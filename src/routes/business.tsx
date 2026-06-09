@@ -253,6 +253,12 @@ function BusinessPage() {
           </div>
         </div>
 
+        <div className="mt-8">
+          <ConnectedAccountCard />
+        </div>
+
+
+
         <div className="mt-8 flex items-start gap-2 rounded-2xl bg-card p-4 ring-1 ring-border">
           <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" />
           <p className="text-[12px] leading-relaxed text-ink-soft">
