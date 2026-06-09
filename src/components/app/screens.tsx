@@ -1,7 +1,45 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { useStore, startShift, endShift, toggleBreak, liveElapsedMs, liveEarnings, weeklyTotals, addShift, deleteShift, setSaveRule, addToSavings, type SaveRule, type Shift } from "@/lib/payflow/store";
 import { estimateDeductions, gbp, fmtHours, fmtClock, nextFriday, daysUntil } from "@/lib/payflow/calc";
-import { Play, Square, Pause, Plus, Clock, Wallet, PiggyBank, Sparkles, Heart, X, Copy, Check, ChevronRight, AlertCircle, ShieldCheck, TrendingUp, Calendar, FileText, MessageSquare, User, Trash2, Coffee } from "lucide-react";
+import { useAuth } from "@/lib/payflow/auth";
+import { Play, Square, Pause, Plus, Clock, Wallet, PiggyBank, Sparkles, Heart, X, Copy, Check, ChevronRight, AlertCircle, ShieldCheck, TrendingUp, Calendar, FileText, MessageSquare, User, Trash2, Coffee, Flame, CloudUpload } from "lucide-react";
+
+// ---------------- Helpers: greeting + streak ----------------
+
+function greetingFor(opts: { name?: string; onShift: boolean; onBreak: boolean; hasEndedToday: boolean; hour: number }) {
+  const { name, onShift, onBreak, hasEndedToday, hour } = opts;
+  const who = name ? `, ${name.split(" ")[0]}` : "";
+  if (onShift && onBreak) return { title: `Enjoy your break${who}`, sub: "The clock's paused — back when you're ready." };
+  if (onShift) return { title: `You're earning now${who}`, sub: "Steady as you go. We're tracking every minute." };
+  if (hasEndedToday) return { title: `Nice work today${who}`, sub: "Let's see what you made." };
+  if (hour < 5) return { title: `Hello${who}`, sub: "Quiet hours. Take it easy when you can." };
+  if (hour < 12) return { title: `Morning${who}`, sub: "Ready for today's shift?" };
+  if (hour < 17) return { title: `Afternoon${who}`, sub: "Hope the day's going kindly." };
+  if (hour < 22) return { title: `Evening${who}`, sub: "How did today land for you?" };
+  return { title: `Hi${who}`, sub: "Winding down — well done today." };
+}
+
+function computeStreak(shifts: { date: string }[]) {
+  if (!shifts.length) return 0;
+  const set = new Set(shifts.map((s) => s.date));
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const iso = (d: Date) => d.toISOString().slice(0, 10);
+  // Allow streak to "carry" if no shift today yet, by starting from yesterday.
+  let cursor = new Date(today);
+  if (!set.has(iso(cursor))) cursor.setDate(cursor.getDate() - 1);
+  let streak = 0;
+  while (set.has(iso(cursor))) {
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
+
+// ---------------- Shared bits ----------------
+
+
 
 // ---------------- Shared bits ----------------
 
