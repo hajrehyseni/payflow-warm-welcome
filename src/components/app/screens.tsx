@@ -210,7 +210,7 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
             <div className="text-[12px] font-bold">
               Payday in {daysToPay} day{daysToPay === 1 ? "" : "s"}
             </div>
-            <div className="text-[11px] text-ink-soft leading-tight truncate">Friday</div>
+            <div className="text-[11px] text-ink-soft leading-tight truncate">{paydayLabel}</div>
           </div>
         </div>
       </section>
