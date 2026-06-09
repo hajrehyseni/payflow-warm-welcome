@@ -207,6 +207,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_member_org: {
+        Args: { _org_id: string }
+        Returns: {
+          id: string
+          name: string
+          pilot_started_at: string
+          plan: string
+        }[]
+      }
       get_org_aggregates: {
         Args: { _org_id: string }
         Returns: {
@@ -219,6 +228,13 @@ export type Database = {
       is_org_member: {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
+      }
+      join_org_with_code: {
+        Args: { _code: string }
+        Returns: {
+          org_id: string
+          org_name: string
+        }[]
       }
     }
     Enums: {
