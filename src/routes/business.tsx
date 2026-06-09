@@ -1,11 +1,18 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Sparkles, Users, Clock, MessageSquareOff, TrendingUp, Copy, LogOut, ShieldCheck, Building2, CreditCard } from "lucide-react";
+import { Sparkles, Users, Clock, MessageSquareOff, TrendingUp, Copy, LogOut, ShieldCheck, Building2, CreditCard, Rocket, ExternalLink } from "lucide-react";
 import { useAuth, signOut, ensureInitialised, refreshProfile } from "@/lib/payflow/auth";
 import { supabase } from "@/integrations/supabase/client";
+import { tierFor, billableQuantity, estimateMonthlyGBP, pilotDaysLeft } from "@/lib/payflow/pricing";
+import { createBusinessPortal } from "@/lib/payflow/billing.functions";
+import { getStripeEnvironment } from "@/lib/stripe";
+import { BusinessCheckoutModal, PaymentTestModeBanner } from "@/components/payflow/BusinessCheckoutModal";
 
 export const Route = createFileRoute("/business")({
   head: () => ({ meta: [{ title: "Business dashboard — PayFlow" }] }),
+  validateSearch: (s: Record<string, unknown>): { checkout?: string } => ({
+    checkout: typeof s.checkout === "string" ? s.checkout : undefined,
+  }),
   component: BusinessPage,
 });
 
@@ -16,14 +23,24 @@ function makeJoinCode() {
 }
 
 type Aggregates = { active_workers: number; total_hours: number; engagement_pct: number; queries_avoided: number };
+type OrgRow = {
+  id: string; name: string; join_code: string;
+  plan: string | null; subscription_status: string | null;
+  current_period_end: string | null; pilot_started_at: string | null;
+  stripe_customer_id: string | null;
+};
 
 function BusinessPage() {
   const user = useAuth();
   const nav = useNavigate();
+  const search = useSearch({ from: "/business" });
   const [ready, setReady] = useState(false);
   const [agg, setAgg] = useState<Aggregates | null>(null);
-  const [orgId, setOrgId] = useState<string | null>(null);
+  const [org, setOrg] = useState<OrgRow | null>(null);
   const [copied, setCopied] = useState(false);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [portalBusy, setPortalBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => { void ensureInitialised().then(() => setReady(true)); }, []);
 
@@ -34,35 +51,56 @@ function BusinessPage() {
     void bootstrap();
   }, [ready, user?.id]);
 
+  useEffect(() => {
+    if (search.checkout === "success") {
+      // Refresh org after a short delay so the webhook can land
+      const t = setTimeout(() => void bootstrap(), 1500);
+      return () => clearTimeout(t);
+    }
+  }, [search.checkout]);
+
   async function bootstrap() {
     if (!user) return;
-    // Find or create the org owned by this user
-    let { data: org } = await supabase
+    let { data: orgRow } = await supabase
       .from("organisations")
-      .select("id, name, join_code")
+      .select("id, name, join_code, plan, subscription_status, current_period_end, pilot_started_at, stripe_customer_id")
       .eq("owner_id", user.id)
       .maybeSingle();
 
-    if (!org) {
-      // Try to read company name from user metadata
+    if (!orgRow) {
       const { data: s } = await supabase.auth.getSession();
       const company = (s.session?.user.user_metadata as any)?.company ?? "Your workplace";
       const code = makeJoinCode();
       const ins = await supabase
         .from("organisations")
         .insert({ name: company, join_code: code, owner_id: user.id })
-        .select("id, name, join_code")
+        .select("id, name, join_code, plan, subscription_status, current_period_end, pilot_started_at, stripe_customer_id")
         .single();
       if (ins.data) {
-        org = ins.data;
-        await supabase.from("org_members").insert({ org_id: org.id, user_id: user.id, role: "owner" });
+        orgRow = ins.data;
+        await supabase.from("org_members").insert({ org_id: orgRow.id, user_id: user.id, role: "owner" });
         await refreshProfile();
       }
     }
-    if (org) {
-      setOrgId(org.id);
-      const { data: a } = await supabase.rpc("get_org_aggregates", { _org_id: org.id });
+    if (orgRow) {
+      setOrg(orgRow as OrgRow);
+      const { data: a } = await supabase.rpc("get_org_aggregates", { _org_id: orgRow.id });
       if (a && Array.isArray(a) && a[0]) setAgg(a[0] as Aggregates);
+    }
+  }
+
+  async function handlePortal() {
+    setPortalBusy(true); setError(null);
+    try {
+      const result = await createBusinessPortal({
+        data: { environment: getStripeEnvironment(), returnUrl: `${window.location.origin}/business` },
+      });
+      if ("error" in result) throw new Error(result.error);
+      window.open(result.url, "_blank");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not open billing portal.");
+    } finally {
+      setPortalBusy(false);
     }
   }
 
@@ -70,8 +108,15 @@ function BusinessPage() {
 
   const m = agg ?? { active_workers: 0, total_hours: 0, engagement_pct: 0, queries_avoided: 0 };
   const active = Number(m.active_workers);
-  const pricePerWorker = active >= 1000 ? 1.5 : active >= 250 ? 2.0 : 2.5;
-  const billing = Math.max(99, Math.round(active * pricePerWorker));
+  const tier = tierFor(active);
+  const monthly = estimateMonthlyGBP(active);
+  const qty = billableQuantity(active);
+
+  const status = org?.subscription_status;
+  const isActive = status === "active" || status === "trialing";
+  const isPastDue = status === "past_due";
+  const daysLeft = pilotDaysLeft(org?.pilot_started_at);
+  const onPilot = !isActive && daysLeft > 0;
 
   const joinLink = typeof window !== "undefined" && user.joinCode
     ? `${window.location.origin}/join?code=${user.joinCode}`
