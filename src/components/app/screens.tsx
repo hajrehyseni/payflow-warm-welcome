@@ -497,6 +497,8 @@ function PayslipTranslator({ onClose }: { onClose: () => void }) {
       </div>
 
       <div className="flex-1 overflow-y-auto px-5 pb-6">
+        <GuidanceLine className="mb-3" />
+
         <div className="rounded-2xl bg-primary-soft px-3.5 py-2.5 text-[11px] font-semibold text-primary flex items-center gap-2">
           <Info className="size-3.5 shrink-0" /> Tap any line to see what it really means
         </div>
