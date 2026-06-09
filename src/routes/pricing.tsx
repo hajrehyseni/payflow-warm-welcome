@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Sparkles, Check, ShieldCheck } from "lucide-react";
+import { useState } from "react";
+import { tierFor, estimateMonthlyGBP } from "@/lib/payflow/pricing";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
