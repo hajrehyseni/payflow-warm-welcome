@@ -120,9 +120,8 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
   const daysToPay = daysUntil(payday);
   const streak = useMemo(() => computeStreak(shifts), [shifts]);
 
-  function celebrate(message: string, description?: string) {
-    toast.success(message, { description, duration: 3200 });
-  }
+
+
 
   function handleEnd() {
     const earnedNow = earned;
