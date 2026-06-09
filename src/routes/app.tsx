@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Home, Wallet, PiggyBank, Sparkles, Heart, ChevronLeft } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { PhoneFrame } from "@/components/PhoneFrame";
