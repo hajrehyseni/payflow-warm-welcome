@@ -942,6 +942,7 @@ export function SaveScreen({ onProfileClick }: { onProfileClick?: () => void }) 
     <div className="flex h-full flex-col">
       <Header subtitle="Gentle, automatic" name="Save" small onProfileClick={onProfileClick} />
       <div className="flex-1 overflow-y-auto px-5 pb-6">
+        <GuidanceLine className="mb-3" />
         {/* Kindness banner */}
         <section className="mb-3 rounded-2xl bg-primary-soft px-4 py-3 text-center">
           <div className="font-display text-sm font-bold text-primary">
