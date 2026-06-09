@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Home, Wallet, PiggyBank, Sparkles, Heart, ChevronLeft } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { PhoneFrame } from "@/components/PhoneFrame";
-import { TodayScreen, PayScreen, SaveScreen, LifeScreen, CoachScreen, ProfileScreen } from "@/components/app/screens";
+import { TodayScreen, PayScreen, SaveScreen, LifeScreen, CoachScreen, ProfileScreen, WelcomeCard } from "@/components/app/screens";
 
 export const Route = createFileRoute("/app")({
   head: () => ({
