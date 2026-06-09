@@ -324,7 +324,7 @@ function PayslipTranslator({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-[11px] font-semibold text-ink-soft ring-1 ring-border">
-          <ShieldCheck className="size-3.5 text-primary" /> Estimate · not financial advice
+          <ShieldCheck className="size-3.5 text-primary" /> Flow Coach gives general information and estimates only — not financial, tax, legal, payroll or banking advice.
         </div>
       </div>
     </div>
