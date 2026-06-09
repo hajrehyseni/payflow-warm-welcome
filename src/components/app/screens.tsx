@@ -649,6 +649,13 @@ const COACH_QA = [
 
 export function CoachScreen() {
   const [asked, setAsked] = useState<string[]>([]);
+  const [toast, setToast] = useState<string | null>(null);
+  function flash(msg: string) {
+    setToast(msg);
+    window.clearTimeout((flash as any)._t);
+    (flash as any)._t = window.setTimeout(() => setToast(null), 2400);
+  }
+
 
   return (
     <div className="flex h-full flex-col">
