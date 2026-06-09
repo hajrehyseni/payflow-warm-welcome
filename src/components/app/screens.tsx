@@ -208,14 +208,23 @@ export function TodayScreen({ goToTab, onProfileClick }: { goToTab?: (t: "today"
   const [savedBoost, setSavedBoost] = useState(0);
 
   const { earned, hh, mm } = useLiveEarnings(onBreak);
+  const earnedAnim = useCountUp(earned, 600);
   const shiftPctRaw = ((hh * 60 + mm) / (6 * 60)) * 100;
   const shiftPct = Math.min(100, shiftPctRaw);
+
+  // Goal ring values (savings + boost from quick-saves this session)
+  const balance = USER.savingsBalance + savedBoost;
+  const goalPct = Math.min(100, (balance / USER.savingsGoal) * 100);
+  const goalPctAnim = useCountUp(goalPct, 700);
+  const RC = 2 * Math.PI * 26;
+  const ringOffset = RC - (goalPctAnim / 100) * RC;
 
   function flash(msg: string) {
     setToast(msg);
     window.clearTimeout((flash as any)._t);
     (flash as any)._t = window.setTimeout(() => setToast(null), 2400);
   }
+
 
   return (
     <div className="flex h-full flex-col">
