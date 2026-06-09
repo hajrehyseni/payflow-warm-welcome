@@ -197,7 +197,7 @@ export function PayScreen() {
             <BreakdownRow label="Gross pay" value={TAKEHOME.gross} bold />
             <BreakdownRow label="Income tax" value={-TAKEHOME.tax} />
             <BreakdownRow label="National Insurance" value={-TAKEHOME.ni} />
-            <BreakdownRow label="Pension (3%)" value={-TAKEHOME.pension} />
+            <BreakdownRow label="Pension (5%)" value={-TAKEHOME.pension} />
             <div className="my-2 h-px bg-border" />
             <BreakdownRow label="Take home" value={TAKEHOME.net} highlight />
           </ul>
