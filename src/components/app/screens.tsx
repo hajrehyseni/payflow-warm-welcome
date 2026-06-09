@@ -583,7 +583,28 @@ export function LifeScreen() {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // COACH TAB
+const COACH_QA = [
+  {
+    q: "What will I take home?",
+    a: `This week, with 34 hours at £14.50, your gross is £493.00. After PAYE tax (£50.25), National Insurance (£20.08) and pension (£24.65), your estimated take-home is £398.02. That's yours to spend, save, or send home.`,
+  },
+  {
+    q: "Why is my pay lower than gross?",
+    a: `Your payslip takes a bit out for three good reasons: PAYE tax (so you don't get a big bill later), National Insurance (for the NHS and your state pension), and workplace pension (still your money, just saved for later). It looks smaller, but it's protecting future you.`,
+  },
+  {
+    q: "Can I save £5 this shift?",
+    a: `Absolutely. If you save £5 from today's shift, that's £20 this month. At that pace, you'd have enough for your Eid trip 3 weeks sooner. Want me to set it aside automatically?`,
+  },
+  {
+    q: "What should I do before payday?",
+    a: `Three small things: check your rota is confirmed so no hours go missing, set aside £5–10 into your savings pot if you can, and plan one no-spend day. These tiny habits are what turn "just getting by" into "moving forward".`,
+  },
+];
+
 export function CoachScreen() {
+  const [asked, setAsked] = useState<string[]>([]);
+
   return (
     <div className="flex h-full flex-col">
       <Header subtitle="Your weekly check-in" name="Flow Coach" small />
@@ -628,6 +649,61 @@ export function CoachScreen() {
               <ChipBtn primary>Yes, remind me</ChipBtn>
               <ChipBtn>Not needed</ChipBtn>
             </div>
+          </div>
+        </div>
+
+        {/* Asked Q&A bubbles */}
+        {asked.map((q) => {
+          const item = COACH_QA.find((c) => c.q === q)!;
+          return (
+            <div key={q} className="space-y-3">
+              {/* User question */}
+              <div className="flex items-start gap-3 justify-end">
+                <div className="rounded-3xl rounded-tr-md bg-primary p-4 text-primary-foreground">
+                  <p className="text-sm leading-relaxed">{item.q}</p>
+                </div>
+                <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-sand-deep font-display text-sm font-bold text-ink">
+                  A
+                </div>
+              </div>
+              {/* Coach answer */}
+              <div className="flex items-start gap-3">
+                <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground">
+                  <Sparkles className="size-5" />
+                </div>
+                <div className="rounded-3xl rounded-tl-md bg-card p-4 ring-1 ring-border">
+                  <p className="text-sm leading-relaxed text-ink">{item.a}</p>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Suggested questions */}
+        <div className="space-y-2 pt-1">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-soft px-1">
+            Try asking
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {COACH_QA.map((item) => {
+              const isAsked = asked.includes(item.q);
+              return (
+                <button
+                  key={item.q}
+                  onClick={() => {
+                    if (!isAsked) setAsked((prev) => [...prev, item.q]);
+                  }}
+                  disabled={isAsked}
+                  className={`rounded-full px-4 py-2 text-xs font-semibold ring-1 transition-all text-left ${
+                    isAsked
+                      ? "bg-sand-deep text-ink-soft ring-border opacity-60"
+                      : "bg-card text-ink ring-border hover:bg-primary-soft hover:ring-primary/30 active:scale-95"
+                  }`}
+                >
+                  {item.q}
+                </button>
+              );
+            })}
           </div>
         </div>
 
