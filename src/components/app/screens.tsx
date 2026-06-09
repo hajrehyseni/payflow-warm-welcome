@@ -665,11 +665,14 @@ function Header({ name, subtitle, small }: { name: string; subtitle: string; sma
   );
 }
 
-function QuickAction({ icon: Icon, label }: { icon: typeof Clock; label: string }) {
+function QuickAction({ icon: Icon, label, onClick, active }: { icon: typeof Clock; label: string; onClick?: () => void; active?: boolean }) {
   return (
-    <button className="flex flex-col items-center gap-1.5 rounded-2xl bg-card p-3 ring-1 ring-border active:scale-95 transition-transform">
-      <div className="grid size-9 place-items-center rounded-xl bg-sand-deep">
-        <Icon className="size-4 text-primary" />
+    <button
+      onClick={onClick}
+      className={`flex flex-col items-center gap-1.5 rounded-2xl p-3 ring-1 active:scale-95 transition-transform ${active ? "bg-accent-soft ring-accent/40" : "bg-card ring-border"}`}
+    >
+      <div className={`grid size-9 place-items-center rounded-xl ${active ? "bg-accent text-white" : "bg-sand-deep text-primary"}`}>
+        <Icon className="size-4" />
       </div>
       <span className="text-[10px] font-semibold text-ink">{label}</span>
     </button>
