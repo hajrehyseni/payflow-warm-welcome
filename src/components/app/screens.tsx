@@ -249,7 +249,7 @@ export function TodayScreen({ goToTab, onProfileClick }: { goToTab?: (t: "today"
               onClick={() => setCheckOpen(true)}
               className="shrink-0 rounded-2xl bg-white px-4 py-2.5 text-sm font-bold text-primary shadow-lg active:scale-95 transition-all"
             >
-              Check
+              Check my pay
             </button>
           </div>
         </section>
