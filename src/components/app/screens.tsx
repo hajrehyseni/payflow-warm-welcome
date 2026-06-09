@@ -1,7 +1,45 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { useStore, startShift, endShift, toggleBreak, liveElapsedMs, liveEarnings, weeklyTotals, addShift, deleteShift, setSaveRule, addToSavings, type SaveRule, type Shift } from "@/lib/payflow/store";
 import { estimateDeductions, gbp, fmtHours, fmtClock, nextFriday, daysUntil } from "@/lib/payflow/calc";
-import { Play, Square, Pause, Plus, Clock, Wallet, PiggyBank, Sparkles, Heart, X, Copy, Check, ChevronRight, AlertCircle, ShieldCheck, TrendingUp, Calendar, FileText, MessageSquare, User, Trash2, Coffee } from "lucide-react";
+import { useAuth } from "@/lib/payflow/auth";
+import { Play, Square, Pause, Plus, Clock, Wallet, PiggyBank, Sparkles, Heart, X, Copy, Check, ChevronRight, AlertCircle, ShieldCheck, TrendingUp, Calendar, FileText, MessageSquare, User, Trash2, Coffee, Flame, CloudUpload } from "lucide-react";
+
+// ---------------- Helpers: greeting + streak ----------------
+
+function greetingFor(opts: { name?: string; onShift: boolean; onBreak: boolean; hasEndedToday: boolean; hour: number }) {
+  const { name, onShift, onBreak, hasEndedToday, hour } = opts;
+  const who = name ? `, ${name.split(" ")[0]}` : "";
+  if (onShift && onBreak) return { title: `Enjoy your break${who}`, sub: "The clock's paused — back when you're ready." };
+  if (onShift) return { title: `You're earning now${who}`, sub: "Steady as you go. We're tracking every minute." };
+  if (hasEndedToday) return { title: `Nice work today${who}`, sub: "Let's see what you made." };
+  if (hour < 5) return { title: `Hello${who}`, sub: "Quiet hours. Take it easy when you can." };
+  if (hour < 12) return { title: `Morning${who}`, sub: "Ready for today's shift?" };
+  if (hour < 17) return { title: `Afternoon${who}`, sub: "Hope the day's going kindly." };
+  if (hour < 22) return { title: `Evening${who}`, sub: "How did today land for you?" };
+  return { title: `Hi${who}`, sub: "Winding down — well done today." };
+}
+
+function computeStreak(shifts: { date: string }[]) {
+  if (!shifts.length) return 0;
+  const set = new Set(shifts.map((s) => s.date));
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const iso = (d: Date) => d.toISOString().slice(0, 10);
+  // Allow streak to "carry" if no shift today yet, by starting from yesterday.
+  let cursor = new Date(today);
+  if (!set.has(iso(cursor))) cursor.setDate(cursor.getDate() - 1);
+  let streak = 0;
+  while (set.has(iso(cursor))) {
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
+
+// ---------------- Shared bits ----------------
+
+
 
 // ---------------- Shared bits ----------------
 
@@ -57,12 +95,15 @@ function Btn({ children, onClick, variant = "primary", className = "", disabled,
 export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
   const live = useStore((s) => s.live);
   const shifts = useStore((s) => s.shifts);
+  const saved = useStore((s) => s.savedTotal);
   const week = weeklyTotals(shifts);
+  const ded = estimateDeductions(week.gross);
+  const user = useAuth();
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
-    if (!live.active) return;
-    const id = setInterval(() => setNow(Date.now()), 1000);
+    // Tick every second when on shift, otherwise every minute so the greeting refreshes.
+    const id = setInterval(() => setNow(Date.now()), live.active ? 1000 : 60000);
     return () => clearInterval(id);
   }, [live.active]);
 
@@ -70,12 +111,40 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
   const earned = liveEarnings(live, now);
   const onBreak = !!live.pausedAt;
 
+  const today = useMemo(() => new Date().toISOString().slice(0, 10), [now]);
+  const hasEndedToday = shifts.some((s) => s.date === today);
+  const hour = new Date(now).getHours();
+  const g = greetingFor({ name: user?.name, onShift: live.active, onBreak, hasEndedToday, hour });
+
+  const payday = nextFriday();
+  const daysToPay = daysUntil(payday);
+  const streak = useMemo(() => computeStreak(shifts), [shifts]);
+
+
+
+
+  function handleEnd() {
+    const earnedNow = earned;
+    endShift();
+    toast.success(
+      earnedNow > 0 ? `Shift saved — ${gbp(earnedNow)} earned` : "Shift saved",
+      { description: "Nice work today. Take a breath.", duration: 3200 },
+    );
+  }
+
+  function handleSave() {
+    if (!user) {
+      toast("Sign in to keep your savings safe", {
+        description: "Create a free account to save your shifts and savings across devices.",
+        action: { label: "Sign in", onClick: () => { window.location.href = "/login"; } },
+      });
+    }
+    goToTab?.("save");
+  }
+
   return (
     <div className="pb-[120px]">
-      <AppHeader
-        title={live.active ? "On shift" : "Today"}
-        subtitle={live.active ? live.workplace : "Ready when you are"}
-      />
+      <AppHeader title={g.title} subtitle={g.sub} />
 
       {/* Hero */}
       <section className="mx-5 mt-5">
@@ -85,7 +154,7 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
               <span className={`size-1.5 rounded-full ${live.active && !onBreak ? "bg-accent animate-pulse-dot" : "bg-white/50"}`} />
               {live.active ? (onBreak ? "On break" : "Earning live") : "Off shift"}
             </span>
-            <span>{gbp(live.hourlyRate)}/hr</span>
+            <span>{gbp(live.hourlyRate)}/hr · {live.workplace}</span>
           </div>
           <div className="mt-4 font-display text-[56px] font-extrabold tracking-tight leading-none tabular-nums">
             {gbp(earned)}
@@ -94,12 +163,12 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
 
           <div className="mt-6 grid grid-cols-1 gap-2">
             {!live.active ? (
-              <Btn variant="accent" onClick={() => startShift()}>
+              <Btn variant="accent" onClick={() => { startShift(); toast("Shift started", { description: "Earning live. Take breaks when you need them." }); }}>
                 <Play className="size-5" fill="currentColor" /> Start shift
               </Btn>
             ) : (
               <>
-                <Btn variant="accent" onClick={endShift}>
+                <Btn variant="accent" onClick={handleEnd}>
                   <Square className="size-4" fill="currentColor" /> End shift
                 </Btn>
                 <Btn variant="ghost" onClick={toggleBreak} className="!bg-white/10 !text-sand !ring-white/15">
@@ -111,18 +180,65 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
         </div>
       </section>
 
-      {/* This week summary */}
-      <section className="mx-5 mt-4 grid grid-cols-2 gap-3">
-        <Tile label="This week" value={fmtHours(week.hours)} icon={Clock} />
-        <Tile label="Gross pay" value={gbp(week.gross)} icon={Wallet} accent />
+      {/* Momentum strip */}
+      <section className="mx-5 mt-4 grid grid-cols-3 gap-2">
+        <Tile label="Hours" value={fmtHours(week.hours)} icon={Clock} />
+        <Tile label="Take-home" value={gbp(ded.net)} icon={Wallet} accent />
+        <Tile label="Saved" value={gbp(saved)} icon={PiggyBank} />
+      </section>
+
+      {/* Streak + payday */}
+      <section className="mx-5 mt-3 flex items-center gap-2">
+        <div className="flex-1 inline-flex items-center gap-2 rounded-2xl bg-card px-3.5 py-2.5 ring-1 ring-border">
+          <Flame className={`size-4 ${streak > 0 ? "text-accent" : "text-ink-soft"}`} />
+          <div className="min-w-0">
+            <div className="text-[12px] font-bold">
+              {streak > 0 ? `${streak}-day streak` : "Start a streak"}
+            </div>
+            <div className="text-[11px] text-ink-soft leading-tight truncate">
+              {streak > 0 ? "Open tomorrow to keep it going" : "Log a shift to begin"}
+            </div>
+          </div>
+        </div>
+        <div className="flex-1 inline-flex items-center gap-2 rounded-2xl bg-card px-3.5 py-2.5 ring-1 ring-border">
+          <Calendar className="size-4 text-primary" />
+          <div className="min-w-0">
+            <div className="text-[12px] font-bold">
+              Payday in {daysToPay} day{daysToPay === 1 ? "" : "s"}
+            </div>
+            <div className="text-[11px] text-ink-soft leading-tight truncate">Friday</div>
+          </div>
+        </div>
       </section>
 
       {/* Quick actions */}
       <section className="mx-5 mt-4 grid grid-cols-3 gap-2">
         <QuickAction icon={Plus} label="Add shift" onClick={() => goToTab?.("pay")} />
-        <QuickAction icon={Wallet} label="Pay" onClick={() => goToTab?.("pay")} />
+        <QuickAction icon={PiggyBank} label="Save" onClick={handleSave} />
         <QuickAction icon={Sparkles} label="Coach" onClick={() => goToTab?.("coach")} />
       </section>
+
+      {/* Guest nudge — only if signed out and they've logged at least one shift today */}
+      {!user && hasEndedToday && (
+        <section className="mx-5 mt-5">
+          <div className="rounded-2xl bg-primary-soft p-4 ring-1 ring-primary/15">
+            <div className="flex items-start gap-3">
+              <div className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground">
+                <CloudUpload className="size-4" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-[14px] font-bold text-ink">Keep your shifts safe</div>
+                <p className="mt-0.5 text-[12.5px] leading-snug text-ink-soft">
+                  Create a free account to save your shifts across devices — never lose them.
+                </p>
+                <Link to="/login" className="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-ink px-3.5 py-1.5 text-[12px] font-bold text-sand">
+                  Create free account <ChevronRight className="size-3.5" />
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Recent shifts */}
       <section className="mx-5 mt-6">
@@ -142,6 +258,8 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
     </div>
   );
 }
+
+
 
 function Tile({ label, value, icon: Icon, accent }: { label: string; value: string; icon: any; accent?: boolean }) {
   return (
@@ -519,7 +637,7 @@ export function SaveScreen() {
       </section>
 
       <section className="mx-5 mt-4">
-        <Btn className="w-full" variant="ink" onClick={() => addToSavings(weekly)}>
+        <Btn className="w-full" variant="ink" onClick={() => { addToSavings(weekly); toast.success(`${gbp(weekly)} moved to savings`, { description: "Small moves, real progress." }); }}>
           <PiggyBank className="size-4" /> Move {gbp(weekly)} to savings
         </Btn>
         <p className="mt-2 text-[11px] text-ink-soft text-center">Moves the amount in PayFlow only. We never touch your bank account.</p>

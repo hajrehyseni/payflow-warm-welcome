@@ -1,8 +1,8 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Home, Wallet, PiggyBank, Sparkles, Heart, LogOut } from "lucide-react";
+import { Home, Wallet, PiggyBank, Sparkles, Heart, LogOut, CloudUpload } from "lucide-react";
 import { TodayScreen, PayScreen, SaveScreen, LifeScreen, CoachScreen, Onboarding } from "@/components/app/screens";
-import { useStore } from "@/lib/payflow/store";
+import { useStore, setOnboarded as setLocalOnboarded } from "@/lib/payflow/store";
 import { hydrateFromCloud, clearCloudUser } from "@/lib/payflow/store";
 import { useAuth, signOut, ensureInitialised, updateProfile } from "@/lib/payflow/auth";
 
@@ -38,28 +38,22 @@ function AppShell() {
 
   useEffect(() => { void ensureInitialised().then(() => setReady(true)); }, []);
 
-  // Hydrate from cloud once we know the user
+  // Hydrate from cloud once we know the user; guests skip cloud and use local store.
   useEffect(() => {
     if (!ready) return;
     if (user) { void hydrateFromCloud(user.id).then(() => setHydrated(true)); }
     else { clearCloudUser(); setHydrated(true); }
   }, [ready, user?.id]);
 
-  // Auth gate: signed-out visitors can still see the app in local-only mode,
-  // but after init if not signed-in we send them to /login (Phase 2 requirement).
-  useEffect(() => {
-    if (ready && !user) {
-      const t = setTimeout(() => { if (!auth_get()) nav({ to: "/login" }); }, 50);
-      return () => clearTimeout(t);
-    }
-  }, [ready, user, nav]);
-
   if (!ready || !hydrated) return null;
-  if (!user) return null;
 
-  const onboarded = user.onboardingComplete || localOnboarded;
+  // Guest-first: no login wall. Local onboarding flag is enough.
+  const onboarded = (user?.onboardingComplete) || localOnboarded;
   if (!onboarded) {
-    return <Onboarding onDone={() => { void updateProfile({ onboarding_complete: true }); }} />;
+    return <Onboarding onDone={() => {
+      setLocalOnboarded();
+      if (user) void updateProfile({ onboarding_complete: true });
+    }} />;
   }
 
   async function handleSignOut() {
@@ -70,13 +64,23 @@ function AppShell() {
 
   return (
     <div className="min-h-screen bg-sand">
-      <button
-        onClick={handleSignOut}
-        className="fixed right-3 top-3 z-50 inline-flex items-center gap-1.5 rounded-full bg-card/90 px-3 py-1.5 text-[11px] font-bold text-ink ring-1 ring-border backdrop-blur hover:bg-sand-deep"
-        aria-label="Sign out"
-      >
-        <LogOut className="size-3.5" /> Sign out
-      </button>
+      {user ? (
+        <button
+          onClick={handleSignOut}
+          className="fixed right-3 top-3 z-50 inline-flex items-center gap-1.5 rounded-full bg-card/90 px-3 py-1.5 text-[11px] font-bold text-ink ring-1 ring-border backdrop-blur hover:bg-sand-deep"
+          aria-label="Sign out"
+        >
+          <LogOut className="size-3.5" /> Sign out
+        </button>
+      ) : (
+        <Link
+          to="/login"
+          className="fixed right-3 top-3 z-50 inline-flex items-center gap-1.5 rounded-full bg-ink/90 px-3 py-1.5 text-[11px] font-bold text-sand ring-1 ring-ink backdrop-blur hover:bg-ink"
+          aria-label="Save across devices"
+        >
+          <CloudUpload className="size-3.5" /> Save across devices
+        </Link>
+      )}
       <main className="mx-auto max-w-md">
         {tab === "today" && <TodayScreen goToTab={(t) => setTab(t as Tab)} />}
         {tab === "pay" && <PayScreen />}
@@ -110,7 +114,3 @@ function AppShell() {
     </div>
   );
 }
-
-// internal helper to avoid React state staleness in the redirect timeout
-import { auth as _auth } from "@/lib/payflow/auth";
-function auth_get() { return _auth.get(); }
