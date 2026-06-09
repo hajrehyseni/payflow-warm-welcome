@@ -38,7 +38,7 @@ function useLiveEarnings() {
 // TODAY TAB
 export function TodayScreen() {
   const { earned, hh, mm } = useLiveEarnings();
-  const shiftPctRaw = ((hh * 60 + mm) / (8 * 60)) * 100;
+  const shiftPctRaw = ((hh * 60 + mm) / (6 * 60)) * 100;
   const shiftPct = Math.min(100, shiftPctRaw);
 
   return (
