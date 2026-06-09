@@ -44,54 +44,60 @@ function Landing() {
       </header>
 
       {/* Hero */}
-      <section className="mx-auto max-w-3xl px-6 pt-20 pb-16 md:pt-28 md:pb-24 text-center">
-        <div className="inline-flex items-center gap-2 rounded-full bg-card px-3 py-1.5 text-xs font-semibold text-primary ring-1 ring-primary/15">
-          <span className="size-1.5 rounded-full bg-primary animate-pulse-dot" />
-          Built for UK hourly workers
-        </div>
-        <h1 className="mt-6 font-display text-5xl md:text-7xl font-extrabold tracking-tight leading-[0.95] text-balance">
-          Know your pay <span className="text-primary">before</span> payday.
-        </h1>
-        <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-ink-soft">
-          Track your hours, estimate your take-home pay, and save from every shift.
-        </p>
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <Link
-            to="/app"
-            className="inline-flex items-center gap-2 rounded-full bg-accent px-7 py-4 text-base font-bold text-accent-foreground shadow-[0_12px_30px_-8px_rgba(255,107,94,0.55)] hover:scale-[1.02] active:scale-[0.98] transition-transform"
-          >
-            Open PayFlow <ArrowRight className="size-4" />
-          </Link>
-          <Link
-            to="/pricing"
-            className="inline-flex items-center gap-2 rounded-full bg-card ring-1 ring-border px-6 py-4 text-base font-bold text-ink hover:bg-sand-deep"
-          >
-            For business
-          </Link>
+      <section className="mx-auto max-w-6xl px-6 pt-14 pb-16 md:pt-20 md:pb-24">
+        <div className="grid items-center gap-12 md:grid-cols-2">
+          <div className="text-center md:text-left">
+            <div className="inline-flex items-center gap-2 rounded-full bg-card px-3 py-1.5 text-xs font-semibold text-primary ring-1 ring-primary/15">
+              <span className="size-1.5 rounded-full bg-primary animate-pulse-dot" />
+              Built for UK hourly workers
+            </div>
+            <h1 className="mt-6 font-display text-5xl md:text-6xl font-extrabold tracking-tight leading-[0.95] text-balance">
+              Know your pay <span className="text-primary">before</span> payday.
+            </h1>
+            <p className="mt-5 max-w-md mx-auto md:mx-0 text-lg leading-relaxed text-ink-soft">
+              Track your hours, see your real take-home, and save from every shift. Free for workers.
+            </p>
+            <div className="mt-7 flex flex-wrap items-center justify-center md:justify-start gap-3">
+              <Link
+                to="/app"
+                className="inline-flex items-center gap-2 rounded-full bg-accent px-7 py-4 text-base font-bold text-accent-foreground shadow-[0_12px_30px_-8px_rgba(255,107,94,0.55)] hover:scale-[1.02] active:scale-[0.98] transition-transform"
+              >
+                Open PayFlow — it's free <ArrowRight className="size-4" />
+              </Link>
+              <Link to="/pricing" className="text-sm font-bold text-ink-soft hover:text-ink underline-offset-4 hover:underline">
+                For business →
+              </Link>
+            </div>
+            <p className="mt-4 text-xs text-ink-soft">No sign-up needed to start.</p>
+          </div>
+
+          <div className="relative">
+            <HeroDemo />
+          </div>
         </div>
       </section>
 
-      {/* How it works */}
+      {/* How it works in 20 seconds */}
       <section id="how" className="border-y border-border/60 bg-card/60">
         <div className="mx-auto max-w-5xl px-6 py-20">
           <div className="max-w-2xl">
-            <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">How it works</div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">How it works in 20 seconds</div>
             <h2 className="mt-2 font-display text-4xl md:text-5xl font-extrabold tracking-tight leading-tight">
-              Hours in. Pay clear. Savings up.
+              Five small steps. One big shift.
             </h2>
           </div>
-          <div className="mt-10 grid gap-4 md:grid-cols-4">
-            {LOOP.map((step, i) => (
-              <div key={step.title} className="rounded-3xl bg-sand p-5 ring-1 ring-border">
+          <ol className="mt-10 grid gap-4 md:grid-cols-5">
+            {STORY.map((step, i) => (
+              <li key={step.title} className="rounded-3xl bg-sand p-5 ring-1 ring-border">
                 <div className="grid size-10 place-items-center rounded-2xl bg-primary-soft text-primary">
                   <step.icon className="size-5" />
                 </div>
                 <div className="mt-4 text-[10px] font-bold uppercase tracking-wider text-ink-soft">Step {i + 1}</div>
-                <div className="mt-1 font-display text-lg font-extrabold leading-snug">{step.title}</div>
+                <div className="mt-1 font-display text-base font-extrabold leading-snug">{step.title}</div>
                 <p className="mt-1.5 text-sm leading-snug text-ink-soft">{step.body}</p>
-              </div>
+              </li>
             ))}
-          </div>
+          </ol>
         </div>
       </section>
 
