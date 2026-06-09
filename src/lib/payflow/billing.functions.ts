@@ -130,8 +130,17 @@ type AccountResult =
 export const getConnectedStripeAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { environment: StripeEnv }) => data)
-  .handler(async ({ data }): Promise<AccountResult> => {
+  .handler(async ({ data, context }): Promise<AccountResult> => {
     try {
+      const { supabase, userId } = context;
+      // Only verified business owners may view platform Stripe account details.
+      const { data: orgRow } = await supabase
+        .from("organisations")
+        .select("id")
+        .eq("owner_id", userId)
+        .maybeSingle();
+      if (!orgRow) return { error: "Not authorised." };
+
       const stripe = createStripeClient(data.environment);
       const account = await (stripe.accounts as any).retrieve();
       return {

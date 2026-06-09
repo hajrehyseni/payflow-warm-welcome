@@ -48,8 +48,18 @@ function BusinessPage() {
   useEffect(() => {
     if (!ready) return;
     if (!user) { nav({ to: "/login" }); return; }
-    if (user.role !== "business") { nav({ to: "/app" }); return; }
-    void bootstrap();
+    // Role gate: allow business owners through. First-time business signups
+    // arrive as 'worker' (role is no longer set from client-supplied metadata);
+    // they're allowed in if they signalled business intent via metadata.company,
+    // so bootstrap() can create their organisation — the DB trigger then
+    // promotes them to 'business' server-side.
+    void (async () => {
+      if (user.role === "business") { void bootstrap(); return; }
+      const { data: s } = await supabase.auth.getSession();
+      const intent = (s.session?.user.user_metadata as any)?.company;
+      if (intent) { void bootstrap(); return; }
+      nav({ to: "/app" });
+    })();
   }, [ready, user?.id]);
 
   useEffect(() => {
@@ -105,7 +115,11 @@ function BusinessPage() {
     }
   }
 
-  if (!ready || !user || user.role !== "business") return null;
+  if (!ready || !user) return null;
+  // After bootstrap creates the org, the DB trigger promotes the user to
+  // 'business' and refreshProfile() updates the client state. Until then
+  // (or for non-business users redirected above), render nothing.
+  if (user.role !== "business" && !org) return null;
 
   const m = agg ?? { active_workers: 0, total_hours: 0, engagement_pct: 0, queries_avoided: 0 };
   const active = Number(m.active_workers);
