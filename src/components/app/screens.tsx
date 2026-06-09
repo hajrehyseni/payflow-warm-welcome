@@ -840,6 +840,7 @@ export function PayScreen({ onProfileClick }: { onProfileClick?: () => void }) {
     <div className="flex h-full flex-col">
       <Header subtitle="This week · estimate" name="Pay" small onProfileClick={onProfileClick} />
       <div className="flex-1 overflow-y-auto px-5 pb-6">
+        <GuidanceLine className="mb-3" />
         {/* Weekly hero */}
         <section className="rounded-3xl bg-card p-5 ring-1 ring-border">
           <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-ink-soft">
