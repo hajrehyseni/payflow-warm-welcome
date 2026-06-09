@@ -64,7 +64,7 @@ function AppDemo() {
         {/* Phone */}
         <PhoneFrame>
           <div className="relative h-full w-full">
-            {tab === "today" && <TodayScreen />}
+            {tab === "today" && <TodayScreen goToTab={setTab} />}
             {tab === "pay" && <PayScreen />}
             {tab === "save" && <SaveScreen />}
             {tab === "life" && <LifeScreen />}
