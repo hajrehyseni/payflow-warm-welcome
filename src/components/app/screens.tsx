@@ -897,6 +897,7 @@ export function CoachScreen() {
           </div>
         </div>
       )}
+      <CelebrationToast />
     </div>
   );
 }
