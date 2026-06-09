@@ -584,30 +584,44 @@ export function LifeScreen() {
               title="NHS workers — 20% off rail travel"
               body="Use your work ID for off-peak journeys until 30 Jun."
               accent
+              onLearnMore={() => flash("Saved · we'll text you the rail code on Friday")}
             />
             <LifeCard
               tag="Wellbeing"
               title="2 free counselling sessions"
               body="Confidential support through your care provider's wellbeing fund."
+              onLearnMore={() => flash("Booking link sent to your inbox")}
             />
             <LifeCard
               tag="Skill up"
               title="Level 3 Care Cert · funded"
               body="Boost your hourly rate by ~£1.20. 12 weeks, evenings only."
+              onLearnMore={() => flash("Saved · enrolment opens next Monday")}
             />
             <LifeCard
               tag="Save on bills"
               title="Council Tax — check your band"
               body="1 in 5 carers are on the wrong band. 4-min check."
+              onLearnMore={() => flash("Opening the 4-minute band checker…")}
             />
             <LifeCard
               tag="Community"
               title="Carers' Sunday brunch · Hackney"
               body="Free brunch this Sunday. 14 carers going."
+              onLearnMore={() => flash("You're on the list · see you Sunday 🤍")}
             />
           </div>
         </section>
       </div>
+
+      {/* Toast */}
+      {toast && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-24 z-30 flex justify-center px-6">
+          <div className="pointer-events-auto rounded-2xl bg-ink px-4 py-2.5 text-xs font-semibold text-white shadow-lg animate-in fade-in slide-in-from-bottom-2">
+            {toast}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
