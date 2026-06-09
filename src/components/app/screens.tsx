@@ -90,6 +90,7 @@ function useLiveEarnings(paused: boolean) {
 export function TodayScreen({ goToTab }: { goToTab?: (t: "today" | "pay" | "save" | "life" | "coach") => void }) {
   const [onBreak, setOnBreak] = useState(false);
   const [payslipOpen, setPayslipOpen] = useState(false);
+  const [checkOpen, setCheckOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [savedBoost, setSavedBoost] = useState(0);
 
@@ -108,32 +109,29 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: "today" | "pay" | "save
       <Header subtitle={onBreak ? "On break · paused" : "On shift · Maple Care Home"} name={USER.name} />
 
       <div className="flex-1 overflow-y-auto px-5 pb-6">
-        {/* Your next move */}
-        <section className="mt-4 rounded-3xl bg-card p-4 ring-1 ring-border">
+        {/* Your next move — Pre-payday check (hero) */}
+        <section className="mt-4 overflow-hidden rounded-3xl bg-gradient-to-br from-primary to-primary/90 p-4 text-primary-foreground shadow-lg shadow-primary/20">
           <div className="flex items-center gap-3">
-            <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-primary-soft">
-              <Heart className="size-5 text-primary" />
+            <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-white/15 ring-1 ring-white/20">
+              <ShieldCheck className="size-5" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-primary">
+              <div className="text-[11px] font-semibold uppercase tracking-wider opacity-90">
                 Your next move
               </div>
-              <p className="mt-0.5 text-sm font-medium text-ink leading-snug">
-                Set aside £5 from today's shift — it'll feel good later.
+              <p className="mt-0.5 text-sm font-semibold leading-snug">
+                Run your pre-payday check — 30 seconds.
               </p>
             </div>
             <button
-              onClick={() => {
-                setSavedBoost((s) => s + 5);
-                flash(`£5 moved to your Eid trip · ${fmt(savedBoost + 5)} saved today`);
-                celebrate("£5 set aside");
-              }}
-              className="shrink-0 rounded-2xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 active:scale-95 transition-all"
+              onClick={() => setCheckOpen(true)}
+              className="shrink-0 rounded-2xl bg-white px-4 py-2.5 text-sm font-bold text-primary shadow-lg active:scale-95 transition-all"
             >
-              Do it
+              Check
             </button>
           </div>
         </section>
+
 
         {/* Live earnings hero */}
 
@@ -270,6 +268,9 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: "today" | "pay" | "save
 
       {/* Payslip translator overlay */}
       {payslipOpen && <PayslipTranslator onClose={() => setPayslipOpen(false)} />}
+
+      {/* Pre-payday check overlay */}
+      {checkOpen && <PrePaydayCheck onClose={() => setCheckOpen(false)} />}
     </div>
   );
 }
@@ -403,6 +404,271 @@ function PayslipTranslator({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-[11px] font-semibold text-ink-soft ring-1 ring-border">
+          <ShieldCheck className="size-3.5 text-primary" /> Flow Coach gives general information and estimates only — not financial, tax, legal, payroll or banking advice.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PRE-PAYDAY CHECK — the hero, empowering 4-point review.
+type CheckPoint = {
+  key: string;
+  label: string;
+  detail: string;
+  status: "ok" | "flag";
+  reassurance: string;
+};
+
+const CHECK_POINTS: CheckPoint[] = [
+  {
+    key: "hours",
+    label: "Hours recorded",
+    detail: "34h logged across 4 shifts — matches your rota.",
+    status: "ok",
+    reassurance: "Every hour you worked is on the timesheet.",
+  },
+  {
+    key: "overtime",
+    label: "Overtime",
+    detail: "2h on Thursday evening — flagged, not yet on the rota.",
+    status: "flag",
+    reassurance: "Worth a polite note to payroll so it lands on Friday's payslip.",
+  },
+  {
+    key: "rate",
+    label: "Hourly rate",
+    detail: "£14.50/hr — matches your contract.",
+    status: "ok",
+    reassurance: "No quiet rate change. Your number is your number.",
+  },
+  {
+    key: "deductions",
+    label: "Deductions",
+    detail: "PAYE, NI and pension look right for £493 gross.",
+    status: "ok",
+    reassurance: "The take-home maths checks out: £398.02.",
+  },
+];
+
+const PAYROLL_DRAFT = `Hi Payroll team,
+
+Hope you're well. Quick one before Friday's payslip — I've got 2 hours of overtime on Thursday 5 Jun (8–10pm cover at Maple Care Home) that I don't think made it onto the rota. Could you take a look and add them in if so?
+
+Thanks so much,
+Amina`;
+
+function PrePaydayCheck({ onClose }: { onClose: () => void }) {
+  const [step, setStep] = useState(0); // 0..CHECK_POINTS.length -> scanning, then result
+  const [draftOpen, setDraftOpen] = useState(false);
+  const [draft, setDraft] = useState(PAYROLL_DRAFT);
+  const [sent, setSent] = useState(false);
+
+  // Animated scan: reveal one check every 600ms
+  useEffect(() => {
+    if (step >= CHECK_POINTS.length) return;
+    const t = window.setTimeout(() => setStep((s) => s + 1), step === 0 ? 350 : 700);
+    return () => window.clearTimeout(t);
+  }, [step]);
+
+  const done = step >= CHECK_POINTS.length;
+  const flagged = CHECK_POINTS.find((p) => p.status === "flag");
+  const allClear = done && !flagged;
+
+  return (
+    <div className="absolute inset-0 z-40 flex flex-col bg-sand">
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 pt-12 pb-3">
+        <div>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-soft">
+            Before Friday's payday
+          </div>
+          <div className="font-display text-2xl font-extrabold tracking-tight text-ink">
+            Pre-payday check
+          </div>
+        </div>
+        <button
+          onClick={onClose}
+          className="grid size-10 place-items-center rounded-2xl bg-card ring-1 ring-border text-ink"
+          aria-label="Close pre-payday check"
+        >
+          <X className="size-5" />
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-5 pb-6">
+        {/* Intro */}
+        <div className="rounded-2xl bg-primary-soft px-3.5 py-2.5 text-[11px] font-semibold text-primary flex items-center gap-2">
+          <ShieldCheck className="size-3.5 shrink-0" />
+          {done
+            ? flagged
+              ? "We found one small thing worth checking — nothing scary."
+              : "All four checks passed. Go into payday calm."
+            : "Running four friendly checks on this week's pay…"}
+        </div>
+
+        {/* Check list */}
+        <ul className="mt-4 space-y-2">
+          {CHECK_POINTS.map((p, i) => {
+            const revealed = i < step;
+            const isFlag = p.status === "flag";
+            return (
+              <li
+                key={p.key}
+                className={`rounded-2xl bg-card p-3.5 ring-1 transition-all ${
+                  revealed
+                    ? isFlag
+                      ? "ring-accent/40"
+                      : "ring-border"
+                    : "ring-border opacity-50"
+                } ${revealed ? "animate-in fade-in slide-in-from-bottom-1" : ""}`}
+              >
+                <div className="flex items-start gap-3">
+                  <div
+                    className={`grid size-9 shrink-0 place-items-center rounded-xl ${
+                      !revealed
+                        ? "bg-sand-deep text-ink-soft"
+                        : isFlag
+                          ? "bg-accent-soft text-accent"
+                          : "bg-primary-soft text-primary"
+                    }`}
+                  >
+                    {!revealed ? (
+                      <span className="block size-2 animate-pulse rounded-full bg-current" />
+                    ) : isFlag ? (
+                      <Info className="size-4" />
+                    ) : (
+                      <CheckCircle2 className="size-5" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-sm font-bold text-ink">{p.label}</div>
+                      {revealed && (
+                        <span
+                          className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                            isFlag ? "bg-accent-soft text-accent" : "bg-primary-soft text-primary"
+                          }`}
+                        >
+                          {isFlag ? "Worth a look" : "Looks right"}
+                        </span>
+                      )}
+                    </div>
+                    {revealed && (
+                      <>
+                        <p className="mt-1 text-[13px] leading-snug text-ink">{p.detail}</p>
+                        <p className="mt-1 text-[11px] leading-snug text-ink-soft">{p.reassurance}</p>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+
+        {/* Result card */}
+        {done && (
+          <section
+            className={`mt-5 overflow-hidden rounded-3xl p-5 text-primary-foreground shadow-lg animate-in fade-in slide-in-from-bottom-2 ${
+              allClear
+                ? "bg-gradient-to-br from-primary to-primary/90 shadow-primary/20"
+                : "bg-gradient-to-br from-accent to-accent/90 shadow-accent/20"
+            }`}
+          >
+            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] opacity-90">
+              {allClear ? <CheckCircle2 className="size-4" /> : <Info className="size-4" />}
+              {allClear ? "All clear" : "One small thing"}
+            </div>
+            <div className="mt-2 font-display text-2xl font-extrabold leading-tight">
+              {allClear ? "Your pay looks right." : "Your pay's mostly right — one bit worth a polite check."}
+            </div>
+            <p className="mt-2 text-sm leading-relaxed opacity-95">
+              {allClear
+                ? `On track for ${fmt(TAKEHOME.net)} on Friday. Nothing to chase — go enjoy your weekend.`
+                : `Your 2 hours of Thursday overtime aren't on the rota yet. A two-line message to payroll usually sorts it before Friday.`}
+            </p>
+
+            {!allClear && !draftOpen && (
+              <button
+                onClick={() => setDraftOpen(true)}
+                className="mt-4 inline-flex items-center gap-1.5 rounded-2xl bg-white px-4 py-2.5 text-sm font-bold text-accent shadow active:scale-95 transition-all"
+              >
+                Draft a polite message <ArrowUpRight className="size-4" />
+              </button>
+            )}
+            {allClear && (
+              <button
+                onClick={() => {
+                  celebrate("Pre-payday check complete");
+                  onClose();
+                }}
+                className="mt-4 inline-flex items-center gap-1.5 rounded-2xl bg-white px-4 py-2.5 text-sm font-bold text-primary shadow active:scale-95 transition-all"
+              >
+                Nice — I'm done <CheckCircle2 className="size-4" />
+              </button>
+            )}
+          </section>
+        )}
+
+        {/* Draft message to payroll */}
+        {done && flagged && draftOpen && (
+          <section className="mt-4 rounded-3xl bg-card p-4 ring-1 ring-border animate-in fade-in slide-in-from-bottom-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-primary">
+                  Polite draft · to Payroll
+                </div>
+                <div className="font-display text-base font-bold text-ink">Edit and send</div>
+              </div>
+              <div className="rounded-full bg-primary-soft px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-primary">
+                Pre-filled
+              </div>
+            </div>
+            <textarea
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              rows={9}
+              className="mt-3 w-full resize-none rounded-2xl bg-sand p-3 text-[13px] leading-relaxed text-ink ring-1 ring-border focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                onClick={() => {
+                  if (typeof navigator !== "undefined" && navigator.clipboard) {
+                    navigator.clipboard.writeText(draft).catch(() => {});
+                  }
+                  setSent(true);
+                  celebrate("Message ready for payroll");
+                }}
+                className="rounded-2xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground shadow active:scale-95 transition-all"
+              >
+                {sent ? "Copied ✓" : "Copy message"}
+              </button>
+              <button
+                onClick={() => {
+                  setSent(true);
+                  celebrate("Message sent to payroll");
+                }}
+                className="rounded-2xl bg-card px-4 py-2.5 text-sm font-bold text-ink ring-1 ring-border active:scale-95 transition-all"
+              >
+                {sent ? "Sent ✓" : "Send to payroll"}
+              </button>
+              <button
+                onClick={() => setDraftOpen(false)}
+                className="rounded-2xl px-3 py-2.5 text-sm font-semibold text-ink-soft active:scale-95 transition-all"
+              >
+                Close draft
+              </button>
+            </div>
+            <p className="mt-3 text-[11px] leading-relaxed text-ink-soft">
+              Tip: keep it short and kind. Payroll teams are people too — a polite note nearly always works.
+            </p>
+          </section>
+        )}
+
+        {/* Disclaimer */}
+        <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-[11px] font-semibold text-ink-soft ring-1 ring-border">
           <ShieldCheck className="size-3.5 text-primary" /> Flow Coach gives general information and estimates only — not financial, tax, legal, payroll or banking advice.
         </div>
       </div>
@@ -757,6 +1023,7 @@ const COACH_QA = [
 
 export function CoachScreen() {
   const [asked, setAsked] = useState<string[]>([]);
+  const [checkOpen, setCheckOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   function flash(msg: string) {
     setToast(msg);
@@ -781,6 +1048,23 @@ export function CoachScreen() {
             </p>
           </div>
         </div>
+
+        {/* Pre-payday check — hero CTA */}
+        <div className="flex items-start gap-3">
+          <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground">
+            <ShieldCheck className="size-5" />
+          </div>
+          <div className="rounded-3xl rounded-tl-md bg-gradient-to-br from-primary-soft to-accent-soft p-4 ring-1 ring-primary/20">
+            <p className="text-sm leading-relaxed text-ink">
+              Want me to <span className="font-semibold">check your pay</span> before Friday? Four quick checks, 30 seconds — so you go into payday calm.
+            </p>
+            <div className="mt-3 flex gap-2">
+              <ChipBtn primary onClick={() => setCheckOpen(true)}>Check my pay</ChipBtn>
+              <ChipBtn onClick={() => flash("All good — I'm here when you want it")}>Maybe later</ChipBtn>
+            </div>
+          </div>
+        </div>
+
 
         <div className="flex items-start gap-3">
           <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-accent-soft">
@@ -898,6 +1182,9 @@ export function CoachScreen() {
         </div>
       )}
       <CelebrationToast />
+
+      {/* Pre-payday check overlay */}
+      {checkOpen && <PrePaydayCheck onClose={() => setCheckOpen(false)} />}
     </div>
   );
 }
