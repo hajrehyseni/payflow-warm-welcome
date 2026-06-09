@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { USER, RECENT, WEEK, TAKEHOME } from "./data";
 import {
   Clock,
@@ -24,6 +24,8 @@ import {
   Users,
   Copy,
   Send,
+  Target,
+  Rocket,
 } from "lucide-react";
 
 const fmt = (n: number) =>
@@ -33,6 +35,7 @@ const fmt = (n: number) =>
 // Streak store — shared across all screens. Positive actions call celebrate().
 let _streak = 6;
 let _celebration: string | null = null;
+let _confettiToken = 0;
 let _celebTimer: number | undefined;
 const _listeners = new Set<() => void>();
 function _notify() { _listeners.forEach((l) => l()); }
@@ -43,6 +46,7 @@ function celebrate(actionMsg?: string) {
   _celebration = actionMsg
     ? `${actionMsg} · streak now ${_streak} weeks 🎉`
     : `Nice one, ${firstName} — streak now ${_streak} weeks 🎉`;
+  _confettiToken += 1;
   _notify();
   if (typeof window !== "undefined") {
     window.clearTimeout(_celebTimer);
@@ -57,17 +61,122 @@ function useStreak() {
     _listeners.add(fn);
     return () => { _listeners.delete(fn); };
   }, []);
-  return { streak: _streak, celebration: _celebration };
+  return { streak: _streak, celebration: _celebration, confettiToken: _confettiToken };
+}
+
+// Smooth count-up for big numbers.
+function useCountUp(value: number, duration = 900) {
+  const [display, setDisplay] = useState(value);
+  const fromRef = useRef(value);
+  const startRef = useRef<number | null>(null);
+  const rafRef = useRef<number | null>(null);
+  useEffect(() => {
+    fromRef.current = display;
+    startRef.current = null;
+    const step = (ts: number) => {
+      if (startRef.current === null) startRef.current = ts;
+      const t = Math.min(1, (ts - startRef.current) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setDisplay(fromRef.current + (value - fromRef.current) * eased);
+      if (t < 1) rafRef.current = requestAnimationFrame(step);
+    };
+    rafRef.current = requestAnimationFrame(step);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+  return display;
+}
+
+// Confetti burst — fires on every celebrate().
+function Confetti() {
+  const { confettiToken } = useStreak();
+  const [pieces, setPieces] = useState<{ id: number; left: number; delay: number; rot: number; color: string; dur: number }[]>([]);
+  useEffect(() => {
+    if (!confettiToken) return;
+    const palette = ["#0E7C66", "#E07A5F", "#F2CC8F", "#81B29A", "#F4D35E"];
+    const next = Array.from({ length: 28 }, (_, i) => ({
+      id: confettiToken * 100 + i,
+      left: Math.random() * 100,
+      delay: Math.random() * 120,
+      rot: Math.random() * 360,
+      color: palette[i % palette.length],
+      dur: 900 + Math.random() * 700,
+    }));
+    setPieces(next);
+    const t = window.setTimeout(() => setPieces([]), 2200);
+    return () => window.clearTimeout(t);
+  }, [confettiToken]);
+  if (!pieces.length) return null;
+  return (
+    <div className="pointer-events-none absolute inset-0 z-50 overflow-hidden">
+      {pieces.map((p) => (
+        <span
+          key={p.id}
+          className="absolute -top-3 block size-2 rounded-[2px]"
+          style={{
+            left: `${p.left}%`,
+            background: p.color,
+            transform: `rotate(${p.rot}deg)`,
+            animation: `confettiFall ${p.dur}ms cubic-bezier(0.2,0.7,0.3,1) ${p.delay}ms forwards`,
+          }}
+        />
+      ))}
+    </div>
+  );
 }
 
 function CelebrationToast() {
   const { celebration } = useStreak();
-  if (!celebration) return null;
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-24 z-40 flex justify-center px-6">
-      <div className="pointer-events-auto flex items-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-accent px-4 py-2.5 text-xs font-semibold text-white shadow-xl shadow-primary/30 animate-in fade-in slide-in-from-bottom-2">
-        <Flame className="size-4 shrink-0" />
-        <span>{celebration}</span>
+    <>
+      <Confetti />
+      {celebration && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-24 z-40 flex justify-center px-6">
+          <div className="pointer-events-auto flex items-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-accent px-4 py-2.5 text-xs font-semibold text-white shadow-xl shadow-primary/30 animate-in fade-in slide-in-from-bottom-2">
+            <Flame className="size-4 shrink-0" />
+            <span>{celebration}</span>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+// Persistent guidance line — warm, never scary.
+function GuidanceLine({ className = "" }: { className?: string }) {
+  return (
+    <div className={`flex items-center gap-1.5 rounded-full bg-primary-soft/60 px-3 py-1.5 text-[10.5px] font-semibold text-primary/90 ring-1 ring-primary/10 ${className}`}>
+      <ShieldCheck className="size-3.5 shrink-0" />
+      <span>Guidance only — not financial advice. Your money decisions are your own.</span>
+    </div>
+  );
+}
+
+// One-time welcome card.
+export function WelcomeCard({ onAccept }: { onAccept: () => void }) {
+  return (
+    <div className="absolute inset-0 z-[60] flex items-end justify-center bg-ink/40 backdrop-blur-sm animate-in fade-in">
+      <div className="m-3 w-full max-w-sm rounded-3xl bg-card p-6 ring-1 ring-border shadow-2xl animate-in slide-in-from-bottom-4">
+        <div className="grid size-12 place-items-center rounded-2xl bg-primary-soft">
+          <Heart className="size-6 text-primary" />
+        </div>
+        <div className="mt-3 font-display text-xl font-extrabold leading-tight text-ink">
+          Welcome to PayFlow
+        </div>
+        <p className="mt-2 text-sm leading-relaxed text-ink">
+          PayFlow is your money <span className="font-semibold">guide</span>, not a financial adviser.
+          We help you understand your pay and build better habits —
+          <span className="font-semibold"> all money decisions and responsibilities stay yours.</span>
+        </p>
+        <button
+          onClick={onAccept}
+          className="mt-5 w-full rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow active:scale-[0.98] transition-all"
+        >
+          Got it
+        </button>
+        <p className="mt-3 text-center text-[10.5px] text-ink-soft">
+          We're not a regulated or licensed financial service.
+        </p>
       </div>
     </div>
   );
