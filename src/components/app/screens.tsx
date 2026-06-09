@@ -26,6 +26,50 @@ const fmt = (n: number) =>
   `£${n.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Streak store — shared across all screens. Positive actions call celebrate().
+let _streak = 6;
+let _celebration: string | null = null;
+let _celebTimer: number | undefined;
+const _listeners = new Set<() => void>();
+function _notify() { _listeners.forEach((l) => l()); }
+
+function celebrate(actionMsg?: string) {
+  _streak += 1;
+  const firstName = USER.name.split(" ")[0];
+  _celebration = actionMsg
+    ? `${actionMsg} · streak now ${_streak} weeks 🎉`
+    : `Nice one, ${firstName} — streak now ${_streak} weeks 🎉`;
+  _notify();
+  if (typeof window !== "undefined") {
+    window.clearTimeout(_celebTimer);
+    _celebTimer = window.setTimeout(() => { _celebration = null; _notify(); }, 3200);
+  }
+}
+
+function useStreak() {
+  const [, force] = useState(0);
+  useEffect(() => {
+    const fn = () => force((n) => n + 1);
+    _listeners.add(fn);
+    return () => { _listeners.delete(fn); };
+  }, []);
+  return { streak: _streak, celebration: _celebration };
+}
+
+function CelebrationToast() {
+  const { celebration } = useStreak();
+  if (!celebration) return null;
+  return (
+    <div className="pointer-events-none absolute inset-x-0 bottom-24 z-40 flex justify-center px-6">
+      <div className="pointer-events-auto flex items-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-accent px-4 py-2.5 text-xs font-semibold text-white shadow-xl shadow-primary/30 animate-in fade-in slide-in-from-bottom-2">
+        <Flame className="size-4 shrink-0" />
+        <span>{celebration}</span>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Live earnings hook — ticks up at hourly rate while "on shift" (pausable)
 function useLiveEarnings(paused: boolean) {
   const baseSeconds = USER.worked.hours * 3600 + USER.worked.minutes * 60;
@@ -82,6 +126,7 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: "today" | "pay" | "save
               onClick={() => {
                 setSavedBoost((s) => s + 5);
                 flash(`£5 moved to your Eid trip · ${fmt(savedBoost + 5)} saved today`);
+                celebrate("£5 set aside");
               }}
               className="shrink-0 rounded-2xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 active:scale-95 transition-all"
             >
@@ -145,6 +190,7 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: "today" | "pay" | "save
             onClick={() => {
               setSavedBoost((s) => s + 5);
               flash(`£5 moved to Eid trip · +${fmt(savedBoost + 5)} today`);
+              celebrate("£5 set aside");
             }}
           />
           <QuickAction
@@ -220,6 +266,7 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: "today" | "pay" | "save
           </div>
         </div>
       )}
+      <CelebrationToast />
 
       {/* Payslip translator overlay */}
       {payslipOpen && <PayslipTranslator onClose={() => setPayslipOpen(false)} />}
@@ -456,6 +503,7 @@ export function PayScreen() {
           </ul>
         </section>
       </div>
+      <CelebrationToast />
     </div>
   );
 }
@@ -463,6 +511,7 @@ export function PayScreen() {
 // ─────────────────────────────────────────────────────────────────────────────
 // SAVE TAB
 export function SaveScreen() {
+  const { streak } = useStreak();
   const pct = (USER.savingsBalance / USER.savingsGoal) * 100;
   const C = 2 * Math.PI * 70;
   const offset = C - (pct / 100) * C;
@@ -470,6 +519,29 @@ export function SaveScreen() {
     <div className="flex h-full flex-col">
       <Header subtitle="Gentle, automatic" name="Save" small />
       <div className="flex-1 overflow-y-auto px-5 pb-6">
+        {/* Streak chip */}
+        <section className="mb-4 rounded-3xl bg-gradient-to-br from-accent-soft to-primary-soft p-4 ring-1 ring-border">
+          <div className="flex items-center gap-3">
+            <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-white/70">
+              <Flame className="size-5 text-accent" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="font-display text-sm font-extrabold text-ink tabular-nums">
+                {streak}-week saving streak
+              </div>
+              <div className="text-[11px] text-ink-soft">
+                Come back tomorrow to keep your streak.
+              </div>
+            </div>
+            <button
+              onClick={() => celebrate("Habit ticked")}
+              className="shrink-0 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground shadow active:scale-95 transition-all"
+            >
+              Tick today
+            </button>
+          </div>
+        </section>
+
         {/* Goal ring */}
         <section className="rounded-3xl bg-card p-6 ring-1 ring-border">
           <div className="text-center">
@@ -524,6 +596,7 @@ export function SaveScreen() {
           </ul>
         </section>
       </div>
+      <CelebrationToast />
     </div>
   );
 }
@@ -531,6 +604,7 @@ export function SaveScreen() {
 // ─────────────────────────────────────────────────────────────────────────────
 // LIFE TAB
 export function LifeScreen() {
+  const { streak } = useStreak();
   const [toast, setToast] = useState<string | null>(null);
   function flash(msg: string) {
     setToast(msg);
@@ -570,12 +644,18 @@ export function LifeScreen() {
             <div className="grid size-10 place-items-center rounded-2xl bg-accent-soft">
               <Flame className="size-5 text-accent" />
             </div>
-            <div>
-              <div className="font-display text-base font-bold text-ink">6 weeks of saving from every shift</div>
+            <div className="min-w-0 flex-1">
+              <div className="font-display text-base font-bold text-ink tabular-nums">
+                {streak} weeks of saving from every shift
+              </div>
               <div className="text-xs text-ink-soft">Amina, you're building a habit that sticks</div>
             </div>
           </div>
+          <div className="mt-3 rounded-2xl bg-primary-soft px-3 py-2 text-center text-[11px] font-semibold text-primary">
+            Come back tomorrow to keep your streak.
+          </div>
         </section>
+
 
         {/* Small wins */}
         <section className="rounded-3xl bg-card p-5 ring-1 ring-border">
@@ -611,31 +691,31 @@ export function LifeScreen() {
               title="NHS workers — 20% off rail travel"
               body="Use your work ID for off-peak journeys until 30 Jun."
               accent
-              onLearnMore={() => flash("Saved · we'll text you the rail code on Friday")}
+              onLearnMore={() => celebrate("Rail code on the way")}
             />
             <LifeCard
               tag="Wellbeing"
               title="2 free counselling sessions"
               body="Confidential support through your care provider's wellbeing fund."
-              onLearnMore={() => flash("Booking link sent to your inbox")}
+              onLearnMore={() => celebrate("Booking link sent")}
             />
             <LifeCard
               tag="Skill up"
               title="Level 3 Care Cert · funded"
               body="Boost your hourly rate by ~£1.20. 12 weeks, evenings only."
-              onLearnMore={() => flash("Saved · enrolment opens next Monday")}
+              onLearnMore={() => celebrate("Enrolment saved")}
             />
             <LifeCard
               tag="Save on bills"
               title="Council Tax — check your band"
               body="1 in 5 carers are on the wrong band. 4-min check."
-              onLearnMore={() => flash("Opening the 4-minute band checker…")}
+              onLearnMore={() => celebrate("Band check done")}
             />
             <LifeCard
               tag="Community"
               title="Carers' Sunday brunch · Hackney"
               body="Free brunch this Sunday. 14 carers going."
-              onLearnMore={() => flash("You're on the list · see you Sunday 🤍")}
+              onLearnMore={() => celebrate("You're on the list 🤍")}
             />
           </div>
         </section>
@@ -649,6 +729,7 @@ export function LifeScreen() {
           </div>
         </div>
       )}
+      <CelebrationToast />
     </div>
   );
 }
@@ -710,7 +791,7 @@ export function CoachScreen() {
               Quick win: skipping one takeaway this week could move <span className="font-semibold">£12</span> toward your Eid trip — that's 2% closer.
             </p>
             <div className="mt-3 flex gap-2">
-              <ChipBtn primary onClick={() => flash("£12 added to Eid trip · nice one")}>Add £12 to goal</ChipBtn>
+              <ChipBtn primary onClick={() => celebrate("£12 added to Eid trip")}>Add £12 to goal</ChipBtn>
               <ChipBtn onClick={() => flash("No worries — I'll ask again next week")}>Not this week</ChipBtn>
             </div>
           </div>
@@ -725,7 +806,7 @@ export function CoachScreen() {
               Your Saturday shift is unconfirmed. Want me to remind you to chase the rota by 5pm Friday?
             </p>
             <div className="mt-3 flex gap-2">
-              <ChipBtn primary onClick={() => flash("Reminder set · Friday 5pm")}>Yes, remind me</ChipBtn>
+              <ChipBtn primary onClick={() => celebrate("Reminder set for Friday 5pm")}>Yes, remind me</ChipBtn>
               <ChipBtn onClick={() => flash("Okay — I'll leave it with you")}>Not needed</ChipBtn>
             </div>
           </div>
@@ -816,6 +897,7 @@ export function CoachScreen() {
           </div>
         </div>
       )}
+      <CelebrationToast />
     </div>
   );
 }
@@ -823,10 +905,11 @@ export function CoachScreen() {
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared bits
 function Header({ name, subtitle, small }: { name: string; subtitle: string; small?: boolean }) {
+  const { streak } = useStreak();
   return (
     <div className="px-5 pt-12 pb-3">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
           <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-soft">
             {subtitle}
           </div>
@@ -834,8 +917,17 @@ function Header({ name, subtitle, small }: { name: string; subtitle: string; sma
             {small ? name : `Hi, ${name}`}
           </div>
         </div>
-        <div className="grid size-11 place-items-center rounded-2xl bg-primary-soft font-display text-base font-bold text-primary ring-1 ring-primary/10">
-          A
+        <div className="flex items-center gap-2 shrink-0">
+          <div
+            title={`${streak}-week saving streak`}
+            className="flex items-center gap-1 rounded-full bg-accent-soft px-2.5 py-1 text-[11px] font-bold text-accent ring-1 ring-accent/20"
+          >
+            <Flame className="size-3.5" />
+            <span className="tabular-nums">{streak} wk</span>
+          </div>
+          <div className="grid size-11 place-items-center rounded-2xl bg-primary-soft font-display text-base font-bold text-primary ring-1 ring-primary/10">
+            A
+          </div>
         </div>
       </div>
     </div>
