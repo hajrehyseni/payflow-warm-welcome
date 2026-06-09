@@ -266,6 +266,7 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: "today" | "pay" | "save
           </div>
         </div>
       )}
+      <CelebrationToast />
 
       {/* Payslip translator overlay */}
       {payslipOpen && <PayslipTranslator onClose={() => setPayslipOpen(false)} />}
