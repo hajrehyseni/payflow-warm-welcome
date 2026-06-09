@@ -313,9 +313,10 @@ type PayModal = null | "add" | "forecast" | "payslip" | "query";
 
 export function PayScreen() {
   const shifts = useStore((s) => s.shifts);
+  const nextPayday = useStore((s) => s.nextPayday);
   const week = weeklyTotals(shifts);
   const ded = estimateDeductions(week.gross);
-  const payday = new Date(useStore((s) => s.nextPayday) + "T00:00:00");
+  const payday = new Date(nextPayday + "T00:00:00");
   const daysToPay = daysUntil(payday);
   const confidence = Math.min(100, Math.round((week.count >= 4 ? 90 : 60 + week.count * 7)));
 
