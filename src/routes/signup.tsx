@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowRight, Sparkles, User, Building2, CheckCircle2 } from "lucide-react";
 import { signupWorker, signupBusiness } from "@/lib/payflow/auth";
@@ -11,31 +11,28 @@ export const Route = createFileRoute("/signup")({
 type Step = "role" | "worker" | "business" | "sent";
 
 function SignupPage() {
-  const nav = useNavigate();
   const [step, setStep] = useState<Step>("role");
-  const [role, setRole] = useState<"worker" | "business">("worker");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [company, setCompany] = useState("");
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
-  function submitWorker(e: React.FormEvent) {
+  async function submitWorker(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim() || !email.includes("@")) return;
-    setStep("sent");
+    setBusy(true); setErr(null);
+    try { await signupWorker(name, email); setStep("sent"); }
+    catch (e: any) { setErr(e?.message ?? "Something went wrong. Try again."); }
+    finally { setBusy(false); }
   }
-  function submitBusiness(e: React.FormEvent) {
+  async function submitBusiness(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim() || !email.includes("@") || !company.trim()) return;
-    setStep("sent");
-  }
-  function proceed() {
-    if (role === "worker") {
-      signupWorker(name, email);
-      nav({ to: "/app" });
-    } else {
-      signupBusiness(name, email, company);
-      nav({ to: "/business" });
-    }
+    setBusy(true); setErr(null);
+    try { await signupBusiness(name, email, company); setStep("sent"); }
+    catch (e: any) { setErr(e?.message ?? "Something went wrong. Try again."); }
+    finally { setBusy(false); }
   }
 
   return (
@@ -57,7 +54,7 @@ function SignupPage() {
             <p className="mt-2 text-ink-soft">Pick the one that fits. You can change later.</p>
             <div className="mt-8 space-y-3">
               <button
-                onClick={() => { setRole("worker"); setStep("worker"); }}
+                onClick={() => setStep("worker")}
                 className="group flex w-full items-center gap-4 rounded-3xl bg-card p-5 text-left ring-1 ring-border hover:ring-primary transition-all"
               >
                 <div className="grid size-12 place-items-center rounded-2xl bg-primary-soft text-primary"><User className="size-6" /></div>
@@ -68,7 +65,7 @@ function SignupPage() {
                 <div className="rounded-full bg-primary-soft px-2.5 py-1 text-[11px] font-bold text-primary">Free forever</div>
               </button>
               <button
-                onClick={() => { setRole("business"); setStep("business"); }}
+                onClick={() => setStep("business")}
                 className="group flex w-full items-center gap-4 rounded-3xl bg-card p-5 text-left ring-1 ring-border hover:ring-primary transition-all"
               >
                 <div className="grid size-12 place-items-center rounded-2xl bg-accent-soft text-accent"><Building2 className="size-6" /></div>
@@ -90,9 +87,10 @@ function SignupPage() {
             <form onSubmit={submitWorker} className="mt-8 flex flex-col gap-3">
               <input value={name} onChange={(e) => setName(e.target.value)} required placeholder="Your name" className="h-14 rounded-2xl border border-border bg-card px-4 text-base outline-none focus:ring-2 focus:ring-primary/30" />
               <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" required placeholder="you@email.com" className="h-14 rounded-2xl border border-border bg-card px-4 text-base outline-none focus:ring-2 focus:ring-primary/30" />
-              <button className="inline-flex h-14 items-center justify-center gap-2 rounded-2xl bg-ink px-6 text-base font-bold text-sand hover:bg-primary transition-colors">
-                Send magic link <ArrowRight className="size-4" />
+              <button disabled={busy} className="inline-flex h-14 items-center justify-center gap-2 rounded-2xl bg-ink px-6 text-base font-bold text-sand hover:bg-primary transition-colors disabled:opacity-60">
+                {busy ? "Sending…" : (<>Send magic link <ArrowRight className="size-4" /></>)}
               </button>
+              {err && <p className="text-sm text-destructive">{err}</p>}
               <p className="mt-1 text-[11px] text-ink-soft">PayFlow gives estimates only. It is not financial, tax or payroll advice.</p>
             </form>
           </>
@@ -107,9 +105,10 @@ function SignupPage() {
               <input value={name} onChange={(e) => setName(e.target.value)} required placeholder="Your name" className="h-14 rounded-2xl border border-border bg-card px-4 text-base outline-none focus:ring-2 focus:ring-primary/30" />
               <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" required placeholder="Work email" className="h-14 rounded-2xl border border-border bg-card px-4 text-base outline-none focus:ring-2 focus:ring-primary/30" />
               <input value={company} onChange={(e) => setCompany(e.target.value)} required placeholder="Company name" className="h-14 rounded-2xl border border-border bg-card px-4 text-base outline-none focus:ring-2 focus:ring-primary/30" />
-              <button className="inline-flex h-14 items-center justify-center gap-2 rounded-2xl bg-accent px-6 text-base font-bold text-accent-foreground hover:scale-[1.01] transition-transform">
-                Start free pilot <ArrowRight className="size-4" />
+              <button disabled={busy} className="inline-flex h-14 items-center justify-center gap-2 rounded-2xl bg-accent px-6 text-base font-bold text-accent-foreground hover:scale-[1.01] transition-transform disabled:opacity-60">
+                {busy ? "Sending…" : (<>Start free pilot <ArrowRight className="size-4" /></>)}
               </button>
+              {err && <p className="text-sm text-destructive">{err}</p>}
             </form>
           </>
         )}
@@ -118,10 +117,8 @@ function SignupPage() {
           <div className="mt-6 rounded-3xl bg-card p-8 ring-1 ring-border text-center">
             <CheckCircle2 className="mx-auto size-10 text-primary" />
             <h2 className="mt-4 font-display text-2xl font-extrabold">Check your inbox</h2>
-            <p className="mt-2 text-sm text-ink-soft">We've sent a link to <span className="font-semibold text-ink">{email}</span>.</p>
-            <button onClick={proceed} className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-accent px-6 text-sm font-bold text-accent-foreground">
-              Continue (demo) <ArrowRight className="size-4" />
-            </button>
+            <p className="mt-2 text-sm text-ink-soft">We've sent a link to <span className="font-semibold text-ink">{email}</span>. Tap it to finish signing in.</p>
+            <p className="mt-4 text-[11px] text-ink-soft">Didn't see it? Check spam, or try again in a minute.</p>
           </div>
         )}
       </main>

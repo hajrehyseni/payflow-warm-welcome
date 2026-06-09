@@ -2,8 +2,9 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Home, Wallet, PiggyBank, Sparkles, Heart, LogOut } from "lucide-react";
 import { TodayScreen, PayScreen, SaveScreen, LifeScreen, CoachScreen, Onboarding } from "@/components/app/screens";
-import { useStore, setOnboarded } from "@/lib/payflow/store";
-import { useAuth, signOut } from "@/lib/payflow/auth";
+import { useStore } from "@/lib/payflow/store";
+import { hydrateFromCloud, clearCloudUser } from "@/lib/payflow/store";
+import { useAuth, signOut, ensureInitialised, updateProfile } from "@/lib/payflow/auth";
 
 export const Route = createFileRoute("/app")({
   head: () => ({
@@ -28,33 +29,54 @@ const TABS: { id: Tab; label: string; icon: typeof Home }[] = [
 ];
 
 function AppShell() {
-  const onboarded = useStore((s) => s.onboarded);
   const user = useAuth();
   const nav = useNavigate();
   const [tab, setTab] = useState<Tab>("today");
   const [ready, setReady] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+  const localOnboarded = useStore((s) => s.onboarded);
 
-  useEffect(() => { setReady(true); }, []);
+  useEffect(() => { void ensureInitialised().then(() => setReady(true)); }, []);
 
-  if (!ready) return null;
+  // Hydrate from cloud once we know the user
+  useEffect(() => {
+    if (!ready) return;
+    if (user) { void hydrateFromCloud(user.id).then(() => setHydrated(true)); }
+    else { clearCloudUser(); setHydrated(true); }
+  }, [ready, user?.id]);
 
+  // Auth gate: signed-out visitors can still see the app in local-only mode,
+  // but after init if not signed-in we send them to /login (Phase 2 requirement).
+  useEffect(() => {
+    if (ready && !user) {
+      const t = setTimeout(() => { if (!auth_get()) nav({ to: "/login" }); }, 50);
+      return () => clearTimeout(t);
+    }
+  }, [ready, user, nav]);
+
+  if (!ready || !hydrated) return null;
+  if (!user) return null;
+
+  const onboarded = user.onboardingComplete || localOnboarded;
   if (!onboarded) {
-    return <Onboarding onDone={setOnboarded} />;
+    return <Onboarding onDone={() => { void updateProfile({ onboarding_complete: true }); }} />;
   }
 
-  function handleSignOut() { signOut(); nav({ to: "/" }); }
+  async function handleSignOut() {
+    await signOut();
+    clearCloudUser();
+    nav({ to: "/" });
+  }
 
   return (
     <div className="min-h-screen bg-sand">
-      {user && (
-        <button
-          onClick={handleSignOut}
-          className="fixed right-3 top-3 z-50 inline-flex items-center gap-1.5 rounded-full bg-card/90 px-3 py-1.5 text-[11px] font-bold text-ink ring-1 ring-border backdrop-blur hover:bg-sand-deep"
-          aria-label="Sign out"
-        >
-          <LogOut className="size-3.5" /> Sign out
-        </button>
-      )}
+      <button
+        onClick={handleSignOut}
+        className="fixed right-3 top-3 z-50 inline-flex items-center gap-1.5 rounded-full bg-card/90 px-3 py-1.5 text-[11px] font-bold text-ink ring-1 ring-border backdrop-blur hover:bg-sand-deep"
+        aria-label="Sign out"
+      >
+        <LogOut className="size-3.5" /> Sign out
+      </button>
       <main className="mx-auto max-w-md">
         {tab === "today" && <TodayScreen goToTab={(t) => setTab(t as Tab)} />}
         {tab === "pay" && <PayScreen />}
@@ -63,7 +85,6 @@ function AppShell() {
         {tab === "coach" && <CoachScreen />}
       </main>
 
-      {/* Fixed bottom nav */}
       <nav
         className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-md border-t border-border bg-sand/95 backdrop-blur-xl"
         style={{ paddingBottom: "max(env(safe-area-inset-bottom), 0.5rem)" }}
@@ -89,3 +110,7 @@ function AppShell() {
     </div>
   );
 }
+
+// internal helper to avoid React state staleness in the redirect timeout
+import { auth as _auth } from "@/lib/payflow/auth";
+function auth_get() { return _auth.get(); }

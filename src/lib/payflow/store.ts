@@ -1,5 +1,8 @@
 import { useSyncExternalStore } from "react";
 import { hoursBetween, round2 } from "./calc";
+import { supabase } from "@/integrations/supabase/client";
+
+let cloudUserId: string | null = null;
 
 export type Shift = {
   id: string;
@@ -170,6 +173,7 @@ export function endShift() {
     shifts: [shift, ...st.shifts],
     live: { ...DEFAULT.live, workplace: st.workplaceDefault, hourlyRate: st.hourlyRateDefault },
   }));
+  void cloudInsertShift(shift);
 }
 
 export function addShift(input: Omit<Shift, "id" | "hours" | "gross">) {
@@ -177,20 +181,104 @@ export function addShift(input: Omit<Shift, "id" | "hours" | "gross">) {
   const gross = round2(hours * input.hourlyRate);
   const shift: Shift = { ...input, id: crypto.randomUUID(), hours, gross };
   store.set((s) => ({ ...s, shifts: [shift, ...s.shifts] }));
+  void cloudInsertShift(shift);
   return shift;
 }
 
 export function deleteShift(id: string) {
   store.set((s) => ({ ...s, shifts: s.shifts.filter((x) => x.id !== id) }));
+  if (cloudUserId) void supabase.from("shifts").delete().eq("id", id).eq("user_id", cloudUserId);
 }
 
 export function setSaveRule(rule: SaveRule) {
   store.set((s) => ({ ...s, saveRule: rule }));
+  void cloudUpsertSavings();
 }
 
 export function addToSavings(amount: number) {
   store.set((s) => ({ ...s, savedTotal: round2(s.savedTotal + amount) }));
+  void cloudUpsertSavings();
 }
+
+// ---------- cloud sync ----------
+async function cloudInsertShift(shift: Shift) {
+  if (!cloudUserId) return;
+  await supabase.from("shifts").insert({
+    id: shift.id,
+    user_id: cloudUserId,
+    workplace: shift.workplace,
+    shift_date: shift.date,
+    start_time: shift.start + ":00",
+    end_time: shift.end + ":00",
+    break_minutes: shift.breakMins,
+    hourly_rate: shift.hourlyRate,
+    hours: shift.hours,
+    gross_pay: shift.gross,
+    notes: shift.notes ?? null,
+  });
+}
+
+async function cloudUpsertSavings() {
+  if (!cloudUserId) return;
+  const s = store.get();
+  const amount = s.saveRule === "shift-1" ? 1 : s.saveRule === "shift-5" ? 5 : 3;
+  await supabase.from("savings_rules").upsert({
+    user_id: cloudUserId,
+    rule_type: s.saveRule,
+    amount,
+    saved_total: s.savedTotal,
+  }, { onConflict: "user_id" });
+}
+
+/** Hydrate the store from Supabase for a signed-in user. */
+export async function hydrateFromCloud(userId: string) {
+  cloudUserId = userId;
+  const { data: rows } = await supabase
+    .from("shifts")
+    .select("id, workplace, shift_date, start_time, end_time, break_minutes, hourly_rate, hours, gross_pay, notes")
+    .eq("user_id", userId)
+    .order("shift_date", { ascending: false });
+
+  const { data: sav } = await supabase
+    .from("savings_rules")
+    .select("rule_type, saved_total")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  const localSeedFlag = `payflow.seeded.${userId}`;
+  const seeded = typeof window !== "undefined" && localStorage.getItem(localSeedFlag);
+
+  if (rows && rows.length > 0) {
+    const shifts: Shift[] = rows.map((r) => ({
+      id: r.id as string,
+      workplace: r.workplace as string,
+      date: r.shift_date as string,
+      start: (r.start_time as string).slice(0, 5),
+      end: (r.end_time as string).slice(0, 5),
+      breakMins: r.break_minutes as number,
+      hourlyRate: Number(r.hourly_rate),
+      hours: Number(r.hours),
+      gross: Number(r.gross_pay),
+      notes: (r.notes as string | null) ?? undefined,
+    }));
+    store.set((s) => ({
+      ...s,
+      shifts,
+      saveRule: (sav?.rule_type as SaveRule) ?? s.saveRule,
+      savedTotal: sav?.saved_total != null ? Number(sav.saved_total) : s.savedTotal,
+    }));
+  } else if (!seeded) {
+    // Brand-new account: seed Amina-style demo shifts to the cloud so screens aren't empty.
+    const seed = store.get().shifts;
+    for (const sh of seed) await cloudInsertShift(sh);
+    if (typeof window !== "undefined") localStorage.setItem(localSeedFlag, "1");
+  } else {
+    store.set((s) => ({ ...s, shifts: [] }));
+  }
+}
+
+export function clearCloudUser() { cloudUserId = null; }
+
 
 // ---------- derived ----------
 export function liveElapsedMs(live: LiveShift, now = Date.now()) {

@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowRight, Sparkles, Mail, CheckCircle2 } from "lucide-react";
-import { loginWithEmail, auth } from "@/lib/payflow/auth";
+import { loginWithEmail } from "@/lib/payflow/auth";
 
 export const Route = createFileRoute("/login")({
   head: () => ({ meta: [{ title: "Sign in — PayFlow" }] }),
@@ -12,16 +12,21 @@ function LoginPage() {
   const nav = useNavigate();
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!email.includes("@")) return;
-    setSent(true);
-  }
-
-  function proceed() {
-    const u = loginWithEmail(email);
-    nav({ to: u.role === "business" ? "/business" : "/app" });
+    setBusy(true); setErr(null);
+    try {
+      await loginWithEmail(email);
+      setSent(true);
+    } catch (e: any) {
+      setErr(e?.message?.includes("not found")
+        ? "We couldn't find an account with that email. Try signing up."
+        : (e?.message ?? "Something went wrong. Try again."));
+    } finally { setBusy(false); }
   }
 
   return (
@@ -34,7 +39,7 @@ function LoginPage() {
               <Mail className="size-3.5" /> Sign in with email
             </div>
             <h1 className="mt-4 font-display text-4xl font-extrabold tracking-tight">Welcome back.</h1>
-            <p className="mt-2 text-ink-soft">We'll send you a magic link — no password.</p>
+            <p className="mt-2 text-ink-soft">We'll send you a magic link — no password needed.</p>
             <form onSubmit={submit} className="mt-8 flex flex-col gap-3">
               <input
                 type="email"
@@ -44,9 +49,10 @@ function LoginPage() {
                 placeholder="you@work.com"
                 className="h-14 rounded-2xl border border-border bg-card px-4 text-base outline-none focus:ring-2 focus:ring-primary/30"
               />
-              <button className="inline-flex h-14 items-center justify-center gap-2 rounded-2xl bg-ink px-6 text-base font-bold text-sand hover:bg-primary transition-colors">
-                Send magic link <ArrowRight className="size-4" />
+              <button disabled={busy} className="inline-flex h-14 items-center justify-center gap-2 rounded-2xl bg-ink px-6 text-base font-bold text-sand hover:bg-primary transition-colors disabled:opacity-60">
+                {busy ? "Sending…" : (<>Send magic link <ArrowRight className="size-4" /></>)}
               </button>
+              {err && <p className="text-sm text-destructive">{err}</p>}
             </form>
             <p className="mt-6 text-sm text-ink-soft">
               New here? <Link to="/signup" className="font-bold text-primary">Create an account</Link>
@@ -56,14 +62,13 @@ function LoginPage() {
           <div className="mt-6 rounded-3xl bg-card p-8 ring-1 ring-border text-center">
             <CheckCircle2 className="mx-auto size-10 text-primary" />
             <h2 className="mt-4 font-display text-2xl font-extrabold">Check your inbox</h2>
-            <p className="mt-2 text-sm text-ink-soft">We've sent a link to <span className="font-semibold text-ink">{email}</span>. Tap it to sign in.</p>
+            <p className="mt-2 text-sm text-ink-soft">We've sent a link to <span className="font-semibold text-ink">{email}</span>. Tap it to sign in — you'll land back in PayFlow.</p>
             <button
-              onClick={proceed}
-              className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-accent px-6 text-sm font-bold text-accent-foreground"
+              onClick={() => nav({ to: "/" })}
+              className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-card px-6 text-sm font-bold text-ink ring-1 ring-border"
             >
-              Continue (demo) <ArrowRight className="size-4" />
+              Back home
             </button>
-            <p className="mt-3 text-[11px] text-ink-soft">Real email delivery comes when we wire up Lovable Cloud.</p>
           </div>
         )}
       </main>
@@ -84,6 +89,3 @@ function Header() {
     </header>
   );
 }
-
-// dummy import to avoid unused warning if needed
-void auth;
