@@ -1209,7 +1209,7 @@ export function CoachScreen({ onProfileClick }: { onProfileClick?: () => void })
 
         {/* User reply prompt */}
         <button
-          onClick={() => flash("Tap a suggested question above to see a warm, plain-English answer")}
+          onClick={() => flash("Pick a suggestion above — Flow Coach replies in plain, kind English")}
           className="sticky bottom-2 w-full rounded-full bg-card px-4 py-3 ring-1 ring-border flex items-center gap-2 shadow-sm active:scale-[0.99] transition-transform text-left"
         >
           <span className="text-sm text-ink-soft flex-1">Ask Flow Coach anything…</span>
