@@ -29,6 +29,20 @@ export type LiveShift = {
 export type SaveRule = "shift-1" | "shift-5" | "percent-3";
 export type PayCycle = "weekly" | "biweekly" | "monthly";
 
+export type PayCheck = {
+  id: string;
+  createdAt: number;          // epoch ms
+  periodStart: string;        // YYYY-MM-DD
+  periodEnd: string;          // YYYY-MM-DD
+  actualNet: number;          // what payslip shows
+  actualHours: number;        // hours your payslip shows
+  expectedNet: number;        // PayFlow estimate at time of check
+  expectedHours: number;      // PayFlow tracked hours
+  gapNet: number;             // expectedNet - actualNet (positive = short)
+  gapHours: number;           // expectedHours - actualHours
+  looksRight: boolean;        // true if within tolerance
+};
+
 export type State = {
   onboarded: boolean;
   shifts: Shift[];
@@ -41,6 +55,8 @@ export type State = {
   nextPayday: string;        // YYYY-MM-DD
   usingSampleData: boolean;  // true when seeded with demo data
   pendingJoinCode?: string;  // captured from /join before sign-in
+  payChecks: PayCheck[];
+  recapDismissedWeek?: string;  // ISO date of Monday of the week most recently dismissed
 };
 
 const KEY = "payflow.state.v2";
