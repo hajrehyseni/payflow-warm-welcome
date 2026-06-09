@@ -190,6 +190,7 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: "today" | "pay" | "save
             onClick={() => {
               setSavedBoost((s) => s + 5);
               flash(`£5 moved to Eid trip · +${fmt(savedBoost + 5)} today`);
+              celebrate("£5 set aside");
             }}
           />
           <QuickAction
