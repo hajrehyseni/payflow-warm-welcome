@@ -327,7 +327,7 @@ export function CoachScreen() {
           </div>
           <div className="rounded-3xl rounded-tl-md bg-card p-4 ring-1 ring-border">
             <p className="text-sm leading-relaxed text-ink">
-              Hi Amina 👋 You worked <span className="font-semibold">32 hours</span> this week — strong week. Your take-home is on track for{" "}
+              Hi Amina 👋 You worked <span className="font-semibold">34 hours</span> this week — strong week. Your take-home is on track for{" "}
               <span className="font-semibold">{fmt(TAKEHOME.net)}</span>.
             </p>
           </div>
