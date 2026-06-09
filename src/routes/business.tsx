@@ -9,6 +9,7 @@ import { getStripeEnvironment } from "@/lib/stripe";
 import { BusinessCheckoutModal, PaymentTestModeBanner } from "@/components/payflow/BusinessCheckoutModal";
 import { ConnectedAccountCard } from "@/components/payflow/ConnectedAccountCard";
 import { InviteHero } from "@/components/payflow/InviteHero";
+import { BusinessROIPanel } from "@/components/payflow/BusinessROIPanel";
 
 export const Route = createFileRoute("/business")({
   head: () => ({ meta: [{ title: "Business dashboard — PayFlow" }] }),
@@ -201,6 +202,16 @@ function BusinessPage() {
         {error && (
           <div className="mt-6 rounded-2xl bg-red-50 p-4 text-sm text-red-700 ring-1 ring-red-200">{error}</div>
         )}
+
+        {/* ROI panel — first, always-on, aggregate only */}
+        <div className="mt-8">
+          <BusinessROIPanel
+            active={active}
+            hours={Number(m.total_hours)}
+            queriesAvoided={m.queries_avoided}
+            engagementPct={m.engagement_pct}
+          />
+        </div>
 
         <div className="mt-8 grid gap-4 md:grid-cols-4">
           <Metric icon={Users} label="Active workers" value={String(active)} hint="Tracked a shift in the last 30 days" />

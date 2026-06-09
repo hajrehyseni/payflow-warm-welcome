@@ -29,6 +29,20 @@ export type LiveShift = {
 export type SaveRule = "shift-1" | "shift-5" | "percent-3";
 export type PayCycle = "weekly" | "biweekly" | "monthly";
 
+export type PayCheck = {
+  id: string;
+  createdAt: number;          // epoch ms
+  periodStart: string;        // YYYY-MM-DD
+  periodEnd: string;          // YYYY-MM-DD
+  actualNet: number;          // what payslip shows
+  actualHours: number;        // hours your payslip shows
+  expectedNet: number;        // PayFlow estimate at time of check
+  expectedHours: number;      // PayFlow tracked hours
+  gapNet: number;             // expectedNet - actualNet (positive = short)
+  gapHours: number;           // expectedHours - actualHours
+  looksRight: boolean;        // true if within tolerance
+};
+
 export type State = {
   onboarded: boolean;
   shifts: Shift[];
@@ -41,6 +55,8 @@ export type State = {
   nextPayday: string;        // YYYY-MM-DD
   usingSampleData: boolean;  // true when seeded with demo data
   pendingJoinCode?: string;  // captured from /join before sign-in
+  payChecks: PayCheck[];
+  recapDismissedWeek?: string;  // ISO date of Monday of the week most recently dismissed
 };
 
 const KEY = "payflow.state.v2";
@@ -88,6 +104,8 @@ const DEFAULT: State = {
   payCycle: "weekly",
   nextPayday: defaultNextFriday(),
   usingSampleData: true,
+  payChecks: [],
+
 };
 
 function load(): State {
@@ -254,6 +272,17 @@ export function setSaveRule(rule: SaveRule) {
 export function addToSavings(amount: number) {
   store.set((s) => ({ ...s, savedTotal: round2(s.savedTotal + amount) }));
   void cloudUpsertSavings();
+}
+
+// ---------- pay checks (local-only) ----------
+export function addPayCheck(input: Omit<PayCheck, "id" | "createdAt">) {
+  const pc: PayCheck = { ...input, id: crypto.randomUUID(), createdAt: Date.now() };
+  store.set((s) => ({ ...s, payChecks: [pc, ...s.payChecks].slice(0, 24) }));
+  return pc;
+}
+
+export function dismissWeeklyRecap(weekMondayISO: string) {
+  store.set((s) => ({ ...s, recapDismissedWeek: weekMondayISO }));
 }
 
 // ---------- cloud sync ----------

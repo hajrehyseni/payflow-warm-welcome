@@ -4,7 +4,9 @@ import { toast } from "sonner";
 import { useStore, startShift, endShift, toggleBreak, liveElapsedMs, liveEarnings, weeklyTotals, addShift, deleteShift, setSaveRule, addToSavings, applySetup, computeNextPayday, type SaveRule, type Shift, type PayCycle } from "@/lib/payflow/store";
 import { estimateDeductions, gbp, fmtHours, fmtClock, daysUntil } from "@/lib/payflow/calc";
 import { useAuth } from "@/lib/payflow/auth";
-import { Play, Square, Pause, Plus, Clock, Wallet, PiggyBank, Sparkles, Heart, X, Copy, Check, ChevronRight, AlertCircle, ShieldCheck, TrendingUp, Calendar, FileText, MessageSquare, User, Trash2, Coffee, Flame, CloudUpload, Pencil } from "lucide-react";
+import { Play, Square, Pause, Plus, Clock, Wallet, PiggyBank, Sparkles, Heart, X, Copy, Check, ChevronRight, AlertCircle, ShieldCheck, TrendingUp, Calendar, FileText, MessageSquare, User, Trash2, Coffee, Flame, CloudUpload, Pencil, FileCheck2 } from "lucide-react";
+import { PayCheckModal } from "@/components/payflow/PayCheckModal";
+import { WeeklyRecap, useWeeklyRecap } from "@/components/payflow/WeeklyRecap";
 
 // ---------------- Helpers: greeting + streak ----------------
 
@@ -103,6 +105,10 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
   const user = useAuth();
   const [now, setNow] = useState(Date.now());
   const [setupOpen, setSetupOpen] = useState(false);
+  const [payCheckOpen, setPayCheckOpen] = useState(false);
+  const recap = useWeeklyRecap();
+  const [recapOpen, setRecapOpen] = useState(false);
+  useEffect(() => { if (recap) setRecapOpen(true); }, [recap?.weekISO]);
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), live.active ? 1000 : 60000);
@@ -233,12 +239,30 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
         </div>
       </section>
 
+      {/* Check my pay — hero feature */}
+      <section className="mx-5 mt-4">
+        <button
+          onClick={() => setPayCheckOpen(true)}
+          className="w-full flex items-center gap-3 rounded-2xl bg-card p-4 ring-1 ring-border text-left active:scale-[0.99] transition-transform"
+        >
+          <div className="grid size-11 place-items-center rounded-2xl bg-accent text-accent-foreground"><FileCheck2 className="size-5" /></div>
+          <div className="min-w-0 flex-1">
+            <div className="text-[14px] font-bold">Check my pay</div>
+            <div className="text-[12px] text-ink-soft truncate">Got your payslip? Make sure it matches what you tracked.</div>
+          </div>
+          <ChevronRight className="size-4 text-ink-soft" />
+        </button>
+      </section>
+
       {/* Quick actions */}
       <section className="mx-5 mt-4 grid grid-cols-3 gap-2">
         <QuickAction icon={Plus} label="Add shift" onClick={() => goToTab?.("pay")} />
         <QuickAction icon={PiggyBank} label="Save" onClick={handleSave} />
         <QuickAction icon={Sparkles} label="Coach" onClick={() => goToTab?.("coach")} />
       </section>
+
+      {payCheckOpen && <PayCheckModal onClose={() => setPayCheckOpen(false)} />}
+      {recap && recapOpen && <WeeklyRecap data={recap} onClose={() => setRecapOpen(false)} />}
 
       {/* Guest nudge — only if signed out and they've logged at least one shift today */}
       {!user && hasEndedToday && (
@@ -339,6 +363,9 @@ export function PayScreen() {
   const confidence = Math.min(100, Math.round((week.count >= 4 ? 90 : 60 + week.count * 7)));
 
   const [modal, setModal] = useState<PayModal>(null);
+  const [payCheckOpen, setPayCheckOpen] = useState(false);
+  const payChecks = useStore((s) => s.payChecks);
+  const lastCheck = payChecks[0];
 
   return (
     <div className="pb-[120px]">
@@ -373,6 +400,22 @@ export function PayScreen() {
         </p>
       </section>
 
+      {/* Check my pay — hero card */}
+      <section className="mx-5 mt-4">
+        <button onClick={() => setPayCheckOpen(true)} className="w-full flex items-center gap-3 rounded-2xl bg-accent-soft p-4 ring-1 ring-accent/20 text-left active:scale-[0.99] transition">
+          <div className="grid size-11 place-items-center rounded-2xl bg-accent text-accent-foreground"><FileCheck2 className="size-5" /></div>
+          <div className="min-w-0 flex-1">
+            <div className="text-[14px] font-bold text-ink">Check my pay</div>
+            <div className="text-[12px] text-ink-soft truncate">
+              {lastCheck
+                ? lastCheck.looksRight ? "Last check looked right ✓" : `Last check: ${gbp(Math.abs(lastCheck.gapNet))} ${lastCheck.gapNet > 0 ? "short" : "over"}`
+                : "Compare your payslip to what you tracked."}
+            </div>
+          </div>
+          <ChevronRight className="size-4 text-ink-soft" />
+        </button>
+      </section>
+
       {/* Actions */}
       <section className="mx-5 mt-4 grid grid-cols-2 gap-2">
         <Btn variant="ink" onClick={() => setModal("add")}><Plus className="size-4" /> Add shift</Btn>
@@ -381,7 +424,7 @@ export function PayScreen() {
         <Btn variant="ghost" onClick={() => setModal("query")}><MessageSquare className="size-4" /> Payroll query</Btn>
       </section>
 
-      {/* Shift history */}
+      {payCheckOpen && <PayCheckModal onClose={() => setPayCheckOpen(false)} />}
       <section className="mx-5 mt-6">
         <h2 className="text-[13px] font-bold text-ink-soft uppercase tracking-wider mb-2">Shift history</h2>
         {shifts.length === 0 ? (
