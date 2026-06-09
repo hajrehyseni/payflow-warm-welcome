@@ -939,8 +939,10 @@ export function PayScreen({ onProfileClick }: { onProfileClick?: () => void }) {
 export function SaveScreen({ onProfileClick }: { onProfileClick?: () => void }) {
   const { streak } = useStreak();
   const pct = (USER.savingsBalance / USER.savingsGoal) * 100;
+  const pctAnim = useCountUp(pct, 1100);
+  const balanceAnim = useCountUp(USER.savingsBalance, 1100);
   const C = 2 * Math.PI * 70;
-  const offset = C - (pct / 100) * C;
+  const offset = C - (pctAnim / 100) * C;
   return (
     <div className="flex h-full flex-col">
       <Header subtitle="Gentle, automatic" name="Save" small onProfileClick={onProfileClick} />
