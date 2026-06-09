@@ -637,7 +637,7 @@ export function SaveScreen() {
       </section>
 
       <section className="mx-5 mt-4">
-        <Btn className="w-full" variant="ink" onClick={() => addToSavings(weekly)}>
+        <Btn className="w-full" variant="ink" onClick={() => { addToSavings(weekly); toast.success(`${gbp(weekly)} moved to savings`, { description: "Small moves, real progress." }); }}>
           <PiggyBank className="size-4" /> Move {gbp(weekly)} to savings
         </Btn>
         <p className="mt-2 text-[11px] text-ink-soft text-center">Moves the amount in PayFlow only. We never touch your bank account.</p>
