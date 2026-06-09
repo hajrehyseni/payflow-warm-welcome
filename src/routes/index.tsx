@@ -29,6 +29,10 @@ function Landing() {
             </div>
             <span className="font-display text-lg font-extrabold tracking-tight">PayFlow</span>
           </Link>
+          <nav className="hidden items-center gap-6 text-sm font-semibold text-ink-soft md:flex">
+            <Link to="/pricing" className="hover:text-ink">For business</Link>
+            <Link to="/login" className="hover:text-ink">Sign in</Link>
+          </nav>
           <Link
             to="/app"
             className="inline-flex items-center gap-1.5 rounded-full bg-ink px-4 py-2 text-sm font-bold text-sand hover:bg-primary transition-colors"
@@ -57,12 +61,12 @@ function Landing() {
           >
             Open PayFlow <ArrowRight className="size-4" />
           </Link>
-          <a
-            href="#how"
+          <Link
+            to="/pricing"
             className="inline-flex items-center gap-2 rounded-full bg-card ring-1 ring-border px-6 py-4 text-base font-bold text-ink hover:bg-sand-deep"
           >
-            How it works
-          </a>
+            For business
+          </Link>
         </div>
       </section>
 
