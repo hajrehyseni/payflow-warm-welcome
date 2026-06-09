@@ -236,7 +236,7 @@ export function TodayScreen({ goToTab, onProfileClick }: { goToTab?: (t: "today"
           <div className="flex items-end justify-between">
             <h3 className="font-display text-base font-bold text-ink">Today so far</h3>
             <button
-              onClick={() => flash("Showing this week's 4 shifts · 34 hrs total")}
+              onClick={() => flash("Your week so far: 4 shifts · 34 hrs — strong work, Amina")}
               className="text-xs font-semibold text-primary active:scale-95 transition-transform"
             >
               All shifts
