@@ -16,6 +16,10 @@ import {
   ShieldCheck,
   Flame,
   CheckCircle2,
+  X,
+  Pause,
+  Play,
+  Info,
 } from "lucide-react";
 
 const fmt = (n: number) =>
