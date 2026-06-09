@@ -729,6 +729,7 @@ export function LifeScreen() {
           </div>
         </div>
       )}
+      <CelebrationToast />
     </div>
   );
 }
