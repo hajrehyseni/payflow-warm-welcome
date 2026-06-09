@@ -96,13 +96,15 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
   const live = useStore((s) => s.live);
   const shifts = useStore((s) => s.shifts);
   const saved = useStore((s) => s.savedTotal);
+  const nextPayday = useStore((s) => s.nextPayday);
+  const usingSample = useStore((s) => s.usingSampleData);
   const week = weeklyTotals(shifts);
   const ded = estimateDeductions(week.gross);
   const user = useAuth();
   const [now, setNow] = useState(Date.now());
+  const [setupOpen, setSetupOpen] = useState(false);
 
   useEffect(() => {
-    // Tick every second when on shift, otherwise every minute so the greeting refreshes.
     const id = setInterval(() => setNow(Date.now()), live.active ? 1000 : 60000);
     return () => clearInterval(id);
   }, [live.active]);
@@ -116,9 +118,11 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
   const hour = new Date(now).getHours();
   const g = greetingFor({ name: user?.name, onShift: live.active, onBreak, hasEndedToday, hour });
 
-  const payday = nextFriday();
+  const payday = new Date(nextPayday + "T00:00:00");
   const daysToPay = daysUntil(payday);
+  const paydayLabel = payday.toLocaleDateString("en-GB", { weekday: "short" });
   const streak = useMemo(() => computeStreak(shifts), [shifts]);
+
 
 
 
