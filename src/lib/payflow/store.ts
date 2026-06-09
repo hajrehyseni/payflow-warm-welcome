@@ -27,6 +27,7 @@ export type LiveShift = {
 };
 
 export type SaveRule = "shift-1" | "shift-5" | "percent-3";
+export type PayCycle = "weekly" | "biweekly" | "monthly";
 
 export type State = {
   onboarded: boolean;
@@ -36,6 +37,10 @@ export type State = {
   savedTotal: number;       // running savings balance
   hourlyRateDefault: number;
   workplaceDefault: string;
+  payCycle: PayCycle;
+  nextPayday: string;        // YYYY-MM-DD
+  usingSampleData: boolean;  // true when seeded with demo data
+  pendingJoinCode?: string;  // captured from /join before sign-in
 };
 
 const KEY = "payflow.state.v2";
@@ -45,8 +50,7 @@ const SEED_SHIFTS: Shift[] = (() => {
   const today = new Date();
   const iso = (d: Date) => d.toISOString().slice(0, 10);
   const day = (offset: number) => { const d = new Date(today); d.setDate(d.getDate() + offset); return iso(d); };
-  const dow = today.getDay(); // 0 Sun .. 6 Sat
-  // Build last Mon, Tue, Thu, Sat shifts relative to today
+  const dow = today.getDay();
   const mk = (label: string, offset: number, start: string, end: string, br: number): Shift => {
     const hours = hoursBetween(start, end, br);
     return {
@@ -56,15 +60,22 @@ const SEED_SHIFTS: Shift[] = (() => {
       hours: round2(hours), gross: round2(hours * 14.5),
     };
   };
-  // Offsets so all are in current week (Mon=1..Sat=6)
-  const off = (target: number) => target - dow; // negative = past, 0 today
+  const off = (target: number) => target - dow;
   return [
-    mk("Maple Care Home", off(1), "07:30", "16:00", 30),  // Mon 8h
-    mk("Maple Care Home", off(2), "07:30", "16:00", 30),  // Tue 8h
-    mk("Riverside Lodge", off(4), "07:00", "19:30", 30),  // Thu 12h
-    mk("Maple Care Home", off(6), "07:30", "13:30", 0),   // Sat 6h
+    mk("Maple Care Home", off(1), "07:30", "16:00", 30),
+    mk("Maple Care Home", off(2), "07:30", "16:00", 30),
+    mk("Riverside Lodge", off(4), "07:00", "19:30", 30),
+    mk("Maple Care Home", off(6), "07:30", "13:30", 0),
   ];
 })();
+
+function defaultNextFriday(): string {
+  const d = new Date();
+  const day = d.getDay();
+  const diff = (5 - day + 7) % 7 || 7;
+  d.setDate(d.getDate() + diff);
+  return d.toISOString().slice(0, 10);
+}
 
 const DEFAULT: State = {
   onboarded: false,
@@ -74,6 +85,9 @@ const DEFAULT: State = {
   savedTotal: 312.4,
   hourlyRateDefault: 14.5,
   workplaceDefault: "Maple Care Home",
+  payCycle: "weekly",
+  nextPayday: defaultNextFriday(),
+  usingSampleData: true,
 };
 
 function load(): State {
