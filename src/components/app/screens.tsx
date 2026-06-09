@@ -790,44 +790,173 @@ export function CoachScreen() {
   );
 }
 
-// ---------------- Onboarding ----------------
+// ---------------- Setup Wizard / Onboarding ----------------
 
-const ONBOARD_STEPS = [
-  { title: "Welcome to PayFlow", body: "A worker-first app for hourly pay. Built in the UK, in plain English." },
-  { title: "Know your hours", body: "Start a shift with one tap. PayFlow tracks the clock so you don't have to." },
-  { title: "Know your pay", body: "See your take-home estimate before payday — tax, National Insurance and pension included." },
-  { title: "Save from every shift", body: "Pick a small saving rule. We'll project it into your week, month and year." },
-  { title: "Meet Flow Coach", body: "Calm, plain-English guidance. Never pushy. Always your call." },
+const CYCLE_OPTIONS: { id: PayCycle; label: string; sub: string }[] = [
+  { id: "weekly", label: "Weekly", sub: "Paid every week" },
+  { id: "biweekly", label: "Every 2 weeks", sub: "Fortnightly pay" },
+  { id: "monthly", label: "Monthly", sub: "Once a month" },
 ];
 
+export function SetupWizard({
+  onClose,
+  onSkip,
+  initial,
+}: {
+  onClose: () => void;
+  onSkip?: () => void;
+  initial?: { hourlyRate?: number; workplace?: string; payCycle?: PayCycle };
+}) {
+  const [step, setStep] = useState(0);
+  const [rate, setRate] = useState<number>(initial?.hourlyRate ?? 14.5);
+  const [workplace, setWorkplace] = useState<string>(initial?.workplace ?? "");
+  const [cycle, setCycle] = useState<PayCycle>(initial?.payCycle ?? "weekly");
+  const [payday, setPayday] = useState<string>(() => computeNextPayday(initial?.payCycle ?? "weekly"));
+
+  function next() { setStep((s) => Math.min(2, s + 1)); }
+  function back() { setStep((s) => Math.max(0, s - 1)); }
+  function finish() {
+    applySetup({
+      hourlyRate: Number.isFinite(rate) && rate > 0 ? rate : 14.5,
+      workplace: workplace.trim() || "My workplace",
+      payCycle: cycle,
+      nextPayday: payday,
+    });
+    toast.success("All set — these are your numbers now.", { description: "You can edit anytime from Today." });
+    onClose();
+  }
+
+  function chooseCycle(c: PayCycle) {
+    setCycle(c);
+    setPayday(computeNextPayday(c));
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 bg-sand flex flex-col">
+      <header className="flex items-center justify-between px-5 pt-[max(env(safe-area-inset-top),1rem)] pb-3">
+        <button onClick={step === 0 ? onClose : back} className="text-[13px] font-bold text-ink-soft hover:text-ink">
+          {step === 0 ? "Close" : "← Back"}
+        </button>
+        <div className="flex items-center gap-1.5">
+          {[0, 1, 2].map((k) => (
+            <span key={k} className={`h-1.5 rounded-full transition-all ${k === step ? "w-6 bg-primary" : "w-1.5 bg-border"}`} />
+          ))}
+        </div>
+        {onSkip ? (
+          <button onClick={onSkip} className="text-[13px] font-bold text-ink-soft hover:text-ink">Skip</button>
+        ) : (
+          <span className="w-10" />
+        )}
+      </header>
+
+      <div className="flex-1 overflow-y-auto px-6 pt-4">
+        {step === 0 && (
+          <div className="max-w-sm mx-auto">
+            <div className="grid size-14 place-items-center rounded-2xl bg-primary text-primary-foreground"><Wallet className="size-6" /></div>
+            <h1 className="mt-5 font-display text-3xl font-extrabold tracking-tight">What's your hourly rate?</h1>
+            <p className="mt-2 text-[14px] text-ink-soft">This is the headline rate before tax. You can change it any time.</p>
+            <div className="mt-6 flex items-center gap-3 rounded-2xl bg-card p-4 ring-1 ring-border">
+              <span className="font-display text-3xl font-extrabold text-ink-soft">£</span>
+              <input
+                inputMode="decimal" type="number" min={0} step="0.01"
+                value={rate}
+                onChange={(e) => setRate(Number(e.target.value))}
+                className="w-full bg-transparent font-display text-4xl font-extrabold tabular-nums outline-none"
+              />
+              <span className="text-sm font-bold text-ink-soft">/ hour</span>
+            </div>
+            <p className="mt-3 text-[12px] text-ink-soft">National Living Wage for 21+ is £12.21/hour (April 2025). PayFlow is guidance only.</p>
+          </div>
+        )}
+
+        {step === 1 && (
+          <div className="max-w-sm mx-auto">
+            <div className="grid size-14 place-items-center rounded-2xl bg-primary text-primary-foreground"><Calendar className="size-6" /></div>
+            <h1 className="mt-5 font-display text-3xl font-extrabold tracking-tight">When do you get paid?</h1>
+            <p className="mt-2 text-[14px] text-ink-soft">We'll show a countdown to your next payday on Today.</p>
+            <div className="mt-5 space-y-2">
+              {CYCLE_OPTIONS.map((opt) => {
+                const active = cycle === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    onClick={() => chooseCycle(opt.id)}
+                    className={`w-full flex items-center justify-between rounded-2xl p-4 ring-1 text-left transition ${active ? "bg-primary text-primary-foreground ring-transparent" : "bg-card ring-border"}`}
+                  >
+                    <div>
+                      <div className="text-[14px] font-bold">{opt.label}</div>
+                      <div className={`text-[12px] ${active ? "opacity-90" : "text-ink-soft"}`}>{opt.sub}</div>
+                    </div>
+                    {active && <Check className="size-5" />}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="mt-5">
+              <label className="block text-[12px] font-bold text-ink-soft mb-1.5">Next payday</label>
+              <input type="date" value={payday} onChange={(e) => setPayday(e.target.value)} className={inputCls} />
+            </div>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="max-w-sm mx-auto">
+            <div className="grid size-14 place-items-center rounded-2xl bg-primary text-primary-foreground"><Sparkles className="size-6" /></div>
+            <h1 className="mt-5 font-display text-3xl font-extrabold tracking-tight">Name your workplace</h1>
+            <p className="mt-2 text-[14px] text-ink-soft">Optional. Helps your shift cards make sense at a glance.</p>
+            <input
+              value={workplace}
+              onChange={(e) => setWorkplace(e.target.value)}
+              placeholder="e.g. Maple Care Home"
+              maxLength={60}
+              className={`${inputCls} mt-5`}
+            />
+            <p className="mt-3 text-[12px] text-ink-soft">You can add more workplaces later when you add a shift.</p>
+          </div>
+        )}
+      </div>
+
+      <div className="px-6 pt-3 pb-[max(env(safe-area-inset-bottom),1.5rem)] space-y-2">
+        {step < 2 ? (
+          <Btn className="w-full" onClick={next} disabled={step === 0 && (!rate || rate <= 0)}>
+            Continue <ChevronRight className="size-4" />
+          </Btn>
+        ) : (
+          <Btn className="w-full" onClick={finish}><Check className="size-4" /> All set — show my numbers</Btn>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function Onboarding({ onDone }: { onDone: () => void }) {
-  const [i, setI] = useState(0);
-  const step = ONBOARD_STEPS[i];
-  const last = i === ONBOARD_STEPS.length - 1;
+  const [mode, setMode] = useState<"welcome" | "setup">("welcome");
+
+  if (mode === "setup") {
+    return <SetupWizard onClose={onDone} onSkip={onDone} />;
+  }
+
   return (
     <div className="fixed inset-0 z-50 bg-sand flex flex-col">
       <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
         <div className="grid size-16 place-items-center rounded-3xl bg-primary text-primary-foreground mb-6">
           <Sparkles className="size-7" />
         </div>
-        <h1 className="font-display text-4xl font-extrabold tracking-tight">{step.title}</h1>
-        <p className="mt-4 text-[15px] leading-relaxed text-ink-soft max-w-sm">{step.body}</p>
+        <h1 className="font-display text-4xl font-extrabold tracking-tight">Welcome to PayFlow</h1>
+        <p className="mt-4 text-[15px] leading-relaxed text-ink-soft max-w-sm">
+          A worker-first app for hourly pay. Let's set you up in about 10 seconds — your rate, when you get paid, and where you work.
+        </p>
       </div>
-      <div className="px-6 pb-[max(env(safe-area-inset-bottom),1.5rem)] space-y-4">
-        <div className="flex items-center justify-center gap-1.5">
-          {ONBOARD_STEPS.map((_, k) => (
-            <span key={k} className={`h-1.5 rounded-full transition-all ${k === i ? "w-6 bg-primary" : "w-1.5 bg-border"}`} />
-          ))}
-        </div>
-        <Btn className="w-full" onClick={() => (last ? onDone() : setI(i + 1))}>
-          {last ? "Get started" : "Next"}
-        </Btn>
-        {!last && (
-          <button onClick={onDone} className="block w-full text-center text-[13px] font-bold text-ink-soft">Skip</button>
-        )}
+      <div className="px-6 pb-[max(env(safe-area-inset-bottom),1.5rem)] space-y-3">
+        <Btn className="w-full" onClick={() => setMode("setup")}>Let's set you up <ChevronRight className="size-4" /></Btn>
+        <button onClick={onDone} className="block w-full text-center text-[13px] font-bold text-ink-soft">
+          Explore with sample data first
+        </button>
+        <p className="text-center text-[11px] text-ink-soft">Guidance only. PayFlow is not financial, tax or payroll advice.</p>
       </div>
     </div>
   );
+}
 }
 
 // Profile placeholder (unused but kept for future)
