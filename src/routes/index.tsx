@@ -185,7 +185,7 @@ function Landing() {
 
             <div className="space-y-3">
               <CoachBubble>
-                Hi Amina — your take-home is on track for <b>£398.02</b> this week. Strongest Friday in a month 👏
+                Hi Amina — your 34 hours this week put your take-home on track for <b>£398.02</b>. Strongest week in a month 👏
               </CoachBubble>
               <CoachBubble dim>
                 Skipping one takeaway could move <b>£12</b> toward your Eid trip. Want me to set that aside?

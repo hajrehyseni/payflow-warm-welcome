@@ -38,7 +38,7 @@ function useLiveEarnings() {
 // TODAY TAB
 export function TodayScreen() {
   const { earned, hh, mm } = useLiveEarnings();
-  const shiftPctRaw = ((hh * 60 + mm) / (8 * 60)) * 100;
+  const shiftPctRaw = ((hh * 60 + mm) / (6 * 60)) * 100;
   const shiftPct = Math.min(100, shiftPctRaw);
 
   return (
@@ -197,7 +197,7 @@ export function PayScreen() {
             <BreakdownRow label="Gross pay" value={TAKEHOME.gross} bold />
             <BreakdownRow label="Income tax" value={-TAKEHOME.tax} />
             <BreakdownRow label="National Insurance" value={-TAKEHOME.ni} />
-            <BreakdownRow label="Pension (3%)" value={-TAKEHOME.pension} />
+            <BreakdownRow label="Pension (5%)" value={-TAKEHOME.pension} />
             <div className="my-2 h-px bg-border" />
             <BreakdownRow label="Take home" value={TAKEHOME.net} highlight />
           </ul>
@@ -327,7 +327,7 @@ export function CoachScreen() {
           </div>
           <div className="rounded-3xl rounded-tl-md bg-card p-4 ring-1 ring-border">
             <p className="text-sm leading-relaxed text-ink">
-              Hi Amina 👋 You worked <span className="font-semibold">32 hours</span> this week — strong week. Your take-home is on track for{" "}
+              Hi Amina 👋 You worked <span className="font-semibold">34 hours</span> this week — strong week. Your take-home is on track for{" "}
               <span className="font-semibold">{fmt(TAKEHOME.net)}</span>.
             </p>
           </div>
