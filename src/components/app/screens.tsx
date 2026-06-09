@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { USER, RECENT, WEEK, TAKEHOME } from "./data";
 import {
   Clock,
@@ -24,6 +24,7 @@ import {
   Users,
   Copy,
   Send,
+  Target,
 } from "lucide-react";
 
 const fmt = (n: number) =>
@@ -33,6 +34,7 @@ const fmt = (n: number) =>
 // Streak store — shared across all screens. Positive actions call celebrate().
 let _streak = 6;
 let _celebration: string | null = null;
+let _confettiToken = 0;
 let _celebTimer: number | undefined;
 const _listeners = new Set<() => void>();
 function _notify() { _listeners.forEach((l) => l()); }
@@ -43,6 +45,7 @@ function celebrate(actionMsg?: string) {
   _celebration = actionMsg
     ? `${actionMsg} · streak now ${_streak} weeks 🎉`
     : `Nice one, ${firstName} — streak now ${_streak} weeks 🎉`;
+  _confettiToken += 1;
   _notify();
   if (typeof window !== "undefined") {
     window.clearTimeout(_celebTimer);
@@ -57,17 +60,122 @@ function useStreak() {
     _listeners.add(fn);
     return () => { _listeners.delete(fn); };
   }, []);
-  return { streak: _streak, celebration: _celebration };
+  return { streak: _streak, celebration: _celebration, confettiToken: _confettiToken };
+}
+
+// Smooth count-up for big numbers.
+function useCountUp(value: number, duration = 900) {
+  const [display, setDisplay] = useState(value);
+  const fromRef = useRef(value);
+  const startRef = useRef<number | null>(null);
+  const rafRef = useRef<number | null>(null);
+  useEffect(() => {
+    fromRef.current = display;
+    startRef.current = null;
+    const step = (ts: number) => {
+      if (startRef.current === null) startRef.current = ts;
+      const t = Math.min(1, (ts - startRef.current) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setDisplay(fromRef.current + (value - fromRef.current) * eased);
+      if (t < 1) rafRef.current = requestAnimationFrame(step);
+    };
+    rafRef.current = requestAnimationFrame(step);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+  return display;
+}
+
+// Confetti burst — fires on every celebrate().
+function Confetti() {
+  const { confettiToken } = useStreak();
+  const [pieces, setPieces] = useState<{ id: number; left: number; delay: number; rot: number; color: string; dur: number }[]>([]);
+  useEffect(() => {
+    if (!confettiToken) return;
+    const palette = ["#0E7C66", "#E07A5F", "#F2CC8F", "#81B29A", "#F4D35E"];
+    const next = Array.from({ length: 28 }, (_, i) => ({
+      id: confettiToken * 100 + i,
+      left: Math.random() * 100,
+      delay: Math.random() * 120,
+      rot: Math.random() * 360,
+      color: palette[i % palette.length],
+      dur: 900 + Math.random() * 700,
+    }));
+    setPieces(next);
+    const t = window.setTimeout(() => setPieces([]), 2200);
+    return () => window.clearTimeout(t);
+  }, [confettiToken]);
+  if (!pieces.length) return null;
+  return (
+    <div className="pointer-events-none absolute inset-0 z-50 overflow-hidden">
+      {pieces.map((p) => (
+        <span
+          key={p.id}
+          className="absolute -top-3 block size-2 rounded-[2px]"
+          style={{
+            left: `${p.left}%`,
+            background: p.color,
+            transform: `rotate(${p.rot}deg)`,
+            animation: `confettiFall ${p.dur}ms cubic-bezier(0.2,0.7,0.3,1) ${p.delay}ms forwards`,
+          }}
+        />
+      ))}
+    </div>
+  );
 }
 
 function CelebrationToast() {
   const { celebration } = useStreak();
-  if (!celebration) return null;
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-24 z-40 flex justify-center px-6">
-      <div className="pointer-events-auto flex items-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-accent px-4 py-2.5 text-xs font-semibold text-white shadow-xl shadow-primary/30 animate-in fade-in slide-in-from-bottom-2">
-        <Flame className="size-4 shrink-0" />
-        <span>{celebration}</span>
+    <>
+      <Confetti />
+      {celebration && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-24 z-40 flex justify-center px-6">
+          <div className="pointer-events-auto flex items-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-accent px-4 py-2.5 text-xs font-semibold text-white shadow-xl shadow-primary/30 animate-in fade-in slide-in-from-bottom-2">
+            <Flame className="size-4 shrink-0" />
+            <span>{celebration}</span>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+// Persistent guidance line — warm, never scary.
+function GuidanceLine({ className = "" }: { className?: string }) {
+  return (
+    <div className={`flex items-center gap-1.5 rounded-full bg-primary-soft/60 px-3 py-1.5 text-[10.5px] font-semibold text-primary/90 ring-1 ring-primary/10 ${className}`}>
+      <ShieldCheck className="size-3.5 shrink-0" />
+      <span>Guidance only — not financial advice. Your money decisions are your own.</span>
+    </div>
+  );
+}
+
+// One-time welcome card.
+export function WelcomeCard({ onAccept }: { onAccept: () => void }) {
+  return (
+    <div className="absolute inset-0 z-[60] flex items-end justify-center bg-ink/40 backdrop-blur-sm animate-in fade-in">
+      <div className="m-3 w-full max-w-sm rounded-3xl bg-card p-6 ring-1 ring-border shadow-2xl animate-in slide-in-from-bottom-4">
+        <div className="grid size-12 place-items-center rounded-2xl bg-primary-soft">
+          <Heart className="size-6 text-primary" />
+        </div>
+        <div className="mt-3 font-display text-xl font-extrabold leading-tight text-ink">
+          Welcome to PayFlow
+        </div>
+        <p className="mt-2 text-sm leading-relaxed text-ink">
+          PayFlow is your money <span className="font-semibold">guide</span>, not a financial adviser.
+          We help you understand your pay and build better habits —
+          <span className="font-semibold"> all money decisions and responsibilities stay yours.</span>
+        </p>
+        <button
+          onClick={onAccept}
+          className="mt-5 w-full rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow active:scale-[0.98] transition-all"
+        >
+          Got it
+        </button>
+        <p className="mt-3 text-center text-[10.5px] text-ink-soft">
+          We're not a regulated or licensed financial service.
+        </p>
       </div>
     </div>
   );
@@ -99,14 +207,23 @@ export function TodayScreen({ goToTab, onProfileClick }: { goToTab?: (t: "today"
   const [savedBoost, setSavedBoost] = useState(0);
 
   const { earned, hh, mm } = useLiveEarnings(onBreak);
+  const earnedAnim = useCountUp(earned, 600);
   const shiftPctRaw = ((hh * 60 + mm) / (6 * 60)) * 100;
   const shiftPct = Math.min(100, shiftPctRaw);
+
+  // Goal ring values (savings + boost from quick-saves this session)
+  const balance = USER.savingsBalance + savedBoost;
+  const goalPct = Math.min(100, (balance / USER.savingsGoal) * 100);
+  const goalPctAnim = useCountUp(goalPct, 700);
+  const RC = 2 * Math.PI * 26;
+  const ringOffset = RC - (goalPctAnim / 100) * RC;
 
   function flash(msg: string) {
     setToast(msg);
     window.clearTimeout((flash as any)._t);
     (flash as any)._t = window.setTimeout(() => setToast(null), 2400);
   }
+
 
   return (
     <div className="flex h-full flex-col">
@@ -131,7 +248,7 @@ export function TodayScreen({ goToTab, onProfileClick }: { goToTab?: (t: "today"
               onClick={() => setCheckOpen(true)}
               className="shrink-0 rounded-2xl bg-white px-4 py-2.5 text-sm font-bold text-primary shadow-lg active:scale-95 transition-all"
             >
-              Check
+              Check my pay
             </button>
           </div>
         </section>
@@ -149,10 +266,10 @@ export function TodayScreen({ goToTab, onProfileClick }: { goToTab?: (t: "today"
             </div>
             <div className="mt-3 flex items-baseline gap-1 font-display tabular-nums tracking-tight">
               <span className="text-[56px] leading-none font-extrabold">
-                £{Math.floor(earned)}
+                £{Math.floor(earnedAnim)}
               </span>
               <span className="text-3xl font-bold opacity-85">
-                .{(earned % 1).toFixed(2).slice(2)}
+                .{(earnedAnim % 1).toFixed(2).slice(2)}
               </span>
             </div>
             <div className="mt-2 text-sm opacity-85">
@@ -175,11 +292,41 @@ export function TodayScreen({ goToTab, onProfileClick }: { goToTab?: (t: "today"
           </div>
         </section>
 
+        {/* Goal ring strip — Eid trip progress */}
+        <section className="mt-4 flex items-center gap-4 rounded-3xl bg-card p-4 ring-1 ring-border">
+          <div className="relative size-16 shrink-0">
+            <svg viewBox="0 0 64 64" className="size-full -rotate-90">
+              <circle cx="32" cy="32" r="26" stroke="var(--sand-deep)" strokeWidth="7" fill="none" />
+              <circle
+                cx="32" cy="32" r="26"
+                stroke="var(--primary)" strokeWidth="7" fill="none" strokeLinecap="round"
+                strokeDasharray={RC} strokeDashoffset={ringOffset}
+                style={{ transition: "stroke-dashoffset 0.6s ease-out" }}
+              />
+            </svg>
+            <div className="absolute inset-0 grid place-items-center font-display text-sm font-extrabold tabular-nums text-ink">
+              {Math.round(goalPctAnim)}%
+            </div>
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-primary">
+              <Target className="-mt-0.5 mr-1 inline size-3" />
+              Eid trip goal
+            </div>
+            <div className="mt-0.5 font-display text-sm font-extrabold leading-snug text-ink">
+              You're {Math.round(goalPctAnim)}% to your {fmt(USER.savingsGoal)} — keep going.
+            </div>
+            <div className="text-[11px] text-ink-soft tabular-nums">
+              {fmt(balance)} saved · {fmt(USER.savingsGoal - balance)} to go
+            </div>
+          </div>
+        </section>
+
         {/* Quick actions */}
         <section className="mt-5 grid grid-cols-4 gap-2">
           <QuickAction
             icon={onBreak ? Play : Pause}
-            label={onBreak ? "Resume" : "Log break"}
+            label={onBreak ? "Clock in" : "Log break"}
             active={onBreak}
             onClick={() => {
               setOnBreak((b) => !b);
@@ -188,11 +335,11 @@ export function TodayScreen({ goToTab, onProfileClick }: { goToTab?: (t: "today"
           />
           <QuickAction
             icon={PiggyBank}
-            label="Save £5"
+            label="Stash £5"
             onClick={() => {
               setSavedBoost((s) => s + 5);
               flash(`£5 tucked away for your Eid trip — kind to future you`);
-              celebrate("£5 set aside");
+              celebrate("£5 stashed");
             }}
           />
           <QuickAction
@@ -206,6 +353,7 @@ export function TodayScreen({ goToTab, onProfileClick }: { goToTab?: (t: "today"
             onClick={() => goToTab?.("coach")}
           />
         </section>
+
 
         {/* Coach nudge */}
         <section className="mt-5 rounded-3xl bg-card p-4 ring-1 ring-border">
@@ -348,6 +496,8 @@ function PayslipTranslator({ onClose }: { onClose: () => void }) {
       </div>
 
       <div className="flex-1 overflow-y-auto px-5 pb-6">
+        <GuidanceLine className="mb-3" />
+
         <div className="rounded-2xl bg-primary-soft px-3.5 py-2.5 text-[11px] font-semibold text-primary flex items-center gap-2">
           <Info className="size-3.5 shrink-0" /> Tap any line to see what it really means
         </div>
@@ -687,10 +837,12 @@ function PrePaydayCheck({ onClose }: { onClose: () => void }) {
 // PAY TAB
 export function PayScreen({ onProfileClick }: { onProfileClick?: () => void }) {
   const max = Math.max(...WEEK.map((d) => d.earned), 1);
+  const netAnim = useCountUp(TAKEHOME.net, 1100);
   return (
     <div className="flex h-full flex-col">
       <Header subtitle="This week · estimate" name="Pay" small onProfileClick={onProfileClick} />
       <div className="flex-1 overflow-y-auto px-5 pb-6">
+        <GuidanceLine className="mb-3" />
         {/* Weekly hero */}
         <section className="rounded-3xl bg-card p-5 ring-1 ring-border">
           <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-ink-soft">
@@ -698,7 +850,7 @@ export function PayScreen({ onProfileClick }: { onProfileClick?: () => void }) {
           </div>
           <div className="mt-2 flex items-baseline gap-2">
             <div className="font-display text-5xl font-extrabold tracking-tight text-ink tabular-nums">
-              {fmt(TAKEHOME.net)}
+              {fmt(netAnim)}
             </div>
           </div>
           <div className="mt-1 text-xs text-ink-soft">
@@ -786,12 +938,15 @@ export function PayScreen({ onProfileClick }: { onProfileClick?: () => void }) {
 export function SaveScreen({ onProfileClick }: { onProfileClick?: () => void }) {
   const { streak } = useStreak();
   const pct = (USER.savingsBalance / USER.savingsGoal) * 100;
+  const pctAnim = useCountUp(pct, 1100);
+  const balanceAnim = useCountUp(USER.savingsBalance, 1100);
   const C = 2 * Math.PI * 70;
-  const offset = C - (pct / 100) * C;
+  const offset = C - (pctAnim / 100) * C;
   return (
     <div className="flex h-full flex-col">
       <Header subtitle="Gentle, automatic" name="Save" small onProfileClick={onProfileClick} />
       <div className="flex-1 overflow-y-auto px-5 pb-6">
+        <GuidanceLine className="mb-3" />
         {/* Kindness banner */}
         <section className="mb-3 rounded-2xl bg-primary-soft px-4 py-3 text-center">
           <div className="font-display text-sm font-bold text-primary">
@@ -819,7 +974,7 @@ export function SaveScreen({ onProfileClick }: { onProfileClick?: () => void }) 
               onClick={() => celebrate("Streak kept — you're building, not behind")}
               className="shrink-0 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground shadow active:scale-95 transition-all"
             >
-              Tick today
+              Smash today
             </button>
           </div>
         </section>
@@ -846,9 +1001,9 @@ export function SaveScreen({ onProfileClick }: { onProfileClick?: () => void }) 
               <div className="absolute inset-0 grid place-items-center text-center">
                 <div>
                   <div className="font-display text-3xl font-extrabold tabular-nums text-ink">
-                    {fmt(USER.savingsBalance)}
+                    {fmt(balanceAnim)}
                   </div>
-                  <div className="text-xs text-ink-soft">of {fmt(USER.savingsGoal)}</div>
+                  <div className="text-xs font-semibold text-primary tabular-nums">{Math.round(pctAnim)}% of {fmt(USER.savingsGoal)}</div>
                 </div>
               </div>
             </div>
@@ -1052,6 +1207,7 @@ export function CoachScreen({ onProfileClick }: { onProfileClick?: () => void })
     <div className="flex h-full flex-col">
       <Header subtitle="Your weekly check-in" name="Flow Coach" small onProfileClick={onProfileClick} />
       <div className="flex-1 overflow-y-auto px-5 pb-6 space-y-4">
+        <GuidanceLine />
         {/* Greeting bubble */}
         <div className="flex items-start gap-3">
           <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground">

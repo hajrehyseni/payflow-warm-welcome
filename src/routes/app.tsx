@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Home, Wallet, PiggyBank, Sparkles, Heart, ChevronLeft } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { PhoneFrame } from "@/components/PhoneFrame";
-import { TodayScreen, PayScreen, SaveScreen, LifeScreen, CoachScreen, ProfileScreen } from "@/components/app/screens";
+import { TodayScreen, PayScreen, SaveScreen, LifeScreen, CoachScreen, ProfileScreen, WelcomeCard } from "@/components/app/screens";
 
 export const Route = createFileRoute("/app")({
   head: () => ({
@@ -30,6 +30,21 @@ const TABS: { id: Tab; label: string; icon: typeof Home }[] = [
 function AppDemo() {
   const [tab, setTab] = useState<Tab>("today");
   const [profileOpen, setProfileOpen] = useState(false);
+  const [welcomeOpen, setWelcomeOpen] = useState(false);
+
+  // Show welcome card on first open per browser.
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem("payflow.welcomed")) setWelcomeOpen(true);
+    } catch { setWelcomeOpen(true); }
+  }, []);
+
+  const acceptWelcome = () => {
+    try { localStorage.setItem("payflow.welcomed", "1"); } catch {}
+    setWelcomeOpen(false);
+  };
+
+
 
   return (
     <div className="min-h-screen bg-sand">
@@ -73,6 +88,9 @@ function AppDemo() {
 
             {/* Profile overlay */}
             {profileOpen && <ProfileScreen onClose={() => setProfileOpen(false)} />}
+
+            {/* Welcome / compliance card */}
+            {welcomeOpen && <WelcomeCard onAccept={acceptWelcome} />}
 
             {/* Bottom tab bar */}
             <nav className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-1 rounded-full bg-card/95 p-1.5 ring-1 ring-border backdrop-blur-xl shadow-[0_10px_30px_-10px_rgba(0,0,0,0.15)]">
