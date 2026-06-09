@@ -154,11 +154,12 @@ function Landing() {
   );
 }
 
-const LOOP = [
-  { icon: Clock, title: "Track hours", body: "Start a shift in one tap. Live timer, automatic breaks." },
-  { icon: Wallet, title: "See take-home", body: "An honest estimate after PAYE, NI and pension." },
-  { icon: PiggyBank, title: "Save gently", body: "Pick a rule. £1, £5 or 3% — your call." },
-  { icon: Sparkles, title: "Stay on top", body: "Flow Coach: calm, plain-English check-ins." },
+const STORY = [
+  { icon: Clock, title: "Clock in", body: "One tap to start your shift. The timer runs in the background." },
+  { icon: TrendingUp, title: "Watch your pay grow", body: "Earnings tick up live at your hourly rate. No more guessing." },
+  { icon: Wallet, title: "Know your take-home", body: "An honest estimate after PAYE, NI and pension — in plain English." },
+  { icon: PiggyBank, title: "Save from every shift", body: "Pick a rule. £1, £5 or 3% — your call. Watch your goal fill up." },
+  { icon: Sparkles, title: "Build a better life", body: "Streaks and gentle nudges from Flow Coach. Always kind, never shame." },
 ];
 
 const FEATURES = [
