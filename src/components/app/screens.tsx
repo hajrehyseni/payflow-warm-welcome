@@ -14,6 +14,8 @@ import {
   Wallet,
   Receipt,
   ShieldCheck,
+  Flame,
+  CheckCircle2,
 } from "lucide-react";
 
 const fmt = (n: number) =>
@@ -290,33 +292,100 @@ export function LifeScreen() {
   return (
     <div className="flex h-full flex-col">
       <Header subtitle="Small wins that add up" name="Life" small />
-      <div className="flex-1 overflow-y-auto px-5 pb-6 space-y-3">
-        <LifeCard
-          tag="Free this month"
-          title="NHS workers — 20% off rail travel"
-          body="Use your work ID for off-peak journeys until 30 Jun."
-          accent
-        />
-        <LifeCard
-          tag="Wellbeing"
-          title="2 free counselling sessions"
-          body="Confidential support through your care provider's wellbeing fund."
-        />
-        <LifeCard
-          tag="Skill up"
-          title="Level 3 Care Cert · funded"
-          body="Boost your hourly rate by ~£1.20. 12 weeks, evenings only."
-        />
-        <LifeCard
-          tag="Save on bills"
-          title="Council Tax — check your band"
-          body="1 in 5 carers are on the wrong band. 4-min check."
-        />
-        <LifeCard
-          tag="Community"
-          title="Carers' Sunday brunch · Hackney"
-          body="Free brunch this Sunday. 14 carers going."
-        />
+      <div className="flex-1 overflow-y-auto px-5 pb-6 space-y-4">
+        {/* Money-confidence score */}
+        <section className="rounded-3xl bg-card p-5 ring-1 ring-border">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-ink-soft">
+                Money-confidence score
+              </div>
+              <div className="mt-1 font-display text-4xl font-extrabold tracking-tight text-ink">
+                72<span className="text-2xl text-ink-soft">/100</span>
+              </div>
+              <div className="mt-1 text-xs font-semibold text-primary">
+                ↑ 24 points since January
+              </div>
+            </div>
+            <div className="grid size-14 place-items-center rounded-2xl bg-primary-soft">
+              <TrendingUp className="size-7 text-primary" />
+            </div>
+          </div>
+          <div className="mt-4 h-2.5 w-full overflow-hidden rounded-full bg-sand-deep">
+            <div className="h-full rounded-full bg-primary transition-all" style={{ width: "72%" }} />
+          </div>
+        </section>
+
+        {/* Savings streak */}
+        <section className="rounded-3xl bg-card p-5 ring-1 ring-border">
+          <div className="flex items-center gap-3">
+            <div className="grid size-10 place-items-center rounded-2xl bg-accent-soft">
+              <Flame className="size-5 text-accent" />
+            </div>
+            <div>
+              <div className="font-display text-base font-bold text-ink">6 weeks of saving from every shift</div>
+              <div className="text-xs text-ink-soft">Amina, you're building a habit that sticks</div>
+            </div>
+          </div>
+        </section>
+
+        {/* Small wins */}
+        <section className="rounded-3xl bg-card p-5 ring-1 ring-border">
+          <div className="font-display text-base font-bold text-ink">Small wins</div>
+          <ul className="mt-3 space-y-3">
+            {[
+              "Hit your weekly target 3 weeks running",
+              "Saved your first £100",
+              "Spotted a missing shift and got it paid",
+              "Understood your whole payslip",
+            ].map((win) => (
+              <li key={win} className="flex items-start gap-3">
+                <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-primary" />
+                <span className="text-sm leading-snug text-ink">{win}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* Reassuring line */}
+        <div className="rounded-2xl bg-primary-soft px-5 py-4 text-center">
+          <div className="font-display text-sm font-bold text-primary">
+            You are not behind. You are building.
+          </div>
+        </div>
+
+        {/* Perks section */}
+        <section className="pt-2">
+          <div className="mb-3 font-display text-base font-bold text-ink">Perks for you</div>
+          <div className="space-y-3">
+            <LifeCard
+              tag="Free this month"
+              title="NHS workers — 20% off rail travel"
+              body="Use your work ID for off-peak journeys until 30 Jun."
+              accent
+            />
+            <LifeCard
+              tag="Wellbeing"
+              title="2 free counselling sessions"
+              body="Confidential support through your care provider's wellbeing fund."
+            />
+            <LifeCard
+              tag="Skill up"
+              title="Level 3 Care Cert · funded"
+              body="Boost your hourly rate by ~£1.20. 12 weeks, evenings only."
+            />
+            <LifeCard
+              tag="Save on bills"
+              title="Council Tax — check your band"
+              body="1 in 5 carers are on the wrong band. 4-min check."
+            />
+            <LifeCard
+              tag="Community"
+              title="Carers' Sunday brunch · Hackney"
+              body="Free brunch this Sunday. 14 carers going."
+            />
+          </div>
+        </section>
       </div>
     </div>
   );
