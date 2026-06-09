@@ -851,7 +851,7 @@ export function PayScreen({ onProfileClick }: { onProfileClick?: () => void }) {
           </div>
           <div className="mt-2 flex items-baseline gap-2">
             <div className="font-display text-5xl font-extrabold tracking-tight text-ink tabular-nums">
-              {fmt(TAKEHOME.net)}
+              {fmt(netAnim)}
             </div>
           </div>
           <div className="mt-1 text-xs text-ink-soft">
