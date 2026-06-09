@@ -1203,6 +1203,7 @@ export function CoachScreen({ onProfileClick }: { onProfileClick?: () => void })
     <div className="flex h-full flex-col">
       <Header subtitle="Your weekly check-in" name="Flow Coach" small onProfileClick={onProfileClick} />
       <div className="flex-1 overflow-y-auto px-5 pb-6 space-y-4">
+        <GuidanceLine />
         {/* Greeting bubble */}
         <div className="flex items-start gap-3">
           <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground">
