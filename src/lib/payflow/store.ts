@@ -104,6 +104,8 @@ const DEFAULT: State = {
   payCycle: "weekly",
   nextPayday: defaultNextFriday(),
   usingSampleData: true,
+  payChecks: [],
+
 };
 
 function load(): State {
