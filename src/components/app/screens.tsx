@@ -683,8 +683,8 @@ export function CoachScreen() {
               Quick win: skipping one takeaway this week could move <span className="font-semibold">£12</span> toward your Eid trip — that's 2% closer.
             </p>
             <div className="mt-3 flex gap-2">
-              <ChipBtn primary>Add £12 to goal</ChipBtn>
-              <ChipBtn>Not this week</ChipBtn>
+              <ChipBtn primary onClick={() => flash("£12 added to Eid trip · nice one")}>Add £12 to goal</ChipBtn>
+              <ChipBtn onClick={() => flash("No worries — I'll ask again next week")}>Not this week</ChipBtn>
             </div>
           </div>
         </div>
