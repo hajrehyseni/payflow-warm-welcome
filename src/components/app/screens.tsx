@@ -150,7 +150,25 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
     <div className="pb-[120px]">
       <AppHeader title={g.title} subtitle={g.sub} />
 
-      {/* Hero */}
+      {usingSample && (
+        <section className="mx-5 mt-3">
+          <button
+            onClick={() => setSetupOpen(true)}
+            className="w-full flex items-center justify-between gap-2 rounded-2xl bg-accent-soft px-3.5 py-2.5 ring-1 ring-accent/20 text-left"
+          >
+            <div className="min-w-0">
+              <div className="text-[12px] font-bold text-accent">Showing sample data</div>
+              <div className="text-[11px] text-ink-soft truncate">Tap to use your own numbers — takes 10 seconds.</div>
+            </div>
+            <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-[11px] font-bold text-accent-foreground shrink-0">
+              <Pencil className="size-3" /> Use mine
+            </span>
+          </button>
+        </section>
+      )}
+
+      {setupOpen && <SetupWizard onClose={() => setSetupOpen(false)} initial={{ hourlyRate: live.hourlyRate, workplace: live.workplace }} />}
+
       <section className="mx-5 mt-5">
         <div className="rounded-[28px] bg-ink p-6 text-sand shadow-[0_14px_40px_-18px_rgba(0,0,0,0.5)]">
           <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-[0.18em] opacity-80">
