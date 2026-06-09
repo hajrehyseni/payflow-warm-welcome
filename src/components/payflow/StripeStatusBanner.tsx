@@ -69,7 +69,7 @@ export function StripeStatusBanner() {
         tone="amber"
         icon={<FlaskConical className="size-4" />}
         title="Test mode"
-        message={`No real money moves yet${email ? ` · Connected: ${email}` : ""}. Complete go-live in the Payments dashboard.`}
+        message={`Preview uses Stripe test mode — no real charges${email ? ` · Connected: ${email}` : ""}. Your published site runs in live mode.`}
         onDismiss={() => setDismissed(true)}
       />
     );
