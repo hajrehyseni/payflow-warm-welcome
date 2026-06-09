@@ -3,7 +3,7 @@ export const USER = {
   role: "Care Worker",
   hourly: 14.5,
   shiftStart: "07:30",
-  shiftEnd: "15:30",
+  shiftEnd: "13:30",
   worked: { hours: 5, minutes: 42 }, // current shift progress
   weeklyHours: 34,
   weeklyGross: 493.0,
