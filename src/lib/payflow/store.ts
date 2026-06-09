@@ -1,5 +1,8 @@
 import { useSyncExternalStore } from "react";
 import { hoursBetween, round2 } from "./calc";
+import { supabase } from "@/integrations/supabase/client";
+
+let cloudUserId: string | null = null;
 
 export type Shift = {
   id: string;
