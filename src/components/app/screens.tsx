@@ -644,12 +644,18 @@ export function LifeScreen() {
             <div className="grid size-10 place-items-center rounded-2xl bg-accent-soft">
               <Flame className="size-5 text-accent" />
             </div>
-            <div>
-              <div className="font-display text-base font-bold text-ink">6 weeks of saving from every shift</div>
+            <div className="min-w-0 flex-1">
+              <div className="font-display text-base font-bold text-ink tabular-nums">
+                {streak} weeks of saving from every shift
+              </div>
               <div className="text-xs text-ink-soft">Amina, you're building a habit that sticks</div>
             </div>
           </div>
+          <div className="mt-3 rounded-2xl bg-primary-soft px-3 py-2 text-center text-[11px] font-semibold text-primary">
+            Come back tomorrow to keep your streak.
+          </div>
         </section>
+
 
         {/* Small wins */}
         <section className="rounded-3xl bg-card p-5 ring-1 ring-border">
