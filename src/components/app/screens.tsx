@@ -164,30 +164,39 @@ export function PayScreen() {
             </div>
             <div className="text-xs font-semibold text-primary">+£12 vs last week</div>
           </div>
-          <div className="mt-5 flex h-32 items-end justify-between gap-2">
+          <div className="mt-5 flex h-40 items-stretch justify-between gap-2">
             {WEEK.map((d) => {
-              const h = (d.earned / max) * 100;
+              const isMax = d.earned === max && d.earned > 0;
+              const h = d.earned > 0 ? Math.max((d.earned / max) * 100, 8) : 4;
               return (
-                <div key={d.day} className="flex flex-1 flex-col items-center gap-2">
-                  <div className="flex h-full w-full items-end">
+                <div key={d.day} className="flex h-full flex-1 flex-col items-center gap-2">
+                  <div className="relative flex w-full flex-1 items-end">
+                    {isMax && (
+                      <span className="absolute left-1/2 -top-1 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-bold text-primary-foreground">
+                        {fmt(d.earned)}
+                      </span>
+                    )}
                     <div
                       className={`w-full rounded-t-lg transition-all ${
                         d.live
                           ? "bg-accent"
-                          : d.upcoming
-                            ? "bg-sand-deep"
-                            : "bg-primary"
+                          : isMax
+                            ? "bg-primary ring-2 ring-primary/20 ring-offset-2 ring-offset-card"
+                            : d.earned === 0
+                              ? "bg-sand-deep"
+                              : "bg-primary/70"
                       }`}
-                      style={{ height: `${Math.max(h, d.upcoming ? 12 : 6)}%`, opacity: d.upcoming ? 0.5 : 1 }}
+                      style={{ height: `${h}%`, opacity: d.earned === 0 ? 0.6 : 1 }}
                     />
                   </div>
-                  <span className={`text-[10px] font-semibold ${d.live ? "text-accent" : "text-ink-soft"}`}>
+                  <span className={`text-[10px] font-semibold ${d.live ? "text-accent" : isMax ? "text-primary" : "text-ink-soft"}`}>
                     {d.day}
                   </span>
                 </div>
               );
             })}
           </div>
+
         </section>
 
         {/* Take-home breakdown */}
