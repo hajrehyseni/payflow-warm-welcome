@@ -8,6 +8,7 @@ import { createBusinessPortal } from "@/lib/payflow/billing.functions";
 import { getStripeEnvironment } from "@/lib/stripe";
 import { BusinessCheckoutModal, PaymentTestModeBanner } from "@/components/payflow/BusinessCheckoutModal";
 import { ConnectedAccountCard } from "@/components/payflow/ConnectedAccountCard";
+import { InviteHero } from "@/components/payflow/InviteHero";
 
 export const Route = createFileRoute("/business")({
   head: () => ({ meta: [{ title: "Business dashboard — PayFlow" }] }),
