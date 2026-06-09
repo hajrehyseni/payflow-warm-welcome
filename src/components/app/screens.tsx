@@ -168,6 +168,16 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: "today" | "pay" | "save
             ))}
           </ul>
         </section>
+
+        {/* Disclaimer */}
+        <div className="mt-5 rounded-2xl bg-card p-3.5 ring-1 ring-border">
+          <div className="flex items-start gap-2">
+            <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" />
+            <p className="text-[11px] leading-relaxed text-ink-soft">
+              Flow Coach gives general information and estimates only — not financial, tax, legal, payroll or banking advice.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Toast */}
@@ -314,7 +324,7 @@ function PayslipTranslator({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-[11px] font-semibold text-ink-soft ring-1 ring-border">
-          <ShieldCheck className="size-3.5 text-primary" /> Estimate · not financial advice
+          <ShieldCheck className="size-3.5 text-primary" /> Flow Coach gives general information and estimates only — not financial, tax, legal, payroll or banking advice.
         </div>
       </div>
     </div>
@@ -343,9 +353,19 @@ export function PayScreen() {
             from {fmt(TAKEHOME.gross)} gross · {USER.weeklyHours}h worked
           </div>
           <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary-soft px-2.5 py-1 text-[11px] font-semibold text-primary">
-            <ShieldCheck className="size-3.5" /> Estimate · not financial advice
+            <ShieldCheck className="size-3.5" /> Estimate · not advice
           </div>
         </section>
+
+        {/* Disclaimer */}
+        <div className="mt-5 rounded-2xl bg-card p-3.5 ring-1 ring-border">
+          <div className="flex items-start gap-2">
+            <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" />
+            <p className="text-[11px] leading-relaxed text-ink-soft">
+              Flow Coach gives general information and estimates only — not financial, tax, legal, payroll or banking advice.
+            </p>
+          </div>
+        </div>
 
         {/* Weekly bar chart */}
         <section className="mt-5 rounded-3xl bg-card p-5 ring-1 ring-border">
@@ -713,6 +733,16 @@ export function CoachScreen() {
           <button className="grid size-8 place-items-center rounded-full bg-primary text-primary-foreground">
             <ArrowUpRight className="size-4" />
           </button>
+        </div>
+
+        {/* Disclaimer */}
+        <div className="rounded-2xl bg-card p-3.5 ring-1 ring-border">
+          <div className="flex items-start gap-2">
+            <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" />
+            <p className="text-[11px] leading-relaxed text-ink-soft">
+              Flow Coach gives general information and estimates only — not financial, tax, legal, payroll or banking advice.
+            </p>
+          </div>
         </div>
       </div>
     </div>
