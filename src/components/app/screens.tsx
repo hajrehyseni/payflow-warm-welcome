@@ -857,7 +857,7 @@ function SaveRule({ icon: Icon, title, sub, on }: { icon: typeof Clock; title: s
   );
 }
 
-function LifeCard({ tag, title, body, accent }: { tag: string; title: string; body: string; accent?: boolean }) {
+function LifeCard({ tag, title, body, accent, onLearnMore }: { tag: string; title: string; body: string; accent?: boolean; onLearnMore?: () => void }) {
   return (
     <div className="rounded-3xl bg-card p-4 ring-1 ring-border">
       <span className={`inline-block rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${accent ? "bg-accent-soft text-accent" : "bg-primary-soft text-primary"}`}>
@@ -865,16 +865,22 @@ function LifeCard({ tag, title, body, accent }: { tag: string; title: string; bo
       </span>
       <div className="mt-2.5 font-display text-base font-bold leading-snug text-ink">{title}</div>
       <p className="mt-1 text-sm leading-snug text-ink-soft">{body}</p>
-      <button className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary">
+      <button
+        onClick={onLearnMore}
+        className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary active:scale-95 transition-transform"
+      >
         Learn more <ChevronRight className="size-3.5" />
       </button>
     </div>
   );
 }
 
-function ChipBtn({ primary, children }: { primary?: boolean; children: React.ReactNode }) {
+function ChipBtn({ primary, children, onClick }: { primary?: boolean; children: React.ReactNode; onClick?: () => void }) {
   return (
-    <button className={`rounded-full px-3.5 py-1.5 text-xs font-semibold ring-1 transition-colors ${primary ? "bg-primary text-primary-foreground ring-primary" : "bg-card text-ink ring-border"}`}>
+    <button
+      onClick={onClick}
+      className={`rounded-full px-3.5 py-1.5 text-xs font-semibold ring-1 transition-all active:scale-95 ${primary ? "bg-primary text-primary-foreground ring-primary" : "bg-card text-ink ring-border hover:bg-primary-soft"}`}
+    >
       {children}
     </button>
   );
