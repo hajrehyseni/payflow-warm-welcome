@@ -48,67 +48,35 @@ function Landing() {
       </header>
 
       {/* Hero */}
-      <section className="mx-auto max-w-6xl px-6 pt-12 pb-20 md:pt-20 md:pb-28">
-        <div className="grid items-center gap-12 md:grid-cols-[1.1fr_1fr]">
+      <section className="mx-auto max-w-6xl px-6 pt-16 pb-20 md:pt-24 md:pb-28">
+        <div className="grid items-center gap-16 md:grid-cols-[1.05fr_1fr]">
           <div className="animate-fade-up">
             <div className="inline-flex items-center gap-2 rounded-full bg-card px-3 py-1.5 text-xs font-semibold text-primary ring-1 ring-primary/15">
               <span className="size-1.5 rounded-full bg-primary animate-pulse-dot" />
-              Built for hourly workers · not banks
+              Built for hourly workers
             </div>
             <h1 className="mt-6 font-display text-5xl md:text-7xl font-extrabold tracking-tight leading-[0.95] text-balance">
               See your shift <span className="text-primary">earn</span>, in real time.
             </h1>
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink-soft text-pretty">
-              PayFlow turns every hour you work into something you can <em>feel</em>. Watch your pay tick up live, understand exactly what hits your bank, and save gently — without thinking about it.
+            <p className="mt-6 max-w-lg text-lg leading-relaxed text-ink-soft">
+              Watch your pay tick up live. Understand what hits your bank. Save a little, without thinking.
             </p>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
+            <div className="mt-8">
               <Link
                 to="/app"
-                className="inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3.5 text-base font-bold text-accent-foreground shadow-[0_12px_30px_-8px_rgba(255,107,94,0.55)] hover:scale-[1.02] active:scale-[0.98] transition-transform"
+                className="inline-flex items-center gap-2 rounded-full bg-accent px-7 py-4 text-base font-bold text-accent-foreground shadow-[0_12px_30px_-8px_rgba(255,107,94,0.55)] hover:scale-[1.02] active:scale-[0.98] transition-transform"
               >
                 Try the demo <ArrowRight className="size-4" />
               </Link>
-              <div className="flex items-center gap-3 text-xs text-ink-soft">
-                <div className="flex -space-x-1.5">
-                  {["bg-primary/80", "bg-accent/80", "bg-ink/70"].map((c, i) => (
-                    <div key={i} className={`size-7 rounded-full ${c} ring-2 ring-sand`} />
-                  ))}
-                </div>
-                <span className="font-medium">Loved by carers, drivers,<br/>retail & hospitality crews.</span>
-              </div>
-            </div>
-            <div className="mt-10 flex flex-wrap gap-x-6 gap-y-2 text-xs font-semibold text-ink-soft">
-              <span className="inline-flex items-center gap-1.5"><ShieldCheck className="size-3.5 text-primary"/> No banking</span>
-              <span className="inline-flex items-center gap-1.5"><ShieldCheck className="size-3.5 text-primary"/> No lending</span>
-              <span className="inline-flex items-center gap-1.5"><ShieldCheck className="size-3.5 text-primary"/> Estimates, always honest</span>
             </div>
           </div>
 
-          {/* Hero phone */}
-          <div className="relative animate-fade-up [animation-delay:120ms]">
+          {/* Hero phone — clean, no floating overlays */}
+          <div className="relative animate-fade-up [animation-delay:120ms] flex justify-center md:justify-end">
             <PhoneFrame className="md:scale-95">
               <TodayScreen />
-              {/* fake bar to suggest tab bar exists (non-interactive in hero) */}
               <div className="pointer-events-none absolute inset-x-3 bottom-3 h-14 rounded-full bg-card/95 ring-1 ring-border backdrop-blur-xl shadow-[0_10px_30px_-10px_rgba(0,0,0,0.15)]" />
             </PhoneFrame>
-
-            {/* Floating proof card */}
-            <div className="absolute -left-6 top-16 hidden sm:block animate-fade-up [animation-delay:400ms]">
-              <div className="rounded-2xl bg-card p-3.5 ring-1 ring-border shadow-xl">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-primary">Live</div>
-                <div className="mt-0.5 text-sm font-bold">+£14.50/hr</div>
-                <div className="text-[11px] text-ink-soft">earning right now</div>
-              </div>
-            </div>
-            <div className="absolute -right-4 bottom-24 hidden sm:block animate-fade-up [animation-delay:550ms]">
-              <div className="rounded-2xl bg-card p-3.5 ring-1 ring-border shadow-xl">
-                <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-accent">
-                  <PiggyBank className="size-3.5" /> Saved
-                </div>
-                <div className="mt-0.5 text-sm font-bold">£2.40</div>
-                <div className="text-[11px] text-ink-soft">round-up · today</div>
-              </div>
-            </div>
           </div>
         </div>
       </section>
