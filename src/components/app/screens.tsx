@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { useStore, startShift, endShift, toggleBreak, liveElapsedMs, liveEarnings, weeklyTotals, addShift, deleteShift, setSaveRule, addToSavings, type SaveRule, type Shift } from "@/lib/payflow/store";
-import { estimateDeductions, gbp, fmtHours, fmtClock, nextFriday, daysUntil } from "@/lib/payflow/calc";
+import { useStore, startShift, endShift, toggleBreak, liveElapsedMs, liveEarnings, weeklyTotals, addShift, deleteShift, setSaveRule, addToSavings, applySetup, computeNextPayday, type SaveRule, type Shift, type PayCycle } from "@/lib/payflow/store";
+import { estimateDeductions, gbp, fmtHours, fmtClock, daysUntil } from "@/lib/payflow/calc";
 import { useAuth } from "@/lib/payflow/auth";
-import { Play, Square, Pause, Plus, Clock, Wallet, PiggyBank, Sparkles, Heart, X, Copy, Check, ChevronRight, AlertCircle, ShieldCheck, TrendingUp, Calendar, FileText, MessageSquare, User, Trash2, Coffee, Flame, CloudUpload } from "lucide-react";
+import { Play, Square, Pause, Plus, Clock, Wallet, PiggyBank, Sparkles, Heart, X, Copy, Check, ChevronRight, AlertCircle, ShieldCheck, TrendingUp, Calendar, FileText, MessageSquare, User, Trash2, Coffee, Flame, CloudUpload, Pencil } from "lucide-react";
 
 // ---------------- Helpers: greeting + streak ----------------
 
@@ -96,13 +96,15 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
   const live = useStore((s) => s.live);
   const shifts = useStore((s) => s.shifts);
   const saved = useStore((s) => s.savedTotal);
+  const nextPayday = useStore((s) => s.nextPayday);
+  const usingSample = useStore((s) => s.usingSampleData);
   const week = weeklyTotals(shifts);
   const ded = estimateDeductions(week.gross);
   const user = useAuth();
   const [now, setNow] = useState(Date.now());
+  const [setupOpen, setSetupOpen] = useState(false);
 
   useEffect(() => {
-    // Tick every second when on shift, otherwise every minute so the greeting refreshes.
     const id = setInterval(() => setNow(Date.now()), live.active ? 1000 : 60000);
     return () => clearInterval(id);
   }, [live.active]);
@@ -116,9 +118,11 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
   const hour = new Date(now).getHours();
   const g = greetingFor({ name: user?.name, onShift: live.active, onBreak, hasEndedToday, hour });
 
-  const payday = nextFriday();
+  const payday = new Date(nextPayday + "T00:00:00");
   const daysToPay = daysUntil(payday);
+  const paydayLabel = payday.toLocaleDateString("en-GB", { weekday: "short" });
   const streak = useMemo(() => computeStreak(shifts), [shifts]);
+
 
 
 
@@ -146,7 +150,25 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
     <div className="pb-[120px]">
       <AppHeader title={g.title} subtitle={g.sub} />
 
-      {/* Hero */}
+      {usingSample && (
+        <section className="mx-5 mt-3">
+          <button
+            onClick={() => setSetupOpen(true)}
+            className="w-full flex items-center justify-between gap-2 rounded-2xl bg-accent-soft px-3.5 py-2.5 ring-1 ring-accent/20 text-left"
+          >
+            <div className="min-w-0">
+              <div className="text-[12px] font-bold text-accent">Showing sample data</div>
+              <div className="text-[11px] text-ink-soft truncate">Tap to use your own numbers — takes 10 seconds.</div>
+            </div>
+            <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-[11px] font-bold text-accent-foreground shrink-0">
+              <Pencil className="size-3" /> Use mine
+            </span>
+          </button>
+        </section>
+      )}
+
+      {setupOpen && <SetupWizard onClose={() => setSetupOpen(false)} initial={{ hourlyRate: live.hourlyRate, workplace: live.workplace }} />}
+
       <section className="mx-5 mt-5">
         <div className="rounded-[28px] bg-ink p-6 text-sand shadow-[0_14px_40px_-18px_rgba(0,0,0,0.5)]">
           <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-[0.18em] opacity-80">
@@ -206,7 +228,7 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
             <div className="text-[12px] font-bold">
               Payday in {daysToPay} day{daysToPay === 1 ? "" : "s"}
             </div>
-            <div className="text-[11px] text-ink-soft leading-tight truncate">Friday</div>
+            <div className="text-[11px] text-ink-soft leading-tight truncate">{paydayLabel}</div>
           </div>
         </div>
       </section>
@@ -309,9 +331,10 @@ type PayModal = null | "add" | "forecast" | "payslip" | "query";
 
 export function PayScreen() {
   const shifts = useStore((s) => s.shifts);
+  const nextPayday = useStore((s) => s.nextPayday);
   const week = weeklyTotals(shifts);
   const ded = estimateDeductions(week.gross);
-  const payday = nextFriday();
+  const payday = new Date(nextPayday + "T00:00:00");
   const daysToPay = daysUntil(payday);
   const confidence = Math.min(100, Math.round((week.count >= 4 ? 90 : 60 + week.count * 7)));
 
@@ -767,45 +790,174 @@ export function CoachScreen() {
   );
 }
 
-// ---------------- Onboarding ----------------
+// ---------------- Setup Wizard / Onboarding ----------------
 
-const ONBOARD_STEPS = [
-  { title: "Welcome to PayFlow", body: "A worker-first app for hourly pay. Built in the UK, in plain English." },
-  { title: "Know your hours", body: "Start a shift with one tap. PayFlow tracks the clock so you don't have to." },
-  { title: "Know your pay", body: "See your take-home estimate before payday — tax, National Insurance and pension included." },
-  { title: "Save from every shift", body: "Pick a small saving rule. We'll project it into your week, month and year." },
-  { title: "Meet Flow Coach", body: "Calm, plain-English guidance. Never pushy. Always your call." },
+const CYCLE_OPTIONS: { id: PayCycle; label: string; sub: string }[] = [
+  { id: "weekly", label: "Weekly", sub: "Paid every week" },
+  { id: "biweekly", label: "Every 2 weeks", sub: "Fortnightly pay" },
+  { id: "monthly", label: "Monthly", sub: "Once a month" },
 ];
 
+export function SetupWizard({
+  onClose,
+  onSkip,
+  initial,
+}: {
+  onClose: () => void;
+  onSkip?: () => void;
+  initial?: { hourlyRate?: number; workplace?: string; payCycle?: PayCycle };
+}) {
+  const [step, setStep] = useState(0);
+  const [rate, setRate] = useState<number>(initial?.hourlyRate ?? 14.5);
+  const [workplace, setWorkplace] = useState<string>(initial?.workplace ?? "");
+  const [cycle, setCycle] = useState<PayCycle>(initial?.payCycle ?? "weekly");
+  const [payday, setPayday] = useState<string>(() => computeNextPayday(initial?.payCycle ?? "weekly"));
+
+  function next() { setStep((s) => Math.min(2, s + 1)); }
+  function back() { setStep((s) => Math.max(0, s - 1)); }
+  function finish() {
+    applySetup({
+      hourlyRate: Number.isFinite(rate) && rate > 0 ? rate : 14.5,
+      workplace: workplace.trim() || "My workplace",
+      payCycle: cycle,
+      nextPayday: payday,
+    });
+    toast.success("All set — these are your numbers now.", { description: "You can edit anytime from Today." });
+    onClose();
+  }
+
+  function chooseCycle(c: PayCycle) {
+    setCycle(c);
+    setPayday(computeNextPayday(c));
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 bg-sand flex flex-col">
+      <header className="flex items-center justify-between px-5 pt-[max(env(safe-area-inset-top),1rem)] pb-3">
+        <button onClick={step === 0 ? onClose : back} className="text-[13px] font-bold text-ink-soft hover:text-ink">
+          {step === 0 ? "Close" : "← Back"}
+        </button>
+        <div className="flex items-center gap-1.5">
+          {[0, 1, 2].map((k) => (
+            <span key={k} className={`h-1.5 rounded-full transition-all ${k === step ? "w-6 bg-primary" : "w-1.5 bg-border"}`} />
+          ))}
+        </div>
+        {onSkip ? (
+          <button onClick={onSkip} className="text-[13px] font-bold text-ink-soft hover:text-ink">Skip</button>
+        ) : (
+          <span className="w-10" />
+        )}
+      </header>
+
+      <div className="flex-1 overflow-y-auto px-6 pt-4">
+        {step === 0 && (
+          <div className="max-w-sm mx-auto">
+            <div className="grid size-14 place-items-center rounded-2xl bg-primary text-primary-foreground"><Wallet className="size-6" /></div>
+            <h1 className="mt-5 font-display text-3xl font-extrabold tracking-tight">What's your hourly rate?</h1>
+            <p className="mt-2 text-[14px] text-ink-soft">This is the headline rate before tax. You can change it any time.</p>
+            <div className="mt-6 flex items-center gap-3 rounded-2xl bg-card p-4 ring-1 ring-border">
+              <span className="font-display text-3xl font-extrabold text-ink-soft">£</span>
+              <input
+                inputMode="decimal" type="number" min={0} step="0.01"
+                value={rate}
+                onChange={(e) => setRate(Number(e.target.value))}
+                className="w-full bg-transparent font-display text-4xl font-extrabold tabular-nums outline-none"
+              />
+              <span className="text-sm font-bold text-ink-soft">/ hour</span>
+            </div>
+            <p className="mt-3 text-[12px] text-ink-soft">National Living Wage for 21+ is £12.21/hour (April 2025). PayFlow is guidance only.</p>
+          </div>
+        )}
+
+        {step === 1 && (
+          <div className="max-w-sm mx-auto">
+            <div className="grid size-14 place-items-center rounded-2xl bg-primary text-primary-foreground"><Calendar className="size-6" /></div>
+            <h1 className="mt-5 font-display text-3xl font-extrabold tracking-tight">When do you get paid?</h1>
+            <p className="mt-2 text-[14px] text-ink-soft">We'll show a countdown to your next payday on Today.</p>
+            <div className="mt-5 space-y-2">
+              {CYCLE_OPTIONS.map((opt) => {
+                const active = cycle === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    onClick={() => chooseCycle(opt.id)}
+                    className={`w-full flex items-center justify-between rounded-2xl p-4 ring-1 text-left transition ${active ? "bg-primary text-primary-foreground ring-transparent" : "bg-card ring-border"}`}
+                  >
+                    <div>
+                      <div className="text-[14px] font-bold">{opt.label}</div>
+                      <div className={`text-[12px] ${active ? "opacity-90" : "text-ink-soft"}`}>{opt.sub}</div>
+                    </div>
+                    {active && <Check className="size-5" />}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="mt-5">
+              <label className="block text-[12px] font-bold text-ink-soft mb-1.5">Next payday</label>
+              <input type="date" value={payday} onChange={(e) => setPayday(e.target.value)} className={inputCls} />
+            </div>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="max-w-sm mx-auto">
+            <div className="grid size-14 place-items-center rounded-2xl bg-primary text-primary-foreground"><Sparkles className="size-6" /></div>
+            <h1 className="mt-5 font-display text-3xl font-extrabold tracking-tight">Name your workplace</h1>
+            <p className="mt-2 text-[14px] text-ink-soft">Optional. Helps your shift cards make sense at a glance.</p>
+            <input
+              value={workplace}
+              onChange={(e) => setWorkplace(e.target.value)}
+              placeholder="e.g. Maple Care Home"
+              maxLength={60}
+              className={`${inputCls} mt-5`}
+            />
+            <p className="mt-3 text-[12px] text-ink-soft">You can add more workplaces later when you add a shift.</p>
+          </div>
+        )}
+      </div>
+
+      <div className="px-6 pt-3 pb-[max(env(safe-area-inset-bottom),1.5rem)] space-y-2">
+        {step < 2 ? (
+          <Btn className="w-full" onClick={next} disabled={step === 0 && (!rate || rate <= 0)}>
+            Continue <ChevronRight className="size-4" />
+          </Btn>
+        ) : (
+          <Btn className="w-full" onClick={finish}><Check className="size-4" /> All set — show my numbers</Btn>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function Onboarding({ onDone }: { onDone: () => void }) {
-  const [i, setI] = useState(0);
-  const step = ONBOARD_STEPS[i];
-  const last = i === ONBOARD_STEPS.length - 1;
+  const [mode, setMode] = useState<"welcome" | "setup">("welcome");
+
+  if (mode === "setup") {
+    return <SetupWizard onClose={onDone} onSkip={onDone} />;
+  }
+
   return (
     <div className="fixed inset-0 z-50 bg-sand flex flex-col">
       <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
         <div className="grid size-16 place-items-center rounded-3xl bg-primary text-primary-foreground mb-6">
           <Sparkles className="size-7" />
         </div>
-        <h1 className="font-display text-4xl font-extrabold tracking-tight">{step.title}</h1>
-        <p className="mt-4 text-[15px] leading-relaxed text-ink-soft max-w-sm">{step.body}</p>
+        <h1 className="font-display text-4xl font-extrabold tracking-tight">Welcome to PayFlow</h1>
+        <p className="mt-4 text-[15px] leading-relaxed text-ink-soft max-w-sm">
+          A worker-first app for hourly pay. Let's set you up in about 10 seconds — your rate, when you get paid, and where you work.
+        </p>
       </div>
-      <div className="px-6 pb-[max(env(safe-area-inset-bottom),1.5rem)] space-y-4">
-        <div className="flex items-center justify-center gap-1.5">
-          {ONBOARD_STEPS.map((_, k) => (
-            <span key={k} className={`h-1.5 rounded-full transition-all ${k === i ? "w-6 bg-primary" : "w-1.5 bg-border"}`} />
-          ))}
-        </div>
-        <Btn className="w-full" onClick={() => (last ? onDone() : setI(i + 1))}>
-          {last ? "Get started" : "Next"}
-        </Btn>
-        {!last && (
-          <button onClick={onDone} className="block w-full text-center text-[13px] font-bold text-ink-soft">Skip</button>
-        )}
+      <div className="px-6 pb-[max(env(safe-area-inset-bottom),1.5rem)] space-y-3">
+        <Btn className="w-full" onClick={() => setMode("setup")}>Let's set you up <ChevronRight className="size-4" /></Btn>
+        <button onClick={onDone} className="block w-full text-center text-[13px] font-bold text-ink-soft">
+          Explore with sample data first
+        </button>
+        <p className="text-center text-[11px] text-ink-soft">Guidance only. PayFlow is not financial, tax or payroll advice.</p>
       </div>
     </div>
   );
 }
+
 
 // Profile placeholder (unused but kept for future)
 export function ProfileScreen({ onClose }: { onClose: () => void }) {

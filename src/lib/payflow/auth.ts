@@ -34,6 +34,16 @@ export function useAuth(): AuthUser | null {
   );
 }
 
+async function claimPendingJoinCode(): Promise<void> {
+  try {
+    const { store } = await import("@/lib/payflow/store");
+    const code = store.get().pendingJoinCode;
+    if (!code) return;
+    const { error } = await (supabase.rpc as any)("join_org_with_code", { _code: code });
+    if (!error) store.set((s) => ({ ...s, pendingJoinCode: undefined }));
+  } catch { /* non-fatal */ }
+}
+
 async function loadProfile(userId: string, email: string) {
   // Profile row is auto-created via the on_auth_user_created trigger.
   // Retry once if the trigger hasn't landed yet.
@@ -53,6 +63,8 @@ async function loadProfile(userId: string, email: string) {
         hourlyRate: Number(data.hourly_rate ?? 14.5),
         weeklyTarget: Number(data.weekly_target ?? 600),
       };
+      // Claim any join code captured before sign-in
+      void claimPendingJoinCode();
       // Fetch org for business users
       if (user.role === "business") {
         const { data: org } = await supabase
@@ -69,6 +81,7 @@ async function loadProfile(userId: string, email: string) {
     await new Promise((r) => setTimeout(r, 500));
   }
 }
+
 
 export async function ensureInitialised() {
   if (initialised || typeof window === "undefined") return;

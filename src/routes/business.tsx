@@ -8,6 +8,7 @@ import { createBusinessPortal } from "@/lib/payflow/billing.functions";
 import { getStripeEnvironment } from "@/lib/stripe";
 import { BusinessCheckoutModal, PaymentTestModeBanner } from "@/components/payflow/BusinessCheckoutModal";
 import { ConnectedAccountCard } from "@/components/payflow/ConnectedAccountCard";
+import { InviteHero } from "@/components/payflow/InviteHero";
 
 export const Route = createFileRoute("/business")({
   head: () => ({ meta: [{ title: "Business dashboard — PayFlow" }] }),
@@ -208,26 +209,13 @@ function BusinessPage() {
           <Metric icon={TrendingUp} label="Engagement" value={`${m.engagement_pct}%`} hint="Active vs total members" />
         </div>
 
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
-          <div className="md:col-span-2 rounded-3xl bg-ink p-6 text-sand ring-1 ring-ink">
-            <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">Invite your workers</div>
-            <h2 className="mt-2 font-display text-2xl font-extrabold">Share your join code</h2>
-            <p className="mt-1 text-sm text-sand/70">Workers join free in under 2 minutes. No card, no IT setup.</p>
+        <div className="mt-8">
+          <InviteHero company={user.company ?? "Your workplace"} code={user.joinCode ?? ""} joinLink={joinLink} />
+        </div>
 
-            <div className="mt-5 grid gap-3 md:grid-cols-[auto_1fr_auto] md:items-center">
-              <div className="rounded-2xl bg-sand/10 px-4 py-3 ring-1 ring-sand/15">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-sand/60">Code</div>
-                <div className="font-display text-2xl font-extrabold tracking-[0.25em]">{user.joinCode ?? "——"}</div>
-              </div>
-              <div className="rounded-2xl bg-sand/10 px-4 py-3 ring-1 ring-sand/15 truncate">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-sand/60">Link</div>
-                <div className="truncate text-sm">{joinLink || "—"}</div>
-              </div>
-              <button onClick={copy} className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-accent px-5 text-sm font-bold text-accent-foreground hover:scale-[1.02] transition-transform">
-                <Copy className="size-4" /> {copied ? "Copied" : "Copy link"}
-              </button>
-            </div>
-          </div>
+        <div className="mt-8 grid gap-4 md:grid-cols-3">
+          <div className="md:col-span-2 hidden" />
+
 
           <div className="rounded-3xl bg-card p-6 ring-1 ring-border">
             <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-primary">
