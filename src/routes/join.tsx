@@ -24,12 +24,13 @@ function JoinPage() {
     if (!code.trim()) return;
     if (!user) { nav({ to: "/signup" }); return; }
     setState("joining"); setMsg("");
-    const { data: org } = await supabase
-      .from("organisations").select("id, name").eq("join_code", code.trim().toUpperCase()).maybeSingle();
-    if (!org) { setState("error"); setMsg("That code doesn't match a workplace. Double-check with your manager."); return; }
-    const { error } = await supabase.from("org_members").insert({ org_id: org.id, user_id: user.id, role: "member" });
-    if (error && !error.message.includes("duplicate")) { setState("error"); setMsg(error.message); return; }
-    setState("done"); setMsg(org.name);
+    const { data, error } = await supabase.rpc("join_org_with_code", { _code: code.trim().toUpperCase() });
+    if (error || !data || !Array.isArray(data) || data.length === 0) {
+      setState("error");
+      setMsg("That code doesn't match a workplace. Double-check with your manager.");
+      return;
+    }
+    setState("done"); setMsg((data[0] as { org_name: string }).org_name);
   }
 
   return (
