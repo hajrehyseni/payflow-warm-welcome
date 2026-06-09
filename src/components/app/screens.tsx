@@ -758,6 +758,7 @@ const COACH_QA = [
 
 export function CoachScreen() {
   const [asked, setAsked] = useState<string[]>([]);
+  const [checkOpen, setCheckOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   function flash(msg: string) {
     setToast(msg);
@@ -782,6 +783,23 @@ export function CoachScreen() {
             </p>
           </div>
         </div>
+
+        {/* Pre-payday check — hero CTA */}
+        <div className="flex items-start gap-3">
+          <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground">
+            <ShieldCheck className="size-5" />
+          </div>
+          <div className="rounded-3xl rounded-tl-md bg-gradient-to-br from-primary-soft to-accent-soft p-4 ring-1 ring-primary/20">
+            <p className="text-sm leading-relaxed text-ink">
+              Want me to <span className="font-semibold">check your pay</span> before Friday? Four quick checks, 30 seconds — so you go into payday calm.
+            </p>
+            <div className="mt-3 flex gap-2">
+              <ChipBtn primary onClick={() => setCheckOpen(true)}>Check my pay</ChipBtn>
+              <ChipBtn onClick={() => flash("All good — I'm here when you want it")}>Maybe later</ChipBtn>
+            </div>
+          </div>
+        </div>
+
 
         <div className="flex items-start gap-3">
           <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-accent-soft">
