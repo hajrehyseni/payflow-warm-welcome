@@ -14,16 +14,194 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      org_members: {
+        Row: {
+          id: string
+          joined_at: string
+          org_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          joined_at?: string
+          org_id: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string
+          org_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_members_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organisations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organisations: {
+        Row: {
+          created_at: string
+          id: string
+          join_code: string
+          name: string
+          owner_id: string
+          plan: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          join_code: string
+          name: string
+          owner_id: string
+          plan?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          join_code?: string
+          name?: string
+          owner_id?: string
+          plan?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string
+          hourly_rate: number
+          id: string
+          onboarding_complete: boolean
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+          weekly_target: number
+        }
+        Insert: {
+          created_at?: string
+          email?: string
+          full_name?: string
+          hourly_rate?: number
+          id: string
+          onboarding_complete?: boolean
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+          weekly_target?: number
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string
+          hourly_rate?: number
+          id?: string
+          onboarding_complete?: boolean
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+          weekly_target?: number
+        }
+        Relationships: []
+      }
+      savings_rules: {
+        Row: {
+          amount: number
+          id: string
+          rule_type: string
+          saved_total: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          id?: string
+          rule_type?: string
+          saved_total?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          id?: string
+          rule_type?: string
+          saved_total?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      shifts: {
+        Row: {
+          break_minutes: number
+          created_at: string
+          end_time: string
+          gross_pay: number
+          hourly_rate: number
+          hours: number
+          id: string
+          notes: string | null
+          shift_date: string
+          start_time: string
+          user_id: string
+          workplace: string
+        }
+        Insert: {
+          break_minutes?: number
+          created_at?: string
+          end_time: string
+          gross_pay: number
+          hourly_rate: number
+          hours: number
+          id?: string
+          notes?: string | null
+          shift_date: string
+          start_time: string
+          user_id: string
+          workplace: string
+        }
+        Update: {
+          break_minutes?: number
+          created_at?: string
+          end_time?: string
+          gross_pay?: number
+          hourly_rate?: number
+          hours?: number
+          id?: string
+          notes?: string | null
+          shift_date?: string
+          start_time?: string
+          user_id?: string
+          workplace?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_org_aggregates: {
+        Args: { _org_id: string }
+        Returns: {
+          active_workers: number
+          engagement_pct: number
+          queries_avoided: number
+          total_hours: number
+        }[]
+      }
+      is_org_member: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      user_role: "worker" | "business"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +328,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      user_role: ["worker", "business"],
+    },
   },
 } as const
