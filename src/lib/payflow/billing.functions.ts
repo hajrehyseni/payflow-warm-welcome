@@ -133,7 +133,7 @@ export const getConnectedStripeAccount = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<AccountResult> => {
     try {
       const stripe = createStripeClient(data.environment);
-      const account = await stripe.accounts.retrieve();
+      const account = await (stripe.accounts as any).retrieve();
       return {
         accountId: account.id,
         email: account.email ?? null,
