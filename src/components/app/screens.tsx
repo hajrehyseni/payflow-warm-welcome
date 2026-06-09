@@ -816,7 +816,7 @@ export function SaveScreen({ onProfileClick }: { onProfileClick?: () => void }) 
               </div>
             </div>
             <button
-              onClick={() => celebrate("Habit ticked")}
+              onClick={() => celebrate("Streak kept — you're building, not behind")}
               className="shrink-0 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground shadow active:scale-95 transition-all"
             >
               Tick today
