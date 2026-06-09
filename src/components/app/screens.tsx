@@ -25,7 +25,6 @@ import {
   Copy,
   Send,
   Target,
-  Rocket,
 } from "lucide-react";
 
 const fmt = (n: number) =>
