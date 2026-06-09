@@ -113,3 +113,41 @@ export const createBusinessPortal = createServerFn({ method: "POST" })
       return { error: getStripeErrorMessage(error) };
     }
   });
+
+type AccountResult =
+  | {
+      accountId: string;
+      email: string | null;
+      businessName: string | null;
+      country: string | null;
+      chargesEnabled: boolean;
+      payoutsEnabled: boolean;
+      detailsSubmitted: boolean;
+      environment: StripeEnv;
+    }
+  | { error: string };
+
+export const getConnectedStripeAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { environment: StripeEnv }) => data)
+  .handler(async ({ data }): Promise<AccountResult> => {
+    try {
+      const stripe = createStripeClient(data.environment);
+      const account = await stripe.accounts.retrieve();
+      return {
+        accountId: account.id,
+        email: account.email ?? null,
+        businessName:
+          account.business_profile?.name ??
+          (account as any).settings?.dashboard?.display_name ??
+          null,
+        country: account.country ?? null,
+        chargesEnabled: Boolean(account.charges_enabled),
+        payoutsEnabled: Boolean(account.payouts_enabled),
+        detailsSubmitted: Boolean(account.details_submitted),
+        environment: data.environment,
+      };
+    } catch (error) {
+      return { error: getStripeErrorMessage(error) };
+    }
+  });
