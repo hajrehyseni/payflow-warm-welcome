@@ -26,6 +26,50 @@ const fmt = (n: number) =>
   `£${n.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Streak store — shared across all screens. Positive actions call celebrate().
+let _streak = 6;
+let _celebration: string | null = null;
+let _celebTimer: number | undefined;
+const _listeners = new Set<() => void>();
+function _notify() { _listeners.forEach((l) => l()); }
+
+function celebrate(actionMsg?: string) {
+  _streak += 1;
+  const firstName = USER.name.split(" ")[0];
+  _celebration = actionMsg
+    ? `${actionMsg} · streak now ${_streak} weeks 🎉`
+    : `Nice one, ${firstName} — streak now ${_streak} weeks 🎉`;
+  _notify();
+  if (typeof window !== "undefined") {
+    window.clearTimeout(_celebTimer);
+    _celebTimer = window.setTimeout(() => { _celebration = null; _notify(); }, 3200);
+  }
+}
+
+function useStreak() {
+  const [, force] = useState(0);
+  useEffect(() => {
+    const fn = () => force((n) => n + 1);
+    _listeners.add(fn);
+    return () => { _listeners.delete(fn); };
+  }, []);
+  return { streak: _streak, celebration: _celebration };
+}
+
+function CelebrationToast() {
+  const { celebration } = useStreak();
+  if (!celebration) return null;
+  return (
+    <div className="pointer-events-none absolute inset-x-0 bottom-24 z-40 flex justify-center px-6">
+      <div className="pointer-events-auto flex items-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-accent px-4 py-2.5 text-xs font-semibold text-white shadow-xl shadow-primary/30 animate-in fade-in slide-in-from-bottom-2">
+        <Flame className="size-4 shrink-0" />
+        <span>{celebration}</span>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Live earnings hook — ticks up at hourly rate while "on shift" (pausable)
 function useLiveEarnings(paused: boolean) {
   const baseSeconds = USER.worked.hours * 3600 + USER.worked.minutes * 60;
