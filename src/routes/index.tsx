@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Clock, Wallet, PiggyBank, Sparkles, ShieldCheck } from "lucide-react";
+import { ArrowRight, Clock, Wallet, PiggyBank, Sparkles, ShieldCheck, TrendingUp } from "lucide-react";
+import { HeroDemo } from "@/components/HeroDemo";
 
 export const Route = createFileRoute("/")({
   head: () => ({
