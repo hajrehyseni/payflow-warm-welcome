@@ -1,1653 +1,703 @@
-import { useEffect, useRef, useState } from "react";
-import { USER, RECENT, WEEK, TAKEHOME } from "./data";
-import {
-  Clock,
-  TrendingUp,
-  Coffee,
-  PiggyBank,
-  Sparkles,
-  Heart,
-  ArrowUpRight,
-  CircleDot,
-  ChevronRight,
-  Quote,
-  Wallet,
-  Receipt,
-  ShieldCheck,
-  Flame,
-  CheckCircle2,
-  X,
-  Pause,
-  Play,
-  Info,
-  Building2,
-  Users,
-  Copy,
-  Send,
-  Target,
-} from "lucide-react";
+import { useEffect, useState } from "react";
+import { useStore, startShift, endShift, toggleBreak, liveElapsedMs, liveEarnings, weeklyTotals, addShift, deleteShift, setSaveRule, addToSavings, type SaveRule, type Shift } from "@/lib/payflow/store";
+import { estimateDeductions, gbp, fmtHours, fmtClock, nextFriday, daysUntil } from "@/lib/payflow/calc";
+import { Play, Square, Pause, Plus, Clock, Wallet, PiggyBank, Sparkles, Heart, X, Copy, Check, ChevronRight, AlertCircle, ShieldCheck, TrendingUp, Calendar, FileText, MessageSquare, User, Trash2, Coffee } from "lucide-react";
 
-const fmt = (n: number) =>
-  `£${n.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+// ---------------- Shared bits ----------------
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Streak store — shared across all screens. Positive actions call celebrate().
-let _streak = 6;
-let _celebration: string | null = null;
-let _confettiToken = 0;
-let _celebTimer: number | undefined;
-const _listeners = new Set<() => void>();
-function _notify() { _listeners.forEach((l) => l()); }
-
-function celebrate(actionMsg?: string) {
-  _streak += 1;
-  const firstName = USER.name.split(" ")[0];
-  _celebration = actionMsg
-    ? `${actionMsg} · streak now ${_streak} weeks 🎉`
-    : `Nice one, ${firstName} — streak now ${_streak} weeks 🎉`;
-  _confettiToken += 1;
-  _notify();
-  if (typeof window !== "undefined") {
-    window.clearTimeout(_celebTimer);
-    _celebTimer = window.setTimeout(() => { _celebration = null; _notify(); }, 3200);
-  }
-}
-
-function useStreak() {
-  const [, force] = useState(0);
-  useEffect(() => {
-    const fn = () => force((n) => n + 1);
-    _listeners.add(fn);
-    return () => { _listeners.delete(fn); };
-  }, []);
-  return { streak: _streak, celebration: _celebration, confettiToken: _confettiToken };
-}
-
-// Smooth count-up for big numbers.
-function useCountUp(value: number, duration = 900) {
-  const [display, setDisplay] = useState(value);
-  const fromRef = useRef(value);
-  const startRef = useRef<number | null>(null);
-  const rafRef = useRef<number | null>(null);
-  useEffect(() => {
-    fromRef.current = display;
-    startRef.current = null;
-    const step = (ts: number) => {
-      if (startRef.current === null) startRef.current = ts;
-      const t = Math.min(1, (ts - startRef.current) / duration);
-      const eased = 1 - Math.pow(1 - t, 3);
-      setDisplay(fromRef.current + (value - fromRef.current) * eased);
-      if (t < 1) rafRef.current = requestAnimationFrame(step);
-    };
-    rafRef.current = requestAnimationFrame(step);
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value]);
-  return display;
-}
-
-// Confetti burst — fires on every celebrate().
-function Confetti() {
-  const { confettiToken } = useStreak();
-  const [pieces, setPieces] = useState<{ id: number; left: number; delay: number; rot: number; color: string; dur: number }[]>([]);
-  useEffect(() => {
-    if (!confettiToken) return;
-    const palette = ["#0E7C66", "#E07A5F", "#F2CC8F", "#81B29A", "#F4D35E"];
-    const next = Array.from({ length: 28 }, (_, i) => ({
-      id: confettiToken * 100 + i,
-      left: Math.random() * 100,
-      delay: Math.random() * 120,
-      rot: Math.random() * 360,
-      color: palette[i % palette.length],
-      dur: 900 + Math.random() * 700,
-    }));
-    setPieces(next);
-    const t = window.setTimeout(() => setPieces([]), 2200);
-    return () => window.clearTimeout(t);
-  }, [confettiToken]);
-  if (!pieces.length) return null;
+export function AppHeader({ title, subtitle, right }: { title: string; subtitle?: string; right?: React.ReactNode }) {
   return (
-    <div className="pointer-events-none absolute inset-0 z-50 overflow-hidden">
-      {pieces.map((p) => (
-        <span
-          key={p.id}
-          className="absolute -top-3 block size-2 rounded-[2px]"
-          style={{
-            left: `${p.left}%`,
-            background: p.color,
-            transform: `rotate(${p.rot}deg)`,
-            animation: `confettiFall ${p.dur}ms cubic-bezier(0.2,0.7,0.3,1) ${p.delay}ms forwards`,
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
-function CelebrationToast() {
-  const { celebration } = useStreak();
-  return (
-    <>
-      <Confetti />
-      {celebration && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-24 z-40 flex justify-center px-6">
-          <div className="pointer-events-auto flex items-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-accent px-4 py-2.5 text-xs font-semibold text-white shadow-xl shadow-primary/30 animate-in fade-in slide-in-from-bottom-2">
-            <Flame className="size-4 shrink-0" />
-            <span>{celebration}</span>
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
-
-// Persistent guidance line — warm, never scary.
-function GuidanceLine({ className = "" }: { className?: string }) {
-  return (
-    <div className={`flex items-center gap-1.5 rounded-full bg-primary-soft/60 px-3 py-1.5 text-[10.5px] font-semibold text-primary/90 ring-1 ring-primary/10 ${className}`}>
-      <ShieldCheck className="size-3.5 shrink-0" />
-      <span>Guidance only — not financial advice. Your money decisions are your own.</span>
-    </div>
-  );
-}
-
-// One-time welcome card.
-export function WelcomeCard({ onAccept }: { onAccept: () => void }) {
-  return (
-    <div className="absolute inset-0 z-[60] flex items-end justify-center bg-ink/40 backdrop-blur-sm animate-in fade-in">
-      <div className="m-3 w-full max-w-sm rounded-3xl bg-card p-6 ring-1 ring-border shadow-2xl animate-in slide-in-from-bottom-4">
-        <div className="grid size-12 place-items-center rounded-2xl bg-primary-soft">
-          <Heart className="size-6 text-primary" />
-        </div>
-        <div className="mt-3 font-display text-xl font-extrabold leading-tight text-ink">
-          Welcome to PayFlow
-        </div>
-        <p className="mt-2 text-sm leading-relaxed text-ink">
-          PayFlow is your money <span className="font-semibold">guide</span>, not a financial adviser.
-          We help you understand your pay and build better habits —
-          <span className="font-semibold"> all money decisions and responsibilities stay yours.</span>
-        </p>
-        <button
-          onClick={onAccept}
-          className="mt-5 w-full rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow active:scale-[0.98] transition-all"
-        >
-          Got it
-        </button>
-        <p className="mt-3 text-center text-[10.5px] text-ink-soft">
-          We're not a regulated or licensed financial service.
-        </p>
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Live earnings hook — ticks up at hourly rate while "on shift" (pausable)
-function useLiveEarnings(paused: boolean) {
-  const baseSeconds = USER.worked.hours * 3600 + USER.worked.minutes * 60;
-  const [seconds, setSeconds] = useState(baseSeconds);
-  useEffect(() => {
-    if (paused) return;
-    const id = setInterval(() => setSeconds((s) => s + 1), 1000);
-    return () => clearInterval(id);
-  }, [paused]);
-  const earned = (seconds / 3600) * USER.hourly;
-  const hh = Math.floor(seconds / 3600);
-  const mm = Math.floor((seconds % 3600) / 60);
-  return { earned, hh, mm, seconds };
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// TODAY TAB
-export function TodayScreen({ goToTab, onProfileClick }: { goToTab?: (t: "today" | "pay" | "save" | "life" | "coach") => void; onProfileClick?: () => void }) {
-  const [onBreak, setOnBreak] = useState(false);
-  const [payslipOpen, setPayslipOpen] = useState(false);
-  const [checkOpen, setCheckOpen] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
-  const [savedBoost, setSavedBoost] = useState(0);
-
-  const { earned, hh, mm } = useLiveEarnings(onBreak);
-  const earnedAnim = useCountUp(earned, 600);
-  const shiftPctRaw = ((hh * 60 + mm) / (6 * 60)) * 100;
-  const shiftPct = Math.min(100, shiftPctRaw);
-
-  // Goal ring values (savings + boost from quick-saves this session)
-  const balance = USER.savingsBalance + savedBoost;
-  const goalPct = Math.min(100, (balance / USER.savingsGoal) * 100);
-  const goalPctAnim = useCountUp(goalPct, 700);
-  const RC = 2 * Math.PI * 26;
-  const ringOffset = RC - (goalPctAnim / 100) * RC;
-
-  function flash(msg: string) {
-    setToast(msg);
-    window.clearTimeout((flash as any)._t);
-    (flash as any)._t = window.setTimeout(() => setToast(null), 2400);
-  }
-
-
-  return (
-    <div className="flex h-full flex-col">
-      <Header subtitle={onBreak ? "On break · paused" : "On shift · Maple Care"} name={USER.name} onProfileClick={onProfileClick} />
-
-      <div className="flex-1 overflow-y-auto px-5 pb-28 space-y-5">
-        {/* 1. Live earnings hero (THE card) */}
-        <section className="relative overflow-hidden rounded-3xl bg-primary p-6 text-primary-foreground shadow-[0_20px_40px_-20px_rgba(14,124,102,0.6)]">
-          <div className="absolute -right-12 -top-12 size-44 rounded-full bg-white/10 blur-2xl" />
-          <div className="absolute -bottom-16 -left-8 size-40 rounded-full bg-accent/30 blur-3xl" />
-          <div className="relative">
-            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] opacity-85">
-              <span className={`size-1.5 rounded-full ${onBreak ? "bg-white/50" : "bg-accent animate-pulse-dot"}`} />
-              {onBreak ? "Paused" : `Earning · £${USER.hourly}/hr`}
-            </div>
-            <div className="mt-4 flex items-baseline gap-1 font-display tabular-nums tracking-tight">
-              <span className="text-[64px] leading-none font-extrabold">
-                £{Math.floor(earnedAnim)}
-              </span>
-              <span className="text-3xl font-bold opacity-85">
-                .{(earnedAnim % 1).toFixed(2).slice(2)}
-              </span>
-            </div>
-            <div className="mt-2 text-sm opacity-85">
-              {hh}h {String(mm).padStart(2, "0")}m today
-            </div>
-
-            <div className="mt-6">
-              <div className="flex justify-between text-[11px] font-medium opacity-85">
-                <span>{USER.shiftStart}</span>
-                <span>{USER.shiftEnd}</span>
-              </div>
-              <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-white/20">
-                <div className="h-full rounded-full bg-accent transition-all duration-1000" style={{ width: `${shiftPct}%` }} />
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* 2. ONE primary action */}
-        <button
-          onClick={() => {
-            setSavedBoost((s) => s + 5);
-            flash(`£5 stashed — kind to future you`);
-            celebrate("£5 stashed");
-          }}
-          className="w-full rounded-3xl bg-accent px-5 py-5 text-base font-extrabold text-accent-foreground shadow-[0_12px_28px_-10px_rgba(255,107,94,0.55)] active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
-        >
-          <PiggyBank className="size-5" /> Stash £5
-        </button>
-
-        {/* 3. Goal ring */}
-        <section className="flex items-center gap-4 rounded-3xl bg-card p-5 ring-1 ring-border">
-          <div className="relative size-20 shrink-0">
-            <svg viewBox="0 0 64 64" className="size-full -rotate-90">
-              <circle cx="32" cy="32" r="26" stroke="var(--sand-deep)" strokeWidth="7" fill="none" />
-              <circle
-                cx="32" cy="32" r="26"
-                stroke="var(--primary)" strokeWidth="7" fill="none" strokeLinecap="round"
-                strokeDasharray={RC} strokeDashoffset={ringOffset}
-                style={{ transition: "stroke-dashoffset 0.6s ease-out" }}
-              />
-            </svg>
-            <div className="absolute inset-0 grid place-items-center font-display text-base font-extrabold tabular-nums text-ink">
-              {Math.round(goalPctAnim)}%
-            </div>
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-primary">
-              <Target className="-mt-0.5 mr-1 inline size-3" />
-              Eid trip
-            </div>
-            <div className="mt-0.5 font-display text-base font-extrabold leading-snug text-ink">
-              {Math.round(goalPctAnim)}% to your {fmt(USER.savingsGoal)}
-            </div>
-            <div className="text-[11px] text-ink-soft tabular-nums mt-0.5">
-              {fmt(balance)} saved
-            </div>
-          </div>
-        </section>
-
-        {/* — fold — quieter content below */}
-
-        {/* Secondary actions */}
-        <section className="grid grid-cols-3 gap-2 pt-2">
-          <QuickAction
-            icon={ShieldCheck}
-            label="Check pay"
-            onClick={() => setCheckOpen(true)}
-          />
-          <QuickAction
-            icon={onBreak ? Play : Pause}
-            label={onBreak ? "Clock in" : "Break"}
-            active={onBreak}
-            onClick={() => {
-              setOnBreak((b) => !b);
-              flash(onBreak ? "Welcome back" : "Break started — rest up");
-            }}
-          />
-          <QuickAction
-            icon={Receipt}
-            label="Payslip"
-            onClick={() => setPayslipOpen(true)}
-          />
-        </section>
-
-        {/* Coach nudge (below fold) */}
-        <section className="rounded-3xl bg-card p-4 ring-1 ring-border">
-          <div className="flex items-start gap-3">
-            <div className="grid size-9 shrink-0 place-items-center rounded-2xl bg-primary-soft">
-              <Sparkles className="size-4 text-primary" />
-            </div>
-            <div>
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-primary">Flow Coach</div>
-              <p className="mt-1 text-sm leading-snug text-ink">
-                You're <span className="font-semibold">£12 ahead</span> of last Friday.
-              </p>
-              <button
-                onClick={() => goToTab?.("coach")}
-                className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary"
-              >
-                Open Coach <ArrowUpRight className="size-3.5" />
-              </button>
-            </div>
-          </div>
-        </section>
-
-        {/* Disclaimer */}
-        <div className="rounded-2xl bg-card p-3.5 ring-1 ring-border">
-          <div className="flex items-start gap-2">
-            <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" />
-            <p className="text-[11px] leading-relaxed text-ink-soft">
-              Guidance only — estimates, not financial advice.
-            </p>
-          </div>
-        </div>
-      </div>
-
-
-      {/* Toast */}
-      {toast && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-24 z-30 flex justify-center px-6">
-          <div className="pointer-events-auto rounded-2xl bg-ink px-4 py-2.5 text-xs font-semibold text-white shadow-lg animate-in fade-in slide-in-from-bottom-2">
-            {toast}
-          </div>
-        </div>
-      )}
-      <CelebrationToast />
-
-      {/* Payslip translator overlay */}
-      {payslipOpen && <PayslipTranslator onClose={() => setPayslipOpen(false)} />}
-
-      {/* Pre-payday check overlay */}
-      {checkOpen && <PrePaydayCheck onClose={() => setCheckOpen(false)} />}
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// PAYSLIP TRANSLATOR
-const PAYSLIP_LINES: { code: string; label: string; value: number; positive?: boolean; plain: string }[] = [
-  {
-    code: "GROSS PAY",
-    label: "Gross pay",
-    value: TAKEHOME.gross,
-    positive: true,
-    plain:
-      "What you earned in total before anything is taken off. 34 hours × £14.50/hr = £493.00. This is the headline number — your real take-home is below.",
-  },
-  {
-    code: "PAYE TAX",
-    label: "Income tax (PAYE)",
-    value: -TAKEHOME.tax,
-    plain:
-      "Income tax taken a bit each payday so you don't get a big bill later. PAYE means 'Pay As You Earn'. You only pay tax on what you earn above £12,570 a year.",
-  },
-  {
-    code: "NI CAT A",
-    label: "National Insurance",
-    value: -TAKEHOME.ni,
-    plain:
-      "This goes toward your State Pension, NHS and benefits if you ever need them. 'Cat A' just means the standard category for most workers.",
-  },
-  {
-    code: "PENSION EE",
-    label: "Pension (5%)",
-    value: -TAKEHOME.pension,
-    plain:
-      "Still your money — just saved for later you. Your employer adds 3% on top. You can stop or change it any time through HR.",
-  },
-  {
-    code: "NET PAY",
-    label: "Take-home pay",
-    value: TAKEHOME.net,
-    positive: true,
-    plain:
-      "The number that actually lands in your account on Friday. This is the figure to budget with — everything above adds up to exactly £398.02.",
-  },
-];
-
-function PayslipTranslator({ onClose }: { onClose: () => void }) {
-  const [open, setOpen] = useState<string | null>("PAYE TAX");
-  return (
-    <div className="absolute inset-0 z-40 flex flex-col bg-sand">
-      {/* Header */}
-      <div className="flex items-center justify-between px-5 pt-12 pb-3">
+    <header className="sticky top-0 z-30 bg-sand/95 backdrop-blur-xl border-b border-border/60 px-5 pt-[max(env(safe-area-inset-top),0.5rem)] pb-3">
+      <div className="flex items-end justify-between gap-3">
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-soft">
-            Week ending Sun 7 Jun
-          </div>
-          <div className="font-display text-2xl font-extrabold tracking-tight text-ink">
-            Payslip translator
-          </div>
+          <h1 className="font-display text-[26px] font-extrabold leading-tight tracking-tight">{title}</h1>
+          {subtitle && <p className="text-[13px] text-ink-soft">{subtitle}</p>}
         </div>
-        <button
-          onClick={onClose}
-          className="grid size-10 place-items-center rounded-2xl bg-card ring-1 ring-border text-ink"
-          aria-label="Close payslip"
-        >
-          <X className="size-5" />
-        </button>
+        {right}
       </div>
-
-      <div className="flex-1 overflow-y-auto px-5 pb-6">
-        <GuidanceLine className="mb-3" />
-
-        <div className="rounded-2xl bg-primary-soft px-3.5 py-2.5 text-[11px] font-semibold text-primary flex items-center gap-2">
-          <Info className="size-3.5 shrink-0" /> Tap any line to see what it really means
-        </div>
-
-        <div className="mt-4 overflow-hidden rounded-3xl bg-card ring-1 ring-border">
-          {PAYSLIP_LINES.map((line, i) => {
-            const isOpen = open === line.code;
-            const isLast = i === PAYSLIP_LINES.length - 1;
-            return (
-              <div key={line.code} className={isLast ? "bg-primary-soft/40" : ""}>
-                <button
-                  onClick={() => setOpen(isOpen ? null : line.code)}
-                  className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left active:bg-sand-deep/40 transition-colors"
-                >
-                  <div className="min-w-0">
-                    <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-ink-soft">
-                      {line.code}
-                    </div>
-                    <div className={`mt-0.5 text-sm font-semibold ${isLast ? "text-primary" : "text-ink"}`}>
-                      {line.label}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`tabular-nums font-display ${
-                        isLast
-                          ? "text-xl font-extrabold text-primary"
-                          : line.positive
-                            ? "text-base font-bold text-ink"
-                            : "text-base font-bold text-ink-soft"
-                      }`}
-                    >
-                      {line.value < 0 ? "−" : ""}{fmt(Math.abs(line.value))}
-                    </span>
-                    <ChevronRight
-                      className={`size-4 text-ink-soft transition-transform ${isOpen ? "rotate-90" : ""}`}
-                    />
-                  </div>
-                </button>
-                {isOpen && (
-                  <div className="mx-3 mb-3 rounded-2xl bg-sand px-3.5 py-3 ring-1 ring-border">
-                    <div className="flex items-start gap-2">
-                      <Sparkles className="mt-0.5 size-4 shrink-0 text-primary" />
-                      <p className="text-[13px] leading-relaxed text-ink">{line.plain}</p>
-                    </div>
-                  </div>
-                )}
-                {!isLast && <div className="mx-4 h-px bg-border" />}
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="mt-4 rounded-2xl bg-card p-4 ring-1 ring-border">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-soft">
-            The maths
-          </div>
-          <p className="mt-1.5 text-sm leading-snug text-ink">
-            £493.00 − £50.25 − £20.08 − £24.65 = <span className="font-bold text-primary">£398.02</span> in your account on Friday.
-          </p>
-        </div>
-
-        <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-[11px] font-semibold text-ink-soft ring-1 ring-border">
-          <ShieldCheck className="size-3.5 text-primary" /> Flow Coach gives general information and estimates only — not financial, tax, legal, payroll or banking advice.
-        </div>
-      </div>
-    </div>
+    </header>
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PRE-PAYDAY CHECK — the hero, empowering 4-point review.
-type CheckPoint = {
-  key: string;
-  label: string;
-  detail: string;
-  status: "ok" | "flag";
-  reassurance: string;
-};
-
-const CHECK_POINTS: CheckPoint[] = [
-  {
-    key: "hours",
-    label: "Hours recorded",
-    detail: "34h logged across 4 shifts — matches your rota.",
-    status: "ok",
-    reassurance: "Every hour you worked is on the timesheet.",
-  },
-  {
-    key: "overtime",
-    label: "Overtime",
-    detail: "2h on Thursday evening — flagged, not yet on the rota.",
-    status: "flag",
-    reassurance: "Worth a polite note to payroll so it lands on Friday's payslip.",
-  },
-  {
-    key: "rate",
-    label: "Hourly rate",
-    detail: "£14.50/hr — matches your contract.",
-    status: "ok",
-    reassurance: "No quiet rate change. Your number is your number.",
-  },
-  {
-    key: "deductions",
-    label: "Deductions",
-    detail: "PAYE, NI and pension look right for £493 gross.",
-    status: "ok",
-    reassurance: "The take-home maths checks out: £398.02.",
-  },
-];
-
-const PAYROLL_DRAFT = `Hi Payroll team,
-
-Hope you're well. Quick one before Friday's payslip — I've got 2 hours of overtime on Thursday 5 Jun (8–10pm cover at Maple Care Home) that I don't think made it onto the rota. Could you take a look and add them in if so?
-
-Thanks so much,
-Amina`;
-
-function PrePaydayCheck({ onClose }: { onClose: () => void }) {
-  const [step, setStep] = useState(0); // 0..CHECK_POINTS.length -> scanning, then result
-  const [draftOpen, setDraftOpen] = useState(false);
-  const [draft, setDraft] = useState(PAYROLL_DRAFT);
-  const [sent, setSent] = useState(false);
-
-  // Animated scan: reveal one check every 600ms
-  useEffect(() => {
-    if (step >= CHECK_POINTS.length) return;
-    const t = window.setTimeout(() => setStep((s) => s + 1), step === 0 ? 350 : 700);
-    return () => window.clearTimeout(t);
-  }, [step]);
-
-  const done = step >= CHECK_POINTS.length;
-  const flagged = CHECK_POINTS.find((p) => p.status === "flag");
-  const allClear = done && !flagged;
-
+export function Compliance({ short = false }: { short?: boolean }) {
   return (
-    <div className="absolute inset-0 z-40 flex flex-col bg-sand">
-      {/* Header */}
-      <div className="flex items-center justify-between px-5 pt-12 pb-3">
-        <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-soft">
-            Before Friday's payday
-          </div>
-          <div className="font-display text-2xl font-extrabold tracking-tight text-ink">
-            Pre-payday check
-          </div>
-        </div>
-        <button
-          onClick={onClose}
-          className="grid size-10 place-items-center rounded-2xl bg-card ring-1 ring-border text-ink"
-          aria-label="Close pre-payday check"
-        >
-          <X className="size-5" />
-        </button>
-      </div>
-
-      <div className="flex-1 overflow-y-auto px-5 pb-6">
-        {/* Intro */}
-        <div className="rounded-2xl bg-primary-soft px-3.5 py-2.5 text-[11px] font-semibold text-primary flex items-center gap-2">
-          <ShieldCheck className="size-3.5 shrink-0" />
-          {done
-            ? flagged
-              ? "We found one small thing worth checking — nothing scary."
-              : "All four checks passed. Go into payday calm."
-            : "Running four friendly checks on this week's pay…"}
-        </div>
-
-        {/* Check list */}
-        <ul className="mt-4 space-y-2">
-          {CHECK_POINTS.map((p, i) => {
-            const revealed = i < step;
-            const isFlag = p.status === "flag";
-            return (
-              <li
-                key={p.key}
-                className={`rounded-2xl bg-card p-3.5 ring-1 transition-all ${
-                  revealed
-                    ? isFlag
-                      ? "ring-accent/40"
-                      : "ring-border"
-                    : "ring-border opacity-50"
-                } ${revealed ? "animate-in fade-in slide-in-from-bottom-1" : ""}`}
-              >
-                <div className="flex items-start gap-3">
-                  <div
-                    className={`grid size-9 shrink-0 place-items-center rounded-xl ${
-                      !revealed
-                        ? "bg-sand-deep text-ink-soft"
-                        : isFlag
-                          ? "bg-accent-soft text-accent"
-                          : "bg-primary-soft text-primary"
-                    }`}
-                  >
-                    {!revealed ? (
-                      <span className="block size-2 animate-pulse rounded-full bg-current" />
-                    ) : isFlag ? (
-                      <Info className="size-4" />
-                    ) : (
-                      <CheckCircle2 className="size-5" />
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="text-sm font-bold text-ink">{p.label}</div>
-                      {revealed && (
-                        <span
-                          className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                            isFlag ? "bg-accent-soft text-accent" : "bg-primary-soft text-primary"
-                          }`}
-                        >
-                          {isFlag ? "Worth a look" : "Looks right"}
-                        </span>
-                      )}
-                    </div>
-                    {revealed && (
-                      <>
-                        <p className="mt-1 text-[13px] leading-snug text-ink">{p.detail}</p>
-                        <p className="mt-1 text-[11px] leading-snug text-ink-soft">{p.reassurance}</p>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-
-        {/* Result card */}
-        {done && (
-          <section
-            className={`mt-5 overflow-hidden rounded-3xl p-5 text-primary-foreground shadow-lg animate-in fade-in slide-in-from-bottom-2 ${
-              allClear
-                ? "bg-gradient-to-br from-primary to-primary/90 shadow-primary/20"
-                : "bg-gradient-to-br from-accent to-accent/90 shadow-accent/20"
-            }`}
-          >
-            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] opacity-90">
-              {allClear ? <CheckCircle2 className="size-4" /> : <Info className="size-4" />}
-              {allClear ? "All clear" : "One small thing"}
-            </div>
-            <div className="mt-2 font-display text-2xl font-extrabold leading-tight">
-              {allClear ? "Your pay looks right." : "Your pay's mostly right — one bit worth a polite check."}
-            </div>
-            <p className="mt-2 text-sm leading-relaxed opacity-95">
-              {allClear
-                ? `On track for ${fmt(TAKEHOME.net)} on Friday. Nothing to chase — go enjoy your weekend.`
-                : `Your 2 hours of Thursday overtime aren't on the rota yet. A two-line message to payroll usually sorts it before Friday.`}
-            </p>
-
-            {!allClear && !draftOpen && (
-              <button
-                onClick={() => setDraftOpen(true)}
-                className="mt-4 inline-flex items-center gap-1.5 rounded-2xl bg-white px-4 py-2.5 text-sm font-bold text-accent shadow active:scale-95 transition-all"
-              >
-                Draft a polite message <ArrowUpRight className="size-4" />
-              </button>
-            )}
-            {allClear && (
-              <button
-                onClick={() => {
-                  celebrate("Pre-payday check complete");
-                  onClose();
-                }}
-                className="mt-4 inline-flex items-center gap-1.5 rounded-2xl bg-white px-4 py-2.5 text-sm font-bold text-primary shadow active:scale-95 transition-all"
-              >
-                Nice — I'm done <CheckCircle2 className="size-4" />
-              </button>
-            )}
-          </section>
-        )}
-
-        {/* Draft message to payroll */}
-        {done && flagged && draftOpen && (
-          <section className="mt-4 rounded-3xl bg-card p-4 ring-1 ring-border animate-in fade-in slide-in-from-bottom-2">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-[11px] font-semibold uppercase tracking-wider text-primary">
-                  Polite draft · to Payroll
-                </div>
-                <div className="font-display text-base font-bold text-ink">Edit and send</div>
-              </div>
-              <div className="rounded-full bg-primary-soft px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-primary">
-                Pre-filled
-              </div>
-            </div>
-            <textarea
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              rows={9}
-              className="mt-3 w-full resize-none rounded-2xl bg-sand p-3 text-[13px] leading-relaxed text-ink ring-1 ring-border focus:outline-none focus:ring-2 focus:ring-primary/40"
-            />
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button
-                onClick={() => {
-                  if (typeof navigator !== "undefined" && navigator.clipboard) {
-                    navigator.clipboard.writeText(draft).catch(() => {});
-                  }
-                  setSent(true);
-                  celebrate("Message ready for payroll");
-                }}
-                className="rounded-2xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground shadow active:scale-95 transition-all"
-              >
-                {sent ? "Copied ✓" : "Copy message"}
-              </button>
-              <button
-                onClick={() => {
-                  setSent(true);
-                  celebrate("Message sent to payroll");
-                }}
-                className="rounded-2xl bg-card px-4 py-2.5 text-sm font-bold text-ink ring-1 ring-border active:scale-95 transition-all"
-              >
-                {sent ? "Sent ✓" : "Send to payroll"}
-              </button>
-              <button
-                onClick={() => setDraftOpen(false)}
-                className="rounded-2xl px-3 py-2.5 text-sm font-semibold text-ink-soft active:scale-95 transition-all"
-              >
-                Close draft
-              </button>
-            </div>
-            <p className="mt-3 text-[11px] leading-relaxed text-ink-soft">
-              Tip: keep it short and kind. Payroll teams are people too — a polite note nearly always works.
-            </p>
-          </section>
-        )}
-
-        {/* Disclaimer */}
-        <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-[11px] font-semibold text-ink-soft ring-1 ring-border">
-          <ShieldCheck className="size-3.5 text-primary" /> Flow Coach gives general information and estimates only — not financial, tax, legal, payroll or banking advice.
-        </div>
-      </div>
+    <div className="mx-5 mt-4 mb-2 flex items-start gap-2 rounded-2xl bg-card p-3 ring-1 ring-border">
+      <ShieldCheck className="mt-0.5 size-3.5 shrink-0 text-primary" />
+      <p className="text-[11px] leading-snug text-ink-soft">
+        {short
+          ? "Estimates only. Your actual payslip may differ."
+          : "PayFlow gives estimates only. It does not provide tax, legal, payroll, banking, investment or financial advice. Your actual payslip may differ."}
+      </p>
     </div>
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PAY TAB
-export function PayScreen({ onProfileClick }: { onProfileClick?: () => void }) {
-  const max = Math.max(...WEEK.map((d) => d.earned), 1);
-  const netAnim = useCountUp(TAKEHOME.net, 1100);
-  return (
-    <div className="flex h-full flex-col">
-      <Header subtitle="This week · estimate" name="Pay" small onProfileClick={onProfileClick} />
-      <div className="flex-1 overflow-y-auto px-5 pb-6">
-        <GuidanceLine className="mb-3" />
-        {/* Weekly hero */}
-        <section className="rounded-3xl bg-card p-5 ring-1 ring-border">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-ink-soft">
-            Estimated take-home this week
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <div className="font-display text-5xl font-extrabold tracking-tight text-ink tabular-nums">
-              {fmt(netAnim)}
-            </div>
-          </div>
-          <div className="mt-1 text-xs text-ink-soft">
-            from {fmt(TAKEHOME.gross)} gross · {USER.weeklyHours}h worked
-          </div>
-          <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary-soft px-2.5 py-1 text-[11px] font-semibold text-primary">
-            <ShieldCheck className="size-3.5" /> Estimate · not advice
-          </div>
-        </section>
-
-        {/* Disclaimer */}
-        <div className="mt-5 rounded-2xl bg-card p-3.5 ring-1 ring-border">
-          <div className="flex items-start gap-2">
-            <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" />
-            <p className="text-[11px] leading-relaxed text-ink-soft">
-              Flow Coach gives general information and estimates only — not financial, tax, legal, payroll or banking advice.
-            </p>
-          </div>
-        </div>
-
-        {/* Weekly bar chart */}
-        <section className="mt-5 rounded-3xl bg-card p-5 ring-1 ring-border">
-          <div className="flex items-end justify-between">
-            <div>
-              <div className="font-display text-base font-bold text-ink">Daily earnings</div>
-              <div className="text-xs text-ink-soft">Mon — Sun</div>
-            </div>
-            <div className="text-xs font-semibold text-primary">+£12 vs last week</div>
-          </div>
-          <div className="mt-5 flex h-40 items-stretch justify-between gap-2">
-            {WEEK.map((d) => {
-              const isMax = d.earned === max && d.earned > 0;
-              const h = d.earned > 0 ? Math.max((d.earned / max) * 100, 8) : 4;
-              return (
-                <div key={d.day} className="flex h-full flex-1 flex-col items-center gap-2">
-                  <div className="relative flex w-full flex-1 items-end">
-                    {isMax && (
-                      <span className="absolute left-1/2 -top-1 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-bold text-primary-foreground">
-                        {fmt(d.earned)}
-                      </span>
-                    )}
-                    <div
-                      className={`w-full rounded-t-lg transition-all ${
-                        d.live
-                          ? "bg-accent"
-                          : isMax
-                            ? "bg-primary ring-2 ring-primary/20 ring-offset-2 ring-offset-card"
-                            : d.earned === 0
-                              ? "bg-sand-deep"
-                              : "bg-primary/70"
-                      }`}
-                      style={{ height: `${h}%`, opacity: d.earned === 0 ? 0.6 : 1 }}
-                    />
-                  </div>
-                  <span className={`text-[10px] font-semibold ${d.live ? "text-accent" : isMax ? "text-primary" : "text-ink-soft"}`}>
-                    {d.day}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-
-        </section>
-
-        {/* Take-home breakdown */}
-        <section className="mt-5 rounded-3xl bg-card p-5 ring-1 ring-border">
-          <div className="font-display text-base font-bold text-ink">Where it goes (est.)</div>
-          <ul className="mt-4 space-y-3">
-            <BreakdownRow label="Gross pay" value={TAKEHOME.gross} bold />
-            <BreakdownRow label="Income tax" value={-TAKEHOME.tax} />
-            <BreakdownRow label="National Insurance" value={-TAKEHOME.ni} />
-            <BreakdownRow label="Pension (5%)" value={-TAKEHOME.pension} />
-            <div className="my-2 h-px bg-border" />
-            <BreakdownRow label="Take home" value={TAKEHOME.net} highlight />
-          </ul>
-        </section>
-      </div>
-      <CelebrationToast />
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SAVE TAB
-export function SaveScreen({ onProfileClick }: { onProfileClick?: () => void }) {
-  const { streak } = useStreak();
-  const pct = (USER.savingsBalance / USER.savingsGoal) * 100;
-  const pctAnim = useCountUp(pct, 1100);
-  const balanceAnim = useCountUp(USER.savingsBalance, 1100);
-  const C = 2 * Math.PI * 70;
-  const offset = C - (pctAnim / 100) * C;
-  return (
-    <div className="flex h-full flex-col">
-      <Header subtitle="Gentle, automatic" name="Save" small onProfileClick={onProfileClick} />
-      <div className="flex-1 overflow-y-auto px-5 pb-6">
-        <GuidanceLine className="mb-3" />
-        {/* Kindness banner */}
-        <section className="mb-3 rounded-2xl bg-primary-soft px-4 py-3 text-center">
-          <div className="font-display text-sm font-bold text-primary">
-            You're building, not behind.
-          </div>
-          <div className="mt-0.5 text-[11px] text-primary/80">
-            Every £ moves you closer — no shame in starting small.
-          </div>
-        </section>
-        {/* Streak chip */}
-        <section className="mb-4 rounded-3xl bg-gradient-to-br from-accent-soft to-primary-soft p-4 ring-1 ring-border">
-          <div className="flex items-center gap-3">
-            <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-white/70">
-              <Flame className="size-5 text-accent" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="font-display text-sm font-extrabold text-ink tabular-nums">
-                {streak}-week saving streak
-              </div>
-              <div className="text-[11px] text-ink-soft">
-                Come back tomorrow to keep your streak.
-              </div>
-            </div>
-            <button
-              onClick={() => celebrate("Streak kept — you're building, not behind")}
-              className="shrink-0 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground shadow active:scale-95 transition-all"
-            >
-              Smash today
-            </button>
-          </div>
-        </section>
-
-        {/* Goal ring */}
-        <section className="rounded-3xl bg-card p-6 ring-1 ring-border">
-          <div className="text-center">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-ink-soft">
-              Goal · {USER.savingsGoalName}
-            </div>
-            <div className="relative mx-auto mt-4 size-44">
-              <svg viewBox="0 0 160 160" className="size-full -rotate-90">
-                <circle cx="80" cy="80" r="70" stroke="var(--sand-deep)" strokeWidth="12" fill="none" />
-                <circle
-                  cx="80" cy="80" r="70"
-                  stroke="var(--primary)"
-                  strokeWidth="12"
-                  fill="none"
-                  strokeLinecap="round"
-                  strokeDasharray={C}
-                  strokeDashoffset={offset}
-                />
-              </svg>
-              <div className="absolute inset-0 grid place-items-center text-center">
-                <div>
-                  <div className="font-display text-3xl font-extrabold tabular-nums text-ink">
-                    {fmt(balanceAnim)}
-                  </div>
-                  <div className="text-xs font-semibold text-primary tabular-nums">{Math.round(pctAnim)}% of {fmt(USER.savingsGoal)}</div>
-                </div>
-              </div>
-            </div>
-            <div className="mt-3 text-sm text-ink-soft">
-              On track to finish <span className="font-semibold text-ink">12 Jul</span>
-            </div>
-          </div>
-        </section>
-
-        {/* Auto-save toggles */}
-        <section className="mt-5 space-y-2">
-          <SaveRule icon={CircleDot} title="Round up every payment" sub="Avg £1.20/day · pauses on tight weeks" on />
-          <SaveRule icon={TrendingUp} title="Save 5% of every shift" sub="Skims after tax estimate" on />
-          <SaveRule icon={Coffee} title="Skip the coffee swap" sub="Move £3.50 when you skip" />
-        </section>
-
-        {/* History */}
-        <section className="mt-6">
-          <h3 className="font-display text-base font-bold text-ink">Recent savings</h3>
-          <ul className="mt-3 space-y-2">
-            {RECENT.filter((t) => t.type === "save").concat([
-              { id: "s2", label: "Shift skim · 5%", meta: "Yesterday", amount: 5.8, type: "save", date: "Yesterday" },
-              { id: "s3", label: "Round-ups (week)", meta: "Last week", amount: 8.4, type: "save", date: "Last wk" },
-            ]).map((t) => (
-              <TxRow key={t.id} t={t} positiveOnly />
-            ))}
-          </ul>
-        </section>
-      </div>
-      <CelebrationToast />
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// LIFE TAB
-export function LifeScreen({ onProfileClick }: { onProfileClick?: () => void }) {
-  const { streak } = useStreak();
-  const [toast, setToast] = useState<string | null>(null);
-  function flash(msg: string) {
-    setToast(msg);
-    window.clearTimeout((flash as any)._t);
-    (flash as any)._t = window.setTimeout(() => setToast(null), 2400);
-  }
-  return (
-    <div className="flex h-full flex-col">
-      <Header subtitle="Small wins that add up" name="Life" small onProfileClick={onProfileClick} />
-      <div className="flex-1 overflow-y-auto px-5 pb-6 space-y-4">
-        {/* Money-confidence score */}
-        <section className="rounded-3xl bg-card p-5 ring-1 ring-border">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-ink-soft">
-                Money-confidence score
-              </div>
-              <div className="mt-1 font-display text-4xl font-extrabold tracking-tight text-ink">
-                72<span className="text-2xl text-ink-soft">/100</span>
-              </div>
-              <div className="mt-1 text-xs font-semibold text-primary">
-                ↑ 24 points since January
-              </div>
-            </div>
-            <div className="grid size-14 place-items-center rounded-2xl bg-primary-soft">
-              <TrendingUp className="size-7 text-primary" />
-            </div>
-          </div>
-          <div className="mt-4 h-2.5 w-full overflow-hidden rounded-full bg-sand-deep">
-            <div className="h-full rounded-full bg-primary transition-all" style={{ width: "72%" }} />
-          </div>
-        </section>
-
-        {/* Savings streak */}
-        <section className="rounded-3xl bg-card p-5 ring-1 ring-border">
-          <div className="flex items-center gap-3">
-            <div className="grid size-10 place-items-center rounded-2xl bg-accent-soft">
-              <Flame className="size-5 text-accent" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="font-display text-base font-bold text-ink tabular-nums">
-                {streak} weeks of saving from every shift
-              </div>
-              <div className="text-xs text-ink-soft">Amina, you're building a habit that sticks</div>
-            </div>
-          </div>
-          <div className="mt-3 rounded-2xl bg-primary-soft px-3 py-2 text-center text-[11px] font-semibold text-primary">
-            Come back tomorrow to keep your streak.
-          </div>
-        </section>
-
-
-        {/* Small wins */}
-        <section className="rounded-3xl bg-card p-5 ring-1 ring-border">
-          <div className="font-display text-base font-bold text-ink">Small wins</div>
-          <ul className="mt-3 space-y-3">
-            {[
-              "Hit your weekly target 3 weeks running",
-              "Saved your first £100",
-              "Spotted a missing shift and got it paid",
-              "Understood your whole payslip",
-            ].map((win) => (
-              <li key={win} className="flex items-start gap-3">
-                <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-primary" />
-                <span className="text-sm leading-snug text-ink">{win}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        {/* Reassuring line */}
-        <div className="rounded-2xl bg-primary-soft px-5 py-4 text-center">
-          <div className="font-display text-sm font-bold text-primary">
-            You are not behind. You are building.
-          </div>
-        </div>
-
-        {/* Perks section */}
-        <section className="pt-2">
-          <div className="mb-3 font-display text-base font-bold text-ink">Perks for you</div>
-          <div className="space-y-3">
-            <LifeCard
-              tag="Free this month"
-              title="NHS workers — 20% off rail travel"
-              body="Use your work ID for off-peak journeys until 30 Jun."
-              accent
-              onLearnMore={() => celebrate("Rail code on the way")}
-            />
-            <LifeCard
-              tag="Wellbeing"
-              title="2 free counselling sessions"
-              body="Confidential support through your care provider's wellbeing fund."
-              onLearnMore={() => celebrate("Booking link sent")}
-            />
-            <LifeCard
-              tag="Skill up"
-              title="Level 3 Care Cert · funded"
-              body="Boost your hourly rate by ~£1.20. 12 weeks, evenings only."
-              onLearnMore={() => celebrate("Enrolment saved")}
-            />
-            <LifeCard
-              tag="Save on bills"
-              title="Council Tax — check your band"
-              body="1 in 5 carers are on the wrong band. 4-min check."
-              onLearnMore={() => celebrate("Band check done")}
-            />
-            <LifeCard
-              tag="Community"
-              title="Carers' Sunday brunch · Hackney"
-              body="Free brunch this Sunday. 14 carers going."
-              onLearnMore={() => celebrate("You're on the list 🤍")}
-            />
-          </div>
-        </section>
-      </div>
-
-      {/* Toast */}
-      {toast && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-24 z-30 flex justify-center px-6">
-          <div className="pointer-events-auto rounded-2xl bg-ink px-4 py-2.5 text-xs font-semibold text-white shadow-lg animate-in fade-in slide-in-from-bottom-2">
-            {toast}
-          </div>
-        </div>
-      )}
-      <CelebrationToast />
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// COACH TAB
-const COACH_QA = [
-  {
-    q: "What will I take home?",
-    a: `This week, with 34 hours at £14.50, your gross is £493.00. After PAYE tax (£50.25), National Insurance (£20.08) and pension (£24.65), your estimated take-home is £398.02. That's yours to spend, save, or send home.`,
-  },
-  {
-    q: "Why is my pay lower than gross?",
-    a: `Your payslip takes a bit out for three good reasons: PAYE tax (so you don't get a big bill later), National Insurance (for the NHS and your state pension), and workplace pension (still your money, just saved for later). It looks smaller, but it's protecting future you.`,
-  },
-  {
-    q: "Can I save £5 this shift?",
-    a: `Absolutely. If you save £5 from today's shift, that's £20 this month. At that pace, you'd have enough for your Eid trip 3 weeks sooner. Want me to set it aside automatically?`,
-  },
-  {
-    q: "What should I do before payday?",
-    a: `Three small things: check your rota is confirmed so no hours go missing, set aside £5–10 into your savings pot if you can, and plan one no-spend day. These tiny habits are what turn "just getting by" into "moving forward".`,
-  },
-];
-
-export function CoachScreen({ onProfileClick }: { onProfileClick?: () => void }) {
-  const [asked, setAsked] = useState<string[]>([]);
-  const [checkOpen, setCheckOpen] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
-  function flash(msg: string) {
-    setToast(msg);
-    window.clearTimeout((flash as any)._t);
-    (flash as any)._t = window.setTimeout(() => setToast(null), 2400);
-  }
-
-
-  return (
-    <div className="flex h-full flex-col">
-      <Header subtitle="Your weekly check-in" name="Flow Coach" small onProfileClick={onProfileClick} />
-      <div className="flex-1 overflow-y-auto px-5 pb-6 space-y-4">
-        <GuidanceLine />
-        {/* Greeting bubble */}
-        <div className="flex items-start gap-3">
-          <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground">
-            <Sparkles className="size-5" />
-          </div>
-          <div className="rounded-3xl rounded-tl-md bg-card p-4 ring-1 ring-border">
-            <p className="text-sm leading-relaxed text-ink">
-              Hi Amina 👋 You worked <span className="font-semibold">34 hours</span> this week — strong week. Your take-home is on track for{" "}
-              <span className="font-semibold">{fmt(TAKEHOME.net)}</span>.
-            </p>
-          </div>
-        </div>
-
-        {/* Pre-payday check — hero CTA */}
-        <div className="flex items-start gap-3">
-          <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground">
-            <ShieldCheck className="size-5" />
-          </div>
-          <div className="rounded-3xl rounded-tl-md bg-gradient-to-br from-primary-soft to-accent-soft p-4 ring-1 ring-primary/20">
-            <p className="text-sm leading-relaxed text-ink">
-              Want me to <span className="font-semibold">check your pay</span> before Friday? Four quick checks, 30 seconds — so you go into payday calm.
-            </p>
-            <div className="mt-3 flex gap-2">
-              <ChipBtn primary onClick={() => setCheckOpen(true)}>Check my pay</ChipBtn>
-              <ChipBtn onClick={() => flash("All good — I'm here when you want it")}>Maybe later</ChipBtn>
-            </div>
-          </div>
-        </div>
-
-
-        <div className="flex items-start gap-3">
-          <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-accent-soft">
-            <Heart className="size-5 text-accent" />
-          </div>
-          <div className="rounded-3xl rounded-tl-md bg-card p-4 ring-1 ring-border">
-            <p className="text-sm leading-relaxed text-ink">
-              Quick win: skipping one takeaway this week could move <span className="font-semibold">£12</span> toward your Eid trip — that's 2% closer.
-            </p>
-            <div className="mt-3 flex gap-2">
-              <ChipBtn primary onClick={() => celebrate("£12 added to Eid trip")}>Add £12 to goal</ChipBtn>
-              <ChipBtn onClick={() => flash("No worries — I'll ask again next week")}>Not this week</ChipBtn>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-start gap-3">
-          <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-primary-soft">
-            <Wallet className="size-5 text-primary" />
-          </div>
-          <div className="rounded-3xl rounded-tl-md bg-card p-4 ring-1 ring-border">
-            <p className="text-sm leading-relaxed text-ink">
-              Your Saturday shift is unconfirmed. Want me to remind you to chase the rota by 5pm Friday?
-            </p>
-            <div className="mt-3 flex gap-2">
-              <ChipBtn primary onClick={() => celebrate("Reminder set for Friday 5pm")}>Yes, remind me</ChipBtn>
-              <ChipBtn onClick={() => flash("Okay — I'll leave it with you")}>Not needed</ChipBtn>
-            </div>
-          </div>
-        </div>
-
-        {/* Asked Q&A bubbles */}
-        {asked.map((q) => {
-          const item = COACH_QA.find((c) => c.q === q)!;
-          return (
-            <div key={q} className="space-y-3">
-              {/* User question */}
-              <div className="flex items-start gap-3 justify-end">
-                <div className="rounded-3xl rounded-tr-md bg-primary p-4 text-primary-foreground">
-                  <p className="text-sm leading-relaxed">{item.q}</p>
-                </div>
-                <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-sand-deep font-display text-sm font-bold text-ink">
-                  A
-                </div>
-              </div>
-              {/* Coach answer */}
-              <div className="flex items-start gap-3">
-                <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground">
-                  <Sparkles className="size-5" />
-                </div>
-                <div className="rounded-3xl rounded-tl-md bg-card p-4 ring-1 ring-border">
-                  <p className="text-sm leading-relaxed text-ink">{item.a}</p>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-
-        {/* Suggested questions */}
-        <div className="space-y-2 pt-1">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-soft px-1">
-            Try asking
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {COACH_QA.map((item) => {
-              const isAsked = asked.includes(item.q);
-              return (
-                <button
-                  key={item.q}
-                  onClick={() => {
-                    if (!isAsked) setAsked((prev) => [...prev, item.q]);
-                  }}
-                  disabled={isAsked}
-                  className={`rounded-full px-4 py-2 text-xs font-semibold ring-1 transition-all text-left ${
-                    isAsked
-                      ? "bg-sand-deep text-ink-soft ring-border opacity-60"
-                      : "bg-card text-ink ring-border hover:bg-primary-soft hover:ring-primary/30 active:scale-95"
-                  }`}
-                >
-                  {item.q}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Bring PayFlow to workplace */}
-        <div className="flex items-start gap-3">
-          <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground">
-            <Building2 className="size-5" />
-          </div>
-          <div className="rounded-3xl rounded-tl-md bg-gradient-to-br from-primary to-primary/90 p-4 text-primary-foreground shadow-lg shadow-primary/20">
-            <p className="text-sm leading-relaxed opacity-95">
-              Get your shifts and pay clear for everyone — <span className="font-semibold">takes your manager 2 minutes</span>.
-            </p>
-            <div className="mt-3 flex gap-2">
-              <button
-                onClick={() => {
-                  const draft = "Hi, I wanted to share PayFlow — a free app that helps hourly workers like our team see shifts and pay clearly in real time. It only takes a couple of minutes to set up. Would you be open to taking a look? Thanks, Amina";
-                  if (typeof navigator !== "undefined" && navigator.clipboard) {
-                    navigator.clipboard.writeText(draft).catch(() => {});
-                  }
-                  celebrate("Manager invite copied");
-                }}
-                className="rounded-full px-3.5 py-1.5 text-xs font-semibold bg-white text-primary shadow active:scale-95 transition-all"
-              >
-                Invite manager
-              </button>
-              <button
-                onClick={() => {
-                  const text = "I'm using PayFlow to track my shifts and pay in real time. It's free and made for hourly workers like us. Want to try it?";
-                  if (typeof navigator !== "undefined" && navigator.share) {
-                    navigator.share({ title: "PayFlow", text }).catch(() => {});
-                  } else if (typeof navigator !== "undefined" && navigator.clipboard) {
-                    navigator.clipboard.writeText(text).catch(() => {});
-                  }
-                  celebrate("Invite shared with a coworker");
-                }}
-                className="rounded-full px-3.5 py-1.5 text-xs font-semibold bg-white/15 text-white ring-1 ring-white/25 hover:bg-white/25 active:scale-95 transition-all"
-              >
-                Invite coworker
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* User reply prompt */}
-        <button
-          onClick={() => flash("Pick a suggestion above — Flow Coach replies in plain, kind English")}
-          className="sticky bottom-2 w-full rounded-full bg-card px-4 py-3 ring-1 ring-border flex items-center gap-2 shadow-sm active:scale-[0.99] transition-transform text-left"
-        >
-          <span className="text-sm text-ink-soft flex-1">Ask Flow Coach anything…</span>
-          <span className="grid size-8 place-items-center rounded-full bg-primary text-primary-foreground">
-            <ArrowUpRight className="size-4" />
-          </span>
-        </button>
-
-        {/* Disclaimer */}
-        <div className="rounded-2xl bg-card p-3.5 ring-1 ring-border">
-          <div className="flex items-start gap-2">
-            <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" />
-            <p className="text-[11px] leading-relaxed text-ink-soft">
-              Flow Coach gives general information and estimates only — not financial, tax, legal, payroll or banking advice.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Toast */}
-      {toast && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-24 z-30 flex justify-center px-6">
-          <div className="pointer-events-auto rounded-2xl bg-ink px-4 py-2.5 text-xs font-semibold text-white shadow-lg animate-in fade-in slide-in-from-bottom-2">
-            {toast}
-          </div>
-        </div>
-      )}
-      <CelebrationToast />
-
-      {/* Pre-payday check overlay */}
-      {checkOpen && <PrePaydayCheck onClose={() => setCheckOpen(false)} />}
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// PROFILE SCREEN
-export function ProfileScreen({ onClose }: { onClose: () => void }) {
-  const [inviteOpen, setInviteOpen] = useState(false);
-  const [copiedManager, setCopiedManager] = useState(false);
-  const [copiedCoworker, setCopiedCoworker] = useState(false);
-
-  const managerDraft = `Hi,
-
-I wanted to share PayFlow — a free app that helps hourly workers like our team see shifts and pay clearly in real time.
-
-It only takes a couple of minutes to set up and it could really help everyone understand their rota and take-home better.
-
-Would you be open to taking a look?
-
-Thanks,
-Amina`;
-
-  const coworkerText = "I'm using PayFlow to track my shifts and pay in real time. It's free and made for hourly workers like us. Want to try it?";
-
-  const shareCoworker = () => {
-    if (typeof navigator !== "undefined" && navigator.share) {
-      navigator.share({ title: "PayFlow", text: coworkerText }).catch(() => {});
-    } else if (typeof navigator !== "undefined" && navigator.clipboard) {
-      navigator.clipboard.writeText(coworkerText).catch(() => {});
-      setCopiedCoworker(true);
-      setTimeout(() => setCopiedCoworker(false), 2000);
-    }
-    celebrate("Invite shared with a coworker");
-  };
-
-  return (
-    <div className="absolute inset-0 z-40 flex flex-col bg-sand">
-      {/* Header */}
-      <div className="flex items-center justify-between px-5 pt-12 pb-3">
-        <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-soft">Your profile</div>
-          <div className="font-display text-2xl font-extrabold tracking-tight text-ink">Profile</div>
-        </div>
-        <button
-          onClick={onClose}
-          className="grid size-10 place-items-center rounded-2xl bg-card ring-1 ring-border text-ink"
-          aria-label="Close profile"
-        >
-          <X className="size-5" />
-        </button>
-      </div>
-
-      <div className="flex-1 overflow-y-auto px-5 pb-6 space-y-4">
-        {/* User card */}
-        <section className="rounded-3xl bg-card p-5 ring-1 ring-border">
-          <div className="flex items-center gap-3">
-            <div className="grid size-14 place-items-center rounded-2xl bg-primary text-primary-foreground font-display text-xl font-bold">
-              A
-            </div>
-            <div>
-              <div className="font-display text-lg font-bold text-ink">{USER.name}</div>
-              <div className="text-sm text-ink-soft">Care worker · Maple Care Home</div>
-              <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-primary-soft px-2 py-0.5 text-[10px] font-bold text-primary">
-                <ShieldCheck className="size-3" /> Verified
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Employer pull — hero card */}
-        <section className="overflow-hidden rounded-3xl bg-gradient-to-br from-primary to-primary/90 p-5 text-primary-foreground shadow-lg shadow-primary/20">
-          <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] opacity-90">
-            <Building2 className="size-4" /> For your whole team
-          </div>
-          <div className="mt-2 font-display text-xl font-extrabold leading-tight">
-            Bring PayFlow to your workplace
-          </div>
-          <p className="mt-2 text-sm leading-relaxed opacity-95">
-            Get your shifts and pay clear for everyone — <span className="font-semibold">takes your manager 2 minutes</span>.
-          </p>
-          <button
-            onClick={() => setInviteOpen(true)}
-            className="mt-4 inline-flex items-center gap-1.5 rounded-2xl bg-white px-4 py-2.5 text-sm font-bold text-primary shadow active:scale-95 transition-all"
-          >
-            Invite my manager <ArrowUpRight className="size-4" />
-          </button>
-        </section>
-
-        {/* Invite a coworker */}
-        <section className="rounded-3xl bg-card p-5 ring-1 ring-border">
-          <div className="flex items-center gap-3">
-            <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-accent-soft">
-              <Users className="size-5 text-accent" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="font-display text-base font-bold text-ink">Invite a coworker</div>
-              <p className="text-sm text-ink-soft">Share PayFlow with someone on your team.</p>
-            </div>
-            <button
-              onClick={shareCoworker}
-              className="shrink-0 rounded-xl bg-accent px-3 py-2 text-xs font-bold text-accent-foreground shadow active:scale-95 transition-all"
-            >
-              {copiedCoworker ? "Copied ✓" : "Share"}
-            </button>
-          </div>
-        </section>
-
-        {/* Manager invite expanded */}
-        {inviteOpen && (
-          <section className="rounded-3xl bg-card p-5 ring-1 ring-border animate-in fade-in slide-in-from-bottom-2">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-[11px] font-semibold uppercase tracking-wider text-primary">Pre-filled draft</div>
-                <div className="font-display text-base font-bold text-ink">To your manager</div>
-              </div>
-              <div className="rounded-full bg-primary-soft px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-primary">
-                Ready to send
-              </div>
-            </div>
-            <textarea
-              readOnly
-              rows={8}
-              className="mt-3 w-full resize-none rounded-2xl bg-sand p-3 text-[13px] leading-relaxed text-ink ring-1 ring-border focus:outline-none"
-              value={managerDraft}
-            />
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button
-                onClick={() => {
-                  if (typeof navigator !== "undefined" && navigator.clipboard) {
-                    navigator.clipboard.writeText(managerDraft).catch(() => {});
-                  }
-                  setCopiedManager(true);
-                  celebrate("Manager invite copied");
-                  setTimeout(() => setCopiedManager(false), 2000);
-                }}
-                className="inline-flex items-center gap-1.5 rounded-2xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground shadow active:scale-95 transition-all"
-              >
-                {copiedManager ? "Copied ✓" : <><Copy className="size-3.5" /> Copy message</>}
-              </button>
-              <button
-                onClick={() => {
-                  celebrate("Invite sent to manager");
-                  setInviteOpen(false);
-                }}
-                className="inline-flex items-center gap-1.5 rounded-2xl bg-card px-4 py-2.5 text-sm font-bold text-ink ring-1 ring-border active:scale-95 transition-all"
-              >
-                <Send className="size-3.5" /> Send
-              </button>
-              <button
-                onClick={() => setInviteOpen(false)}
-                className="rounded-2xl px-3 py-2.5 text-sm font-semibold text-ink-soft active:scale-95 transition-all"
-              >
-                Close
-              </button>
-            </div>
-            <p className="mt-3 text-[11px] leading-relaxed text-ink-soft">
-              Tip: a short, kind message works best. Most managers are happy to explore tools that help the team.
-            </p>
-          </section>
-        )}
-
-        {/* Disclaimer */}
-        <div className="rounded-2xl bg-card p-3.5 ring-1 ring-border">
-          <div className="flex items-start gap-2">
-            <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" />
-            <p className="text-[11px] leading-relaxed text-ink-soft">
-              Flow Coach gives general information and estimates only — not financial, tax, legal, payroll or banking advice.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Shared bits
-function Header({ name, subtitle, small, onProfileClick }: { name: string; subtitle: string; small?: boolean; onProfileClick?: () => void }) {
-  const { streak } = useStreak();
-  return (
-    <div className="px-5 pt-12 pb-3">
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-soft">
-            {subtitle}
-          </div>
-          <div className={`font-display font-extrabold tracking-tight text-ink ${small ? "text-2xl" : "text-3xl"}`}>
-            {small ? name : `Hi, ${name}`}
-          </div>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <div
-            title={`${streak}-week saving streak`}
-            className="flex items-center gap-1 rounded-full bg-accent-soft px-2.5 py-1 text-[11px] font-bold text-accent ring-1 ring-accent/20"
-          >
-            <Flame className="size-3.5" />
-            <span className="tabular-nums">{streak} wk</span>
-          </div>
-          <button
-            onClick={onProfileClick}
-            className="grid size-11 place-items-center rounded-2xl bg-primary-soft font-display text-base font-bold text-primary ring-1 ring-primary/10 active:scale-95 transition-transform"
-          >
-            A
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function QuickAction({ icon: Icon, label, onClick, active }: { icon: typeof Clock; label: string; onClick?: () => void; active?: boolean }) {
+function Btn({ children, onClick, variant = "primary", className = "", disabled, type = "button" }: { children: React.ReactNode; onClick?: () => void; variant?: "primary" | "ghost" | "ink" | "danger" | "accent"; className?: string; disabled?: boolean; type?: "button" | "submit" }) {
+  const v = {
+    primary: "bg-primary text-primary-foreground hover:opacity-95",
+    accent: "bg-accent text-accent-foreground hover:opacity-95",
+    ink: "bg-ink text-sand hover:opacity-95",
+    ghost: "bg-card text-ink ring-1 ring-border hover:bg-sand-deep",
+    danger: "bg-destructive text-destructive-foreground hover:opacity-95",
+  }[variant];
   return (
     <button
+      type={type}
       onClick={onClick}
-      className={`flex flex-col items-center gap-1.5 rounded-2xl p-3 ring-1 active:scale-95 transition-transform ${active ? "bg-accent-soft ring-accent/40" : "bg-card ring-border"}`}
-    >
-      <div className={`grid size-9 place-items-center rounded-xl ${active ? "bg-accent text-white" : "bg-sand-deep text-primary"}`}>
-        <Icon className="size-4" />
-      </div>
-      <span className="text-[10px] font-semibold text-ink">{label}</span>
-    </button>
-  );
-}
-
-function TxRow({ t, positiveOnly }: { t: { id: string; label: string; meta: string; amount: number; type: string }; positiveOnly?: boolean }) {
-  const isSave = t.type === "save";
-  const isTip = t.type === "tip";
-  return (
-    <li className="flex items-center gap-3 rounded-2xl bg-card p-3 ring-1 ring-border">
-      <div className={`grid size-10 shrink-0 place-items-center rounded-xl ${isSave ? "bg-primary-soft" : isTip ? "bg-accent-soft" : "bg-sand-deep"}`}>
-        {isSave ? <PiggyBank className="size-4 text-primary" /> : isTip ? <Heart className="size-4 text-accent" /> : <Clock className="size-4 text-primary" />}
-      </div>
-      <div className="min-w-0 flex-1">
-        <div className="truncate text-sm font-semibold text-ink">{t.label}</div>
-        <div className="truncate text-[11px] text-ink-soft">{t.meta}</div>
-      </div>
-      <div className={`text-sm font-bold tabular-nums ${positiveOnly || isSave ? "text-primary" : isTip ? "text-accent" : "text-ink"}`}>
-        +{fmt(t.amount)}
-      </div>
-    </li>
-  );
-}
-
-function BreakdownRow({ label, value, bold, highlight }: { label: string; value: number; bold?: boolean; highlight?: boolean }) {
-  return (
-    <li className="flex items-baseline justify-between">
-      <span className={`text-sm ${bold || highlight ? "font-bold text-ink" : "text-ink-soft"}`}>{label}</span>
-      <span className={`tabular-nums ${highlight ? "font-display text-xl font-extrabold text-primary" : bold ? "text-sm font-bold text-ink" : "text-sm font-semibold text-ink"}`}>
-        {value < 0 ? "−" : ""}{fmt(Math.abs(value))}
-      </span>
-    </li>
-  );
-}
-
-function SaveRule({ icon: Icon, title, sub, on }: { icon: typeof Clock; title: string; sub: string; on?: boolean }) {
-  return (
-    <div className="flex items-center gap-3 rounded-2xl bg-card p-3.5 ring-1 ring-border">
-      <div className="grid size-10 place-items-center rounded-xl bg-sand-deep">
-        <Icon className="size-4 text-primary" />
-      </div>
-      <div className="flex-1">
-        <div className="text-sm font-semibold text-ink">{title}</div>
-        <div className="text-[11px] text-ink-soft">{sub}</div>
-      </div>
-      <div className={`relative h-6 w-10 rounded-full transition-colors ${on ? "bg-primary" : "bg-sand-deep"}`}>
-        <div className={`absolute top-0.5 size-5 rounded-full bg-white shadow transition-all ${on ? "left-[18px]" : "left-0.5"}`} />
-      </div>
-    </div>
-  );
-}
-
-function LifeCard({ tag, title, body, accent, onLearnMore }: { tag: string; title: string; body: string; accent?: boolean; onLearnMore?: () => void }) {
-  return (
-    <div className="rounded-3xl bg-card p-4 ring-1 ring-border">
-      <span className={`inline-block rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${accent ? "bg-accent-soft text-accent" : "bg-primary-soft text-primary"}`}>
-        {tag}
-      </span>
-      <div className="mt-2.5 font-display text-base font-bold leading-snug text-ink">{title}</div>
-      <p className="mt-1 text-sm leading-snug text-ink-soft">{body}</p>
-      <button
-        onClick={onLearnMore}
-        className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary active:scale-95 transition-transform"
-      >
-        Learn more <ChevronRight className="size-3.5" />
-      </button>
-    </div>
-  );
-}
-
-function ChipBtn({ primary, children, onClick }: { primary?: boolean; children: React.ReactNode; onClick?: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`rounded-full px-3.5 py-1.5 text-xs font-semibold ring-1 transition-all active:scale-95 ${primary ? "bg-primary text-primary-foreground ring-primary" : "bg-card text-ink ring-border hover:bg-primary-soft"}`}
+      disabled={disabled}
+      className={`inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3.5 text-[15px] font-bold transition-all active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 ${v} ${className}`}
     >
       {children}
     </button>
   );
 }
 
-// Re-export Quote for landing page use (lucide doesn't always include it consistently)
-export { Quote };
+// ---------------- TODAY ----------------
+
+export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
+  const live = useStore((s) => s.live);
+  const shifts = useStore((s) => s.shifts);
+  const week = weeklyTotals(shifts);
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    if (!live.active) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [live.active]);
+
+  const elapsedMs = liveElapsedMs(live, now);
+  const earned = liveEarnings(live, now);
+  const onBreak = !!live.pausedAt;
+
+  return (
+    <div className="pb-[120px]">
+      <AppHeader
+        title={live.active ? "On shift" : "Today"}
+        subtitle={live.active ? live.workplace : "Ready when you are"}
+      />
+
+      {/* Hero */}
+      <section className="mx-5 mt-5">
+        <div className="rounded-[28px] bg-ink p-6 text-sand shadow-[0_14px_40px_-18px_rgba(0,0,0,0.5)]">
+          <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-[0.18em] opacity-80">
+            <span className="inline-flex items-center gap-1.5">
+              <span className={`size-1.5 rounded-full ${live.active && !onBreak ? "bg-accent animate-pulse-dot" : "bg-white/50"}`} />
+              {live.active ? (onBreak ? "On break" : "Earning live") : "Off shift"}
+            </span>
+            <span>{gbp(live.hourlyRate)}/hr</span>
+          </div>
+          <div className="mt-4 font-display text-[56px] font-extrabold tracking-tight leading-none tabular-nums">
+            {gbp(earned)}
+          </div>
+          <div className="mt-1 text-sm opacity-80">{fmtClock(elapsedMs)} this shift</div>
+
+          <div className="mt-6 grid grid-cols-1 gap-2">
+            {!live.active ? (
+              <Btn variant="accent" onClick={() => startShift()}>
+                <Play className="size-5" fill="currentColor" /> Start shift
+              </Btn>
+            ) : (
+              <>
+                <Btn variant="accent" onClick={endShift}>
+                  <Square className="size-4" fill="currentColor" /> End shift
+                </Btn>
+                <Btn variant="ghost" onClick={toggleBreak} className="!bg-white/10 !text-sand !ring-white/15">
+                  {onBreak ? <><Play className="size-4" fill="currentColor" /> Resume shift</> : <><Coffee className="size-4" /> Start break</>}
+                </Btn>
+              </>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* This week summary */}
+      <section className="mx-5 mt-4 grid grid-cols-2 gap-3">
+        <Tile label="This week" value={fmtHours(week.hours)} icon={Clock} />
+        <Tile label="Gross pay" value={gbp(week.gross)} icon={Wallet} accent />
+      </section>
+
+      {/* Quick actions */}
+      <section className="mx-5 mt-4 grid grid-cols-3 gap-2">
+        <QuickAction icon={Plus} label="Add shift" onClick={() => goToTab?.("pay")} />
+        <QuickAction icon={Wallet} label="Pay" onClick={() => goToTab?.("pay")} />
+        <QuickAction icon={Sparkles} label="Coach" onClick={() => goToTab?.("coach")} />
+      </section>
+
+      {/* Recent shifts */}
+      <section className="mx-5 mt-6">
+        <h2 className="text-[13px] font-bold text-ink-soft uppercase tracking-wider mb-2">Recent shifts</h2>
+        {shifts.length === 0 ? (
+          <div className="rounded-2xl bg-card p-5 ring-1 ring-border text-center text-sm text-ink-soft">
+            No shifts yet. Start one above or add one in Pay — you're building, not behind.
+          </div>
+        ) : (
+          <ul className="space-y-2">
+            {shifts.slice(0, 3).map((s) => <ShiftRow key={s.id} s={s} />)}
+          </ul>
+        )}
+      </section>
+
+      <Compliance short />
+    </div>
+  );
+}
+
+function Tile({ label, value, icon: Icon, accent }: { label: string; value: string; icon: any; accent?: boolean }) {
+  return (
+    <div className={`rounded-2xl p-4 ring-1 ${accent ? "bg-primary text-primary-foreground ring-transparent" : "bg-card ring-border"}`}>
+      <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider opacity-80">
+        <Icon className="size-3.5" /> {label}
+      </div>
+      <div className="mt-1.5 font-display text-2xl font-extrabold tracking-tight tabular-nums">{value}</div>
+    </div>
+  );
+}
+
+function QuickAction({ icon: Icon, label, onClick }: { icon: any; label: string; onClick?: () => void }) {
+  return (
+    <button onClick={onClick} className="flex flex-col items-center gap-1.5 rounded-2xl bg-card p-3 ring-1 ring-border active:scale-[0.97] transition-transform">
+      <div className="grid size-9 place-items-center rounded-xl bg-primary-soft text-primary"><Icon className="size-4" /></div>
+      <span className="text-[12px] font-bold text-ink">{label}</span>
+    </button>
+  );
+}
+
+function ShiftRow({ s, onDelete }: { s: Shift; onDelete?: () => void }) {
+  const d = new Date(s.date + "T00:00:00");
+  const dayLabel = d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+  return (
+    <li className="flex items-center gap-3 rounded-2xl bg-card p-3.5 ring-1 ring-border">
+      <div className="grid size-10 place-items-center rounded-xl bg-primary-soft text-primary"><Clock className="size-4" /></div>
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-[14px] font-bold">{s.workplace}</div>
+        <div className="text-[12px] text-ink-soft">{dayLabel} · {fmtHours(s.hours)} · {s.start}–{s.end}</div>
+      </div>
+      <div className="text-right">
+        <div className="font-display text-[15px] font-extrabold tabular-nums">{gbp(s.gross)}</div>
+        {onDelete && (
+          <button onClick={onDelete} className="mt-0.5 text-[11px] text-ink-soft hover:text-destructive inline-flex items-center gap-1">
+            <Trash2 className="size-3" /> Remove
+          </button>
+        )}
+      </div>
+    </li>
+  );
+}
+
+// ---------------- PAY ----------------
+
+type PayModal = null | "add" | "forecast" | "payslip" | "query";
+
+export function PayScreen() {
+  const shifts = useStore((s) => s.shifts);
+  const week = weeklyTotals(shifts);
+  const ded = estimateDeductions(week.gross);
+  const payday = nextFriday();
+  const daysToPay = daysUntil(payday);
+  const confidence = Math.min(100, Math.round((week.count >= 4 ? 90 : 60 + week.count * 7)));
+
+  const [modal, setModal] = useState<PayModal>(null);
+
+  return (
+    <div className="pb-[120px]">
+      <AppHeader title="Pay" subtitle={`Next payday · Fri (${daysToPay} day${daysToPay === 1 ? "" : "s"})`} />
+
+      {/* Hero */}
+      <section className="mx-5 mt-5">
+        <div className="rounded-[28px] bg-gradient-to-br from-primary to-primary/80 p-6 text-primary-foreground">
+          <div className="text-[11px] font-bold uppercase tracking-[0.18em] opacity-90">Estimated take-home this week</div>
+          <div className="mt-2 font-display text-[52px] font-extrabold tracking-tight tabular-nums leading-none">{gbp(ded.net)}</div>
+          <div className="mt-2 text-sm opacity-90">{fmtHours(week.hours)} · gross {gbp(ded.gross)}</div>
+
+          <div className="mt-5 rounded-2xl bg-white/10 p-3 ring-1 ring-white/15">
+            <Row k="PAYE income tax" v={`− ${gbp(ded.tax)}`} />
+            <Row k="National Insurance" v={`− ${gbp(ded.ni)}`} />
+            <Row k="Pension (5%)" v={`− ${gbp(ded.pension)}`} last />
+          </div>
+        </div>
+      </section>
+
+      {/* Confidence */}
+      <section className="mx-5 mt-4 rounded-2xl bg-card p-4 ring-1 ring-border">
+        <div className="flex items-center justify-between">
+          <div className="text-[13px] font-bold">Pay confidence</div>
+          <div className="text-[13px] font-bold tabular-nums">{confidence}%</div>
+        </div>
+        <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-sand-deep">
+          <div className="h-full rounded-full bg-primary" style={{ width: `${confidence}%` }} />
+        </div>
+        <p className="mt-2 text-[12px] text-ink-soft">
+          Based on {week.count} shift{week.count === 1 ? "" : "s"} this week. Log every shift to keep this accurate.
+        </p>
+      </section>
+
+      {/* Actions */}
+      <section className="mx-5 mt-4 grid grid-cols-2 gap-2">
+        <Btn variant="ink" onClick={() => setModal("add")}><Plus className="size-4" /> Add shift</Btn>
+        <Btn variant="ghost" onClick={() => setModal("forecast")}><TrendingUp className="size-4" /> Pay forecast</Btn>
+        <Btn variant="ghost" onClick={() => setModal("payslip")}><FileText className="size-4" /> Payslip translator</Btn>
+        <Btn variant="ghost" onClick={() => setModal("query")}><MessageSquare className="size-4" /> Payroll query</Btn>
+      </section>
+
+      {/* Shift history */}
+      <section className="mx-5 mt-6">
+        <h2 className="text-[13px] font-bold text-ink-soft uppercase tracking-wider mb-2">Shift history</h2>
+        {shifts.length === 0 ? (
+          <div className="rounded-2xl bg-card p-5 ring-1 ring-border text-center text-sm text-ink-soft">
+            No shifts logged yet. Tap Add shift to get started.
+          </div>
+        ) : (
+          <ul className="space-y-2">
+            {shifts.map((s) => <ShiftRow key={s.id} s={s} onDelete={() => deleteShift(s.id)} />)}
+          </ul>
+        )}
+      </section>
+
+      <Compliance />
+
+      {modal === "add" && <AddShiftModal onClose={() => setModal(null)} />}
+      {modal === "forecast" && <ForecastModal onClose={() => setModal(null)} />}
+      {modal === "payslip" && <PayslipModal onClose={() => setModal(null)} ded={ded} hours={week.hours} />}
+      {modal === "query" && <PayrollQueryModal onClose={() => setModal(null)} />}
+    </div>
+  );
+}
+
+function Row({ k, v, last }: { k: string; v: string; last?: boolean }) {
+  return (
+    <div className={`flex items-center justify-between py-1.5 ${last ? "" : "border-b border-white/10"}`}>
+      <span className="text-[13px] opacity-90">{k}</span>
+      <span className="text-[14px] font-bold tabular-nums">{v}</span>
+    </div>
+  );
+}
+
+// ---------------- Modals ----------------
+
+function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-ink/40 backdrop-blur-sm" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="w-full sm:max-w-md bg-sand rounded-t-[28px] sm:rounded-[28px] max-h-[92vh] overflow-y-auto shadow-2xl">
+        <div className="sticky top-0 z-10 bg-sand/95 backdrop-blur px-5 pt-4 pb-3 flex items-center justify-between border-b border-border/60">
+          <h2 className="font-display text-xl font-extrabold">{title}</h2>
+          <button onClick={onClose} className="grid size-9 place-items-center rounded-full bg-card ring-1 ring-border"><X className="size-4" /></button>
+        </div>
+        <div className="p-5">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="block text-[12px] font-bold text-ink-soft mb-1.5">{label}</span>
+      {children}
+    </label>
+  );
+}
+
+const inputCls = "w-full rounded-2xl bg-card px-4 py-3 ring-1 ring-border text-[15px] focus:outline-none focus:ring-2 focus:ring-primary";
+
+function AddShiftModal({ onClose }: { onClose: () => void }) {
+  const def = useStore((s) => ({ wp: s.workplaceDefault, rate: s.hourlyRateDefault }));
+  const today = new Date().toISOString().slice(0, 10);
+  const [form, setForm] = useState({
+    workplace: def.wp, date: today, start: "09:00", end: "17:00", breakMins: 30, hourlyRate: def.rate, notes: "",
+  });
+  const [err, setErr] = useState<string | null>(null);
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.workplace.trim()) return setErr("Please add a workplace.");
+    if (!form.start || !form.end) return setErr("Please add start and end times.");
+    if (form.hourlyRate <= 0) return setErr("Hourly rate must be more than £0.");
+    addShift({ ...form, breakMins: Number(form.breakMins) || 0, hourlyRate: Number(form.hourlyRate) });
+    onClose();
+  };
+
+  return (
+    <Modal title="Add shift" onClose={onClose}>
+      <form onSubmit={submit} className="space-y-3">
+        <Field label="Workplace"><input className={inputCls} value={form.workplace} onChange={(e) => setForm({ ...form, workplace: e.target.value })} maxLength={60} /></Field>
+        <Field label="Date"><input type="date" className={inputCls} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></Field>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Start"><input type="time" className={inputCls} value={form.start} onChange={(e) => setForm({ ...form, start: e.target.value })} /></Field>
+          <Field label="End"><input type="time" className={inputCls} value={form.end} onChange={(e) => setForm({ ...form, end: e.target.value })} /></Field>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Break (mins)"><input type="number" min={0} max={240} className={inputCls} value={form.breakMins} onChange={(e) => setForm({ ...form, breakMins: Number(e.target.value) })} /></Field>
+          <Field label="Hourly rate (£)"><input type="number" min={0} step="0.01" className={inputCls} value={form.hourlyRate} onChange={(e) => setForm({ ...form, hourlyRate: Number(e.target.value) })} /></Field>
+        </div>
+        <Field label="Notes (optional)"><textarea className={inputCls} rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} maxLength={200} /></Field>
+        {err && <div className="rounded-xl bg-destructive/10 text-destructive px-3 py-2 text-sm flex items-center gap-2"><AlertCircle className="size-4" /> {err}</div>}
+        <Btn type="submit" className="w-full"><Check className="size-4" /> Save shift</Btn>
+      </form>
+    </Modal>
+  );
+}
+
+function ForecastModal({ onClose }: { onClose: () => void }) {
+  const shifts = useStore((s) => s.shifts);
+  const week = weeklyTotals(shifts);
+  const ded = estimateDeductions(week.gross);
+  const monthly = ded.net * 4.33;
+  const yearly = ded.net * 52;
+  return (
+    <Modal title="Pay forecast" onClose={onClose}>
+      <p className="text-[13px] text-ink-soft mb-4">If your current week's pattern continues, here's a rough picture.</p>
+      <div className="space-y-2">
+        <Stat label="This week (take-home)" v={gbp(ded.net)} />
+        <Stat label="Estimated monthly" v={gbp(monthly)} />
+        <Stat label="Estimated yearly" v={gbp(yearly)} />
+      </div>
+      <p className="mt-4 text-[11px] text-ink-soft">PayFlow gives estimates only. Your actual pay may differ depending on tax code, overtime and other factors.</p>
+    </Modal>
+  );
+}
+
+function Stat({ label, v }: { label: string; v: string }) {
+  return (
+    <div className="flex items-center justify-between rounded-2xl bg-card p-4 ring-1 ring-border">
+      <span className="text-[13px] text-ink-soft">{label}</span>
+      <span className="font-display text-lg font-extrabold tabular-nums">{v}</span>
+    </div>
+  );
+}
+
+function PayslipModal({ onClose, ded, hours }: { onClose: () => void; ded: ReturnType<typeof estimateDeductions>; hours: number }) {
+  const items: { k: string; v: string; what: string }[] = [
+    { k: "Gross pay", v: gbp(ded.gross), what: "Total earned before deductions — your hourly rate × hours worked." },
+    { k: "PAYE income tax", v: gbp(ded.tax), what: "Tax taken from your pay by your employer and sent to HMRC. Based on your tax code." },
+    { k: "National Insurance", v: gbp(ded.ni), what: "A separate UK contribution that builds up your State Pension and benefits." },
+    { k: "Pension", v: gbp(ded.pension), what: "Your contribution to your workplace pension (auto-enrolment minimum 5%)." },
+    { k: "Net pay (take-home)", v: gbp(ded.net), what: "What actually lands in your bank account on payday." },
+  ];
+  return (
+    <Modal title="Payslip translator" onClose={onClose}>
+      <p className="text-[13px] text-ink-soft mb-3">Plain English meaning of each line on your payslip.</p>
+      <p className="text-[12px] text-ink-soft mb-3">Based on {fmtHours(hours)} this week.</p>
+      <div className="space-y-2.5">
+        {items.map((i) => (
+          <div key={i.k} className="rounded-2xl bg-card p-4 ring-1 ring-border">
+            <div className="flex items-center justify-between">
+              <span className="text-[14px] font-bold">{i.k}</span>
+              <span className="font-display text-[15px] font-extrabold tabular-nums">{i.v}</span>
+            </div>
+            <p className="mt-1.5 text-[12px] text-ink-soft leading-snug">{i.what}</p>
+          </div>
+        ))}
+      </div>
+    </Modal>
+  );
+}
+
+// ---------------- Payroll Query ----------------
+
+type QueryIssue = "missing-hours" | "wrong-rate" | "overtime" | "holiday" | "deduction" | "missing-payslip";
+
+const ISSUES: { id: QueryIssue; label: string }[] = [
+  { id: "missing-hours", label: "Missing hours" },
+  { id: "wrong-rate", label: "Wrong hourly rate" },
+  { id: "overtime", label: "Overtime missing" },
+  { id: "holiday", label: "Holiday pay question" },
+  { id: "deduction", label: "Deduction unclear" },
+  { id: "missing-payslip", label: "Payslip missing" },
+];
+
+function messageFor(issue: QueryIssue) {
+  const sign = "\n\nKind regards,\n[Your name]";
+  switch (issue) {
+    case "missing-hours":
+      return `Hello payroll team,\n\nI hope you're well. I think there may be some hours missing from my latest payslip. According to my records I worked [hours] hours during the pay period [dates], but my payslip shows fewer.\n\nCould you please check this when you have a moment and let me know what you find? I'm happy to share my shift log.${sign}`;
+    case "wrong-rate":
+      return `Hello payroll team,\n\nI hope you're well. I think the hourly rate used on my latest payslip may be incorrect. My agreed rate is £[rate]/hour, but the payslip appears to use a different figure.\n\nCould you please double-check this for me? Thank you for your help.${sign}`;
+    case "overtime":
+      return `Hello payroll team,\n\nI worked some overtime during the pay period [dates] but I can't see it on my latest payslip. Could you please check if it has been included, and let me know how overtime is paid?\n\nThank you very much.${sign}`;
+    case "holiday":
+      return `Hello payroll team,\n\nI had a quick question about my holiday pay. Could you let me know how many holiday hours I have accrued so far this year, and how holiday pay is calculated for my role?\n\nThank you for your help.${sign}`;
+    case "deduction":
+      return `Hello payroll team,\n\nI noticed a deduction on my latest payslip that I don't fully understand. Could you please explain what it is for, and confirm it is correct?\n\nThank you for taking the time to look into this.${sign}`;
+    case "missing-payslip":
+      return `Hello payroll team,\n\nI haven't received my payslip for the pay period ending [date]. Could you please send it across when you have a moment?\n\nThank you very much.${sign}`;
+  }
+}
+
+export function PayrollQueryModal({ onClose, initial = "missing-hours" }: { onClose: () => void; initial?: QueryIssue }) {
+  const [issue, setIssue] = useState<QueryIssue>(initial);
+  const [copied, setCopied] = useState(false);
+  const msg = messageFor(issue);
+
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(msg); setCopied(true); setTimeout(() => setCopied(false), 1800); } catch {}
+  };
+
+  return (
+    <Modal title="Payroll query helper" onClose={onClose}>
+      <p className="text-[13px] text-ink-soft mb-3">Pick an issue. We'll draft a polite message you can copy and send.</p>
+      <div className="flex flex-wrap gap-2 mb-4">
+        {ISSUES.map((i) => (
+          <button
+            key={i.id}
+            onClick={() => setIssue(i.id)}
+            className={`rounded-full px-3 py-1.5 text-[12px] font-bold ring-1 transition ${issue === i.id ? "bg-primary text-primary-foreground ring-transparent" : "bg-card ring-border text-ink"}`}
+          >
+            {i.label}
+          </button>
+        ))}
+      </div>
+      <textarea readOnly className="w-full rounded-2xl bg-card p-4 ring-1 ring-border text-[13px] leading-relaxed h-72" value={msg} />
+      <Btn className="w-full mt-3" onClick={copy}>
+        {copied ? <><Check className="size-4" /> Copied to clipboard</> : <><Copy className="size-4" /> Copy message</>}
+      </Btn>
+      <p className="mt-3 text-[11px] text-ink-soft">Replace anything in [brackets] with your details before sending.</p>
+    </Modal>
+  );
+}
+
+// ---------------- SAVE ----------------
+
+const RULES: { id: SaveRule; label: string; desc: string; calc: (gross: number, net: number, shiftCount: number) => number }[] = [
+  { id: "shift-1", label: "£1 per shift", desc: "Tiny and easy. Adds up quietly.", calc: (_g, _n, c) => c * 1 },
+  { id: "shift-5", label: "£5 per shift", desc: "A small bite from each shift.", calc: (_g, _n, c) => c * 5 },
+  { id: "percent-3", label: "3% of take-home", desc: "Scales with what you earn.", calc: (_g, n) => n * 0.03 },
+];
+
+export function SaveScreen() {
+  const rule = useStore((s) => s.saveRule);
+  const saved = useStore((s) => s.savedTotal);
+  const shifts = useStore((s) => s.shifts);
+  const week = weeklyTotals(shifts);
+  const ded = estimateDeductions(week.gross);
+  const active = RULES.find((r) => r.id === rule)!;
+
+  const weekly = active.calc(week.gross, ded.net, week.count);
+  const monthly = weekly * 4.33;
+  const yearly = weekly * 52;
+
+  const goal = 1000; // emergency fund
+  const pct = Math.min(100, Math.round((saved / goal) * 100));
+
+  return (
+    <div className="pb-[120px]">
+      <AppHeader title="Save" subtitle="Small moves from every shift" />
+
+      <section className="mx-5 mt-5">
+        <div className="rounded-[28px] bg-gradient-to-br from-accent to-accent/80 p-6 text-accent-foreground">
+          <div className="text-[11px] font-bold uppercase tracking-[0.18em] opacity-90">Saved so far</div>
+          <div className="mt-2 font-display text-[52px] font-extrabold tracking-tight tabular-nums leading-none">{gbp(saved)}</div>
+          <div className="mt-3 text-[13px] opacity-90">Emergency fund · {pct}% of {gbp(goal, { decimals: 0 })}</div>
+          <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-white/25">
+            <div className="h-full rounded-full bg-white" style={{ width: `${pct}%` }} />
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-5 mt-5">
+        <h2 className="text-[13px] font-bold text-ink-soft uppercase tracking-wider mb-2">Pick a saving rule</h2>
+        <div className="space-y-2">
+          {RULES.map((r) => {
+            const active = rule === r.id;
+            return (
+              <button key={r.id} onClick={() => setSaveRule(r.id)} className={`w-full flex items-center justify-between gap-3 rounded-2xl p-4 ring-1 text-left transition ${active ? "bg-primary text-primary-foreground ring-transparent" : "bg-card ring-border"}`}>
+                <div className="min-w-0">
+                  <div className="text-[14px] font-bold">{r.label}</div>
+                  <div className={`text-[12px] ${active ? "opacity-90" : "text-ink-soft"}`}>{r.desc}</div>
+                </div>
+                {active ? <Check className="size-5" /> : <ChevronRight className="size-5 opacity-50" />}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="mx-5 mt-5 grid grid-cols-3 gap-2">
+        <Stat3 k="Weekly" v={gbp(weekly)} />
+        <Stat3 k="Monthly" v={gbp(monthly)} />
+        <Stat3 k="Yearly" v={gbp(yearly)} />
+      </section>
+
+      <section className="mx-5 mt-4">
+        <Btn className="w-full" variant="ink" onClick={() => addToSavings(weekly)}>
+          <PiggyBank className="size-4" /> Move {gbp(weekly)} to savings
+        </Btn>
+        <p className="mt-2 text-[11px] text-ink-soft text-center">Moves the amount in PayFlow only. We never touch your bank account.</p>
+      </section>
+
+      <Compliance />
+    </div>
+  );
+}
+
+function Stat3({ k, v }: { k: string; v: string }) {
+  return (
+    <div className="rounded-2xl bg-card p-3 ring-1 ring-border">
+      <div className="text-[10px] font-bold uppercase tracking-wider text-ink-soft">{k}</div>
+      <div className="mt-1 font-display text-[15px] font-extrabold tabular-nums">{v}</div>
+    </div>
+  );
+}
+
+// ---------------- LIFE ----------------
+
+export function LifeScreen() {
+  const items = [
+    { icon: Heart, title: "Wellbeing check-in", body: "How are you feeling after your last shift? Tap to log." },
+    { icon: Calendar, title: "Free training", body: "Care worker CPD courses, free with your role." },
+    { icon: ShieldCheck, title: "Your rights at work", body: "Plain-English guide to holiday, rest breaks and sick pay (UK)." },
+    { icon: TrendingUp, title: "Money habits", body: "Tiny ideas, never pushy. Read in 2 minutes." },
+  ];
+  return (
+    <div className="pb-[120px]">
+      <AppHeader title="Life" subtitle="Real perks. Calm tools." />
+      <section className="mx-5 mt-4 space-y-2">
+        {items.map((i) => (
+          <div key={i.title} className="flex items-center gap-3 rounded-2xl bg-card p-4 ring-1 ring-border">
+            <div className="grid size-10 place-items-center rounded-xl bg-primary-soft text-primary"><i.icon className="size-4" /></div>
+            <div className="min-w-0 flex-1">
+              <div className="text-[14px] font-bold">{i.title}</div>
+              <div className="text-[12px] text-ink-soft">{i.body}</div>
+            </div>
+            <ChevronRight className="size-4 text-ink-soft" />
+          </div>
+        ))}
+      </section>
+      <Compliance short />
+    </div>
+  );
+}
+
+// ---------------- COACH ----------------
+
+const COACH_PROMPTS: { q: string; a: string }[] = [
+  { q: "How is my week going?", a: "You're on track for a steady week. Logging every shift keeps your take-home estimate accurate — that's the single best habit." },
+  { q: "How can I save without feeling it?", a: "Try the £1-per-shift rule. It's quiet, it's small, and over a year of regular shifts it builds a real cushion." },
+  { q: "How does PAYE work?", a: "Your employer takes income tax from your pay before you see it, then sends it to HMRC. It's based on your tax code (most people are 1257L). Your payslip shows how much was taken." },
+  { q: "What about National Insurance?", a: "It's a separate UK contribution that builds your State Pension and benefits over time. You pay it on weekly earnings above £242." },
+  { q: "Should I opt into the pension?", a: "Most workers do. Auto-enrolment gives you employer contributions too — that's extra money you wouldn't get otherwise. PayFlow can't advise; talk to MoneyHelper or a regulated adviser for guidance." },
+];
+
+export function CoachScreen() {
+  const [open, setOpen] = useState<number | null>(null);
+  const shifts = useStore((s) => s.shifts);
+  const week = weeklyTotals(shifts);
+  const ded = estimateDeductions(week.gross);
+
+  return (
+    <div className="pb-[120px]">
+      <AppHeader title="Flow Coach" subtitle="Calm, plain English" />
+
+      {/* Today's insight */}
+      <section className="mx-5 mt-5">
+        <div className="rounded-[28px] bg-primary p-6 text-primary-foreground">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-[10px] font-bold uppercase tracking-wider">
+            <Sparkles className="size-3" /> Today
+          </div>
+          <p className="mt-3 text-[15px] leading-relaxed font-medium">
+            {week.count > 0
+              ? `You've logged ${fmtHours(week.hours)} this week. On track for around ${gbp(ded.net)} take-home. Steady work — well done.`
+              : `Welcome to Coach. Log a shift today and I'll start showing you a real take-home estimate.`}
+          </p>
+        </div>
+      </section>
+
+      {/* Before payday checklist */}
+      <section className="mx-5 mt-5">
+        <h2 className="text-[13px] font-bold text-ink-soft uppercase tracking-wider mb-2">Before payday — quick check</h2>
+        <ul className="space-y-2">
+          {[
+            "All shifts this week are logged",
+            "Hourly rate looks right on each shift",
+            "Any overtime is recorded",
+            "Holiday or sick days noted (if any)",
+          ].map((t, i) => (
+            <li key={i} className="flex items-start gap-3 rounded-2xl bg-card p-3.5 ring-1 ring-border">
+              <div className="mt-0.5 grid size-5 place-items-center rounded-full bg-primary-soft text-primary"><Check className="size-3" strokeWidth={3} /></div>
+              <span className="text-[13px]">{t}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {/* Prompts */}
+      <section className="mx-5 mt-5">
+        <h2 className="text-[13px] font-bold text-ink-soft uppercase tracking-wider mb-2">Ask Flow Coach</h2>
+        <div className="space-y-2">
+          {COACH_PROMPTS.map((p, i) => (
+            <div key={i} className="rounded-2xl bg-card ring-1 ring-border overflow-hidden">
+              <button onClick={() => setOpen(open === i ? null : i)} className="w-full flex items-center justify-between p-4 text-left">
+                <span className="text-[13px] font-bold">{p.q}</span>
+                <ChevronRight className={`size-4 text-ink-soft transition-transform ${open === i ? "rotate-90" : ""}`} />
+              </button>
+              {open === i && <div className="px-4 pb-4 text-[13px] leading-relaxed text-ink-soft">{p.a}</div>}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Next step */}
+      <section className="mx-5 mt-5">
+        <div className="rounded-2xl bg-card p-4 ring-1 ring-border">
+          <div className="text-[11px] font-bold uppercase tracking-wider text-primary">Your next small step</div>
+          <p className="mt-2 text-[14px] font-medium">Log any missing shifts from this week before payday on Friday.</p>
+        </div>
+      </section>
+
+      <Compliance />
+    </div>
+  );
+}
+
+// ---------------- Onboarding ----------------
+
+const ONBOARD_STEPS = [
+  { title: "Welcome to PayFlow", body: "A worker-first app for hourly pay. Built in the UK, in plain English." },
+  { title: "Know your hours", body: "Start a shift with one tap. PayFlow tracks the clock so you don't have to." },
+  { title: "Know your pay", body: "See your take-home estimate before payday — tax, National Insurance and pension included." },
+  { title: "Save from every shift", body: "Pick a small saving rule. We'll project it into your week, month and year." },
+  { title: "Meet Flow Coach", body: "Calm, plain-English guidance. Never pushy. Always your call." },
+];
+
+export function Onboarding({ onDone }: { onDone: () => void }) {
+  const [i, setI] = useState(0);
+  const step = ONBOARD_STEPS[i];
+  const last = i === ONBOARD_STEPS.length - 1;
+  return (
+    <div className="fixed inset-0 z-50 bg-sand flex flex-col">
+      <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
+        <div className="grid size-16 place-items-center rounded-3xl bg-primary text-primary-foreground mb-6">
+          <Sparkles className="size-7" />
+        </div>
+        <h1 className="font-display text-4xl font-extrabold tracking-tight">{step.title}</h1>
+        <p className="mt-4 text-[15px] leading-relaxed text-ink-soft max-w-sm">{step.body}</p>
+      </div>
+      <div className="px-6 pb-[max(env(safe-area-inset-bottom),1.5rem)] space-y-4">
+        <div className="flex items-center justify-center gap-1.5">
+          {ONBOARD_STEPS.map((_, k) => (
+            <span key={k} className={`h-1.5 rounded-full transition-all ${k === i ? "w-6 bg-primary" : "w-1.5 bg-border"}`} />
+          ))}
+        </div>
+        <Btn className="w-full" onClick={() => (last ? onDone() : setI(i + 1))}>
+          {last ? "Get started" : "Next"}
+        </Btn>
+        {!last && (
+          <button onClick={onDone} className="block w-full text-center text-[13px] font-bold text-ink-soft">Skip</button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Profile placeholder (unused but kept for future)
+export function ProfileScreen({ onClose }: { onClose: () => void }) {
+  return (
+    <Modal title="Profile" onClose={onClose}>
+      <div className="flex items-center gap-3">
+        <div className="grid size-12 place-items-center rounded-2xl bg-primary text-primary-foreground"><User className="size-5" /></div>
+        <div><div className="font-bold">You</div><div className="text-[12px] text-ink-soft">PayFlow user</div></div>
+      </div>
+      <p className="mt-4 text-[13px] text-ink-soft">All your data is stored on this device. Clear it any time from your browser settings.</p>
+    </Modal>
+  );
+}
