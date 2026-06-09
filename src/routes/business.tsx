@@ -7,6 +7,7 @@ import { tierFor, billableQuantity, estimateMonthlyGBP, pilotDaysLeft } from "@/
 import { createBusinessPortal } from "@/lib/payflow/billing.functions";
 import { getStripeEnvironment } from "@/lib/stripe";
 import { BusinessCheckoutModal, PaymentTestModeBanner } from "@/components/payflow/BusinessCheckoutModal";
+import { ConnectedAccountCard } from "@/components/payflow/ConnectedAccountCard";
 
 export const Route = createFileRoute("/business")({
   head: () => ({ meta: [{ title: "Business dashboard — PayFlow" }] }),
@@ -251,6 +252,12 @@ function BusinessPage() {
             </Link>
           </div>
         </div>
+
+        <div className="mt-8">
+          <ConnectedAccountCard />
+        </div>
+
+
 
         <div className="mt-8 flex items-start gap-2 rounded-2xl bg-card p-4 ring-1 ring-border">
           <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" />
