@@ -596,6 +596,7 @@ export function SaveScreen() {
           </ul>
         </section>
       </div>
+      <CelebrationToast />
     </div>
   );
 }
