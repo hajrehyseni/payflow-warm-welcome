@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Sparkles, Check, ShieldCheck } from "lucide-react";
+import { useState } from "react";
+import { tierFor, estimateMonthlyGBP } from "@/lib/payflow/pricing";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
@@ -14,6 +16,9 @@ export const Route = createFileRoute("/pricing")({
 });
 
 function Pricing() {
+  const [workers, setWorkers] = useState(50);
+  const tier = tierFor(workers);
+  const monthly = estimateMonthlyGBP(workers);
   return (
     <div className="min-h-screen bg-sand text-ink">
       <header className="sticky top-0 z-40 border-b border-border/60 bg-sand/80 backdrop-blur-md">
@@ -92,6 +97,27 @@ function Pricing() {
             <a href="mailto:hello@payflow.app" className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-sand/10 px-6 py-3 text-sm font-bold text-sand hover:bg-sand/15">
               Talk to us
             </a>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-3xl px-6 pb-12">
+        <div className="rounded-3xl bg-card p-6 ring-1 ring-border md:p-8">
+          <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">Live estimate</div>
+          <h2 className="mt-2 font-display text-2xl font-extrabold">What would it cost us?</h2>
+          <p className="mt-1 text-sm text-ink-soft">Slide to your active worker count. Billing is per-worker, monthly, £99 minimum.</p>
+          <div className="mt-5 flex items-baseline gap-2">
+            <span className="font-display text-5xl font-extrabold">£{monthly}</span>
+            <span className="text-sm text-ink-soft">/ month · {workers} workers × £{tier.perWorker.toFixed(2)}</span>
+          </div>
+          <input
+            type="range" min={1} max={2000} value={workers}
+            onChange={(e) => setWorkers(Number(e.target.value))}
+            className="mt-5 w-full accent-primary"
+            aria-label="Active workers"
+          />
+          <div className="mt-2 flex justify-between text-[11px] font-semibold text-ink-soft">
+            <span>1</span><span>250</span><span>1,000</span><span>2,000+</span>
           </div>
         </div>
       </section>

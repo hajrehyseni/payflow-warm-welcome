@@ -48,28 +48,49 @@ export type Database = {
       }
       organisations: {
         Row: {
+          billable_workers: number
           created_at: string
+          current_period_end: string | null
+          environment: string | null
           id: string
           join_code: string
           name: string
           owner_id: string
+          pilot_started_at: string
           plan: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_status: string | null
         }
         Insert: {
+          billable_workers?: number
           created_at?: string
+          current_period_end?: string | null
+          environment?: string | null
           id?: string
           join_code: string
           name: string
           owner_id: string
+          pilot_started_at?: string
           plan?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string | null
         }
         Update: {
+          billable_workers?: number
           created_at?: string
+          current_period_end?: string | null
+          environment?: string | null
           id?: string
           join_code?: string
           name?: string
           owner_id?: string
+          pilot_started_at?: string
           plan?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string | null
         }
         Relationships: []
       }
