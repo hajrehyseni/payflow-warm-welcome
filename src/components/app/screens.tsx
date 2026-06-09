@@ -247,6 +247,9 @@ export function TodayScreen({ goToTab, onProfileClick }: { goToTab?: (t: "today"
               <TxRow key={t.id} t={t} />
             ))}
           </ul>
+          <p className="mt-3 text-center text-[11px] font-medium text-ink-soft">
+            You're building, not behind — every shift counts.
+          </p>
         </section>
 
         {/* Disclaimer */}
