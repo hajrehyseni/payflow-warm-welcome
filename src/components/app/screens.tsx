@@ -400,6 +400,22 @@ export function PayScreen() {
         </p>
       </section>
 
+      {/* Check my pay — hero card */}
+      <section className="mx-5 mt-4">
+        <button onClick={() => setPayCheckOpen(true)} className="w-full flex items-center gap-3 rounded-2xl bg-accent-soft p-4 ring-1 ring-accent/20 text-left active:scale-[0.99] transition">
+          <div className="grid size-11 place-items-center rounded-2xl bg-accent text-accent-foreground"><FileCheck2 className="size-5" /></div>
+          <div className="min-w-0 flex-1">
+            <div className="text-[14px] font-bold text-ink">Check my pay</div>
+            <div className="text-[12px] text-ink-soft truncate">
+              {lastCheck
+                ? lastCheck.looksRight ? "Last check looked right ✓" : `Last check: ${gbp(Math.abs(lastCheck.gapNet))} ${lastCheck.gapNet > 0 ? "short" : "over"}`
+                : "Compare your payslip to what you tracked."}
+            </div>
+          </div>
+          <ChevronRight className="size-4 text-ink-soft" />
+        </button>
+      </section>
+
       {/* Actions */}
       <section className="mx-5 mt-4 grid grid-cols-2 gap-2">
         <Btn variant="ink" onClick={() => setModal("add")}><Plus className="size-4" /> Add shift</Btn>
@@ -408,7 +424,7 @@ export function PayScreen() {
         <Btn variant="ghost" onClick={() => setModal("query")}><MessageSquare className="size-4" /> Payroll query</Btn>
       </section>
 
-      {/* Shift history */}
+      {payCheckOpen && <PayCheckModal onClose={() => setPayCheckOpen(false)} />}
       <section className="mx-5 mt-6">
         <h2 className="text-[13px] font-bold text-ink-soft uppercase tracking-wider mb-2">Shift history</h2>
         {shifts.length === 0 ? (
