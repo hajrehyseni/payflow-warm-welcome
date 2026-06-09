@@ -957,7 +957,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
     </div>
   );
 }
-}
+
 
 // Profile placeholder (unused but kept for future)
 export function ProfileScreen({ onClose }: { onClose: () => void }) {
