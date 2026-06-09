@@ -1,8 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Home, Wallet, PiggyBank, Sparkles, Heart } from "lucide-react";
+import { Home, Wallet, PiggyBank, Sparkles, Heart, LogOut } from "lucide-react";
 import { TodayScreen, PayScreen, SaveScreen, LifeScreen, CoachScreen, Onboarding } from "@/components/app/screens";
 import { useStore, setOnboarded } from "@/lib/payflow/store";
+import { useAuth, signOut } from "@/lib/payflow/auth";
 
 export const Route = createFileRoute("/app")({
   head: () => ({
@@ -28,6 +29,8 @@ const TABS: { id: Tab; label: string; icon: typeof Home }[] = [
 
 function AppShell() {
   const onboarded = useStore((s) => s.onboarded);
+  const user = useAuth();
+  const nav = useNavigate();
   const [tab, setTab] = useState<Tab>("today");
   const [ready, setReady] = useState(false);
 
@@ -39,8 +42,19 @@ function AppShell() {
     return <Onboarding onDone={setOnboarded} />;
   }
 
+  function handleSignOut() { signOut(); nav({ to: "/" }); }
+
   return (
     <div className="min-h-screen bg-sand">
+      {user && (
+        <button
+          onClick={handleSignOut}
+          className="fixed right-3 top-3 z-50 inline-flex items-center gap-1.5 rounded-full bg-card/90 px-3 py-1.5 text-[11px] font-bold text-ink ring-1 ring-border backdrop-blur hover:bg-sand-deep"
+          aria-label="Sign out"
+        >
+          <LogOut className="size-3.5" /> Sign out
+        </button>
+      )}
       <main className="mx-auto max-w-md">
         {tab === "today" && <TodayScreen goToTab={(t) => setTab(t as Tab)} />}
         {tab === "pay" && <PayScreen />}
