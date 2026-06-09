@@ -183,7 +183,7 @@ export function TodayScreen({ goToTab, onProfileClick }: { goToTab?: (t: "today"
             active={onBreak}
             onClick={() => {
               setOnBreak((b) => !b);
-              flash(onBreak ? "Welcome back — earnings resumed" : "Break started — clock paused");
+              flash(onBreak ? "Welcome back — your clock's ticking again" : "Break started — rest up, you've earned it");
             }}
           />
           <QuickAction
@@ -191,7 +191,7 @@ export function TodayScreen({ goToTab, onProfileClick }: { goToTab?: (t: "today"
             label="Save £5"
             onClick={() => {
               setSavedBoost((s) => s + 5);
-              flash(`£5 moved to Eid trip · +${fmt(savedBoost + 5)} today`);
+              flash(`£5 tucked away for your Eid trip — kind to future you`);
               celebrate("£5 set aside");
             }}
           />
@@ -236,7 +236,7 @@ export function TodayScreen({ goToTab, onProfileClick }: { goToTab?: (t: "today"
           <div className="flex items-end justify-between">
             <h3 className="font-display text-base font-bold text-ink">Today so far</h3>
             <button
-              onClick={() => flash("Showing this week's 4 shifts · 34 hrs total")}
+              onClick={() => flash("Your week so far: 4 shifts · 34 hrs — strong work, Amina")}
               className="text-xs font-semibold text-primary active:scale-95 transition-transform"
             >
               All shifts
@@ -247,6 +247,9 @@ export function TodayScreen({ goToTab, onProfileClick }: { goToTab?: (t: "today"
               <TxRow key={t.id} t={t} />
             ))}
           </ul>
+          <p className="mt-3 text-center text-[11px] font-medium text-ink-soft">
+            You're building, not behind — every shift counts.
+          </p>
         </section>
 
         {/* Disclaimer */}
@@ -789,6 +792,15 @@ export function SaveScreen({ onProfileClick }: { onProfileClick?: () => void }) 
     <div className="flex h-full flex-col">
       <Header subtitle="Gentle, automatic" name="Save" small onProfileClick={onProfileClick} />
       <div className="flex-1 overflow-y-auto px-5 pb-6">
+        {/* Kindness banner */}
+        <section className="mb-3 rounded-2xl bg-primary-soft px-4 py-3 text-center">
+          <div className="font-display text-sm font-bold text-primary">
+            You're building, not behind.
+          </div>
+          <div className="mt-0.5 text-[11px] text-primary/80">
+            Every £ moves you closer — no shame in starting small.
+          </div>
+        </section>
         {/* Streak chip */}
         <section className="mb-4 rounded-3xl bg-gradient-to-br from-accent-soft to-primary-soft p-4 ring-1 ring-border">
           <div className="flex items-center gap-3">
@@ -804,7 +816,7 @@ export function SaveScreen({ onProfileClick }: { onProfileClick?: () => void }) 
               </div>
             </div>
             <button
-              onClick={() => celebrate("Habit ticked")}
+              onClick={() => celebrate("Streak kept — you're building, not behind")}
               className="shrink-0 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground shadow active:scale-95 transition-all"
             >
               Tick today
@@ -1197,7 +1209,7 @@ export function CoachScreen({ onProfileClick }: { onProfileClick?: () => void })
 
         {/* User reply prompt */}
         <button
-          onClick={() => flash("Tap a suggested question above to see a warm, plain-English answer")}
+          onClick={() => flash("Pick a suggestion above — Flow Coach replies in plain, kind English")}
           className="sticky bottom-2 w-full rounded-full bg-card px-4 py-3 ring-1 ring-border flex items-center gap-2 shadow-sm active:scale-[0.99] transition-transform text-left"
         >
           <span className="text-sm text-ink-soft flex-1">Ask Flow Coach anything…</span>
