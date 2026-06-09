@@ -714,6 +714,16 @@ export function CoachScreen() {
             <ArrowUpRight className="size-4" />
           </button>
         </div>
+
+        {/* Disclaimer */}
+        <div className="rounded-2xl bg-card p-3.5 ring-1 ring-border">
+          <div className="flex items-start gap-2">
+            <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" />
+            <p className="text-[11px] leading-relaxed text-ink-soft">
+              Flow Coach gives general information and estimates only — not financial, tax, legal, payroll or banking advice.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
