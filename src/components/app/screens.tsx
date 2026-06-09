@@ -227,45 +227,20 @@ export function TodayScreen({ goToTab, onProfileClick }: { goToTab?: (t: "today"
 
   return (
     <div className="flex h-full flex-col">
-      <Header subtitle={onBreak ? "On break · paused" : "On shift · Maple Care Home"} name={USER.name} onProfileClick={onProfileClick} />
+      <Header subtitle={onBreak ? "On break · paused" : "On shift · Maple Care"} name={USER.name} onProfileClick={onProfileClick} />
 
-      <div className="flex-1 overflow-y-auto px-5 pb-6">
-        {/* Your next move — Pre-payday check (hero) */}
-        <section className="mt-4 overflow-hidden rounded-3xl bg-gradient-to-br from-primary to-primary/90 p-4 text-primary-foreground shadow-lg shadow-primary/20">
-          <div className="flex items-center gap-3">
-            <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-white/15 ring-1 ring-white/20">
-              <ShieldCheck className="size-5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-[11px] font-semibold uppercase tracking-wider opacity-90">
-                Your next move
-              </div>
-              <p className="mt-0.5 text-sm font-semibold leading-snug">
-                Run your pre-payday check — 30 seconds.
-              </p>
-            </div>
-            <button
-              onClick={() => setCheckOpen(true)}
-              className="shrink-0 rounded-2xl bg-white px-4 py-2.5 text-sm font-bold text-primary shadow-lg active:scale-95 transition-all"
-            >
-              Check my pay
-            </button>
-          </div>
-        </section>
-
-
-        {/* Live earnings hero */}
-
-        <section className="relative overflow-hidden rounded-3xl bg-primary p-5 text-primary-foreground shadow-[0_20px_40px_-20px_rgba(14,124,102,0.6)]">
+      <div className="flex-1 overflow-y-auto px-5 pb-28 space-y-5">
+        {/* 1. Live earnings hero (THE card) */}
+        <section className="relative overflow-hidden rounded-3xl bg-primary p-6 text-primary-foreground shadow-[0_20px_40px_-20px_rgba(14,124,102,0.6)]">
           <div className="absolute -right-12 -top-12 size-44 rounded-full bg-white/10 blur-2xl" />
           <div className="absolute -bottom-16 -left-8 size-40 rounded-full bg-accent/30 blur-3xl" />
           <div className="relative">
-            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] opacity-80">
+            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] opacity-85">
               <span className={`size-1.5 rounded-full ${onBreak ? "bg-white/50" : "bg-accent animate-pulse-dot"}`} />
-              {onBreak ? "Paused for break" : `Earning now · £${USER.hourly}/hr`}
+              {onBreak ? "Paused" : `Earning · £${USER.hourly}/hr`}
             </div>
-            <div className="mt-3 flex items-baseline gap-1 font-display tabular-nums tracking-tight">
-              <span className="text-[56px] leading-none font-extrabold">
+            <div className="mt-4 flex items-baseline gap-1 font-display tabular-nums tracking-tight">
+              <span className="text-[64px] leading-none font-extrabold">
                 £{Math.floor(earnedAnim)}
               </span>
               <span className="text-3xl font-bold opacity-85">
@@ -273,28 +248,36 @@ export function TodayScreen({ goToTab, onProfileClick }: { goToTab?: (t: "today"
               </span>
             </div>
             <div className="mt-2 text-sm opacity-85">
-              earned in {hh}h {String(mm).padStart(2, "0")}m on shift today
+              {hh}h {String(mm).padStart(2, "0")}m today
             </div>
 
-            {/* Shift progress */}
-            <div className="mt-5">
+            <div className="mt-6">
               <div className="flex justify-between text-[11px] font-medium opacity-85">
                 <span>{USER.shiftStart}</span>
-                <span>End {USER.shiftEnd}</span>
+                <span>{USER.shiftEnd}</span>
               </div>
               <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-white/20">
-                <div
-                  className="h-full rounded-full bg-accent transition-all duration-1000"
-                  style={{ width: `${shiftPct}%` }}
-                />
+                <div className="h-full rounded-full bg-accent transition-all duration-1000" style={{ width: `${shiftPct}%` }} />
               </div>
             </div>
           </div>
         </section>
 
-        {/* Goal ring strip — Eid trip progress */}
-        <section className="mt-4 flex items-center gap-4 rounded-3xl bg-card p-4 ring-1 ring-border">
-          <div className="relative size-16 shrink-0">
+        {/* 2. ONE primary action */}
+        <button
+          onClick={() => {
+            setSavedBoost((s) => s + 5);
+            flash(`£5 stashed — kind to future you`);
+            celebrate("£5 stashed");
+          }}
+          className="w-full rounded-3xl bg-accent px-5 py-5 text-base font-extrabold text-accent-foreground shadow-[0_12px_28px_-10px_rgba(255,107,94,0.55)] active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
+        >
+          <PiggyBank className="size-5" /> Stash £5
+        </button>
+
+        {/* 3. Goal ring */}
+        <section className="flex items-center gap-4 rounded-3xl bg-card p-5 ring-1 ring-border">
+          <div className="relative size-20 shrink-0">
             <svg viewBox="0 0 64 64" className="size-full -rotate-90">
               <circle cx="32" cy="32" r="26" stroke="var(--sand-deep)" strokeWidth="7" fill="none" />
               <circle
@@ -304,42 +287,40 @@ export function TodayScreen({ goToTab, onProfileClick }: { goToTab?: (t: "today"
                 style={{ transition: "stroke-dashoffset 0.6s ease-out" }}
               />
             </svg>
-            <div className="absolute inset-0 grid place-items-center font-display text-sm font-extrabold tabular-nums text-ink">
+            <div className="absolute inset-0 grid place-items-center font-display text-base font-extrabold tabular-nums text-ink">
               {Math.round(goalPctAnim)}%
             </div>
           </div>
           <div className="min-w-0 flex-1">
             <div className="text-[11px] font-semibold uppercase tracking-wider text-primary">
               <Target className="-mt-0.5 mr-1 inline size-3" />
-              Eid trip goal
+              Eid trip
             </div>
-            <div className="mt-0.5 font-display text-sm font-extrabold leading-snug text-ink">
-              You're {Math.round(goalPctAnim)}% to your {fmt(USER.savingsGoal)} — keep going.
+            <div className="mt-0.5 font-display text-base font-extrabold leading-snug text-ink">
+              {Math.round(goalPctAnim)}% to your {fmt(USER.savingsGoal)}
             </div>
-            <div className="text-[11px] text-ink-soft tabular-nums">
-              {fmt(balance)} saved · {fmt(USER.savingsGoal - balance)} to go
+            <div className="text-[11px] text-ink-soft tabular-nums mt-0.5">
+              {fmt(balance)} saved
             </div>
           </div>
         </section>
 
-        {/* Quick actions */}
-        <section className="mt-5 grid grid-cols-4 gap-2">
+        {/* — fold — quieter content below */}
+
+        {/* Secondary actions */}
+        <section className="grid grid-cols-3 gap-2 pt-2">
+          <QuickAction
+            icon={ShieldCheck}
+            label="Check pay"
+            onClick={() => setCheckOpen(true)}
+          />
           <QuickAction
             icon={onBreak ? Play : Pause}
-            label={onBreak ? "Clock in" : "Log break"}
+            label={onBreak ? "Clock in" : "Break"}
             active={onBreak}
             onClick={() => {
               setOnBreak((b) => !b);
-              flash(onBreak ? "Welcome back — your clock's ticking again" : "Break started — rest up, you've earned it");
-            }}
-          />
-          <QuickAction
-            icon={PiggyBank}
-            label="Stash £5"
-            onClick={() => {
-              setSavedBoost((s) => s + 5);
-              flash(`£5 tucked away for your Eid trip — kind to future you`);
-              celebrate("£5 stashed");
+              flash(onBreak ? "Welcome back" : "Break started — rest up");
             }}
           />
           <QuickAction
@@ -347,69 +328,40 @@ export function TodayScreen({ goToTab, onProfileClick }: { goToTab?: (t: "today"
             label="Payslip"
             onClick={() => setPayslipOpen(true)}
           />
-          <QuickAction
-            icon={Sparkles}
-            label="Coach"
-            onClick={() => goToTab?.("coach")}
-          />
         </section>
 
-
-        {/* Coach nudge */}
-        <section className="mt-5 rounded-3xl bg-card p-4 ring-1 ring-border">
+        {/* Coach nudge (below fold) */}
+        <section className="rounded-3xl bg-card p-4 ring-1 ring-border">
           <div className="flex items-start gap-3">
-            <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-primary-soft">
-              <Sparkles className="size-5 text-primary" />
+            <div className="grid size-9 shrink-0 place-items-center rounded-2xl bg-primary-soft">
+              <Sparkles className="size-4 text-primary" />
             </div>
             <div>
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-primary">
-                Flow Coach
-              </div>
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-primary">Flow Coach</div>
               <p className="mt-1 text-sm leading-snug text-ink">
-                You're <span className="font-semibold">£12 ahead</span> of last Friday at this hour. Round-ups this week could add{" "}
-                <span className="font-semibold">£8.40</span> to your Eid trip.
+                You're <span className="font-semibold">£12 ahead</span> of last Friday.
               </p>
               <button
                 onClick={() => goToTab?.("coach")}
-                className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary"
+                className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary"
               >
-                Enable smart round-ups <ArrowUpRight className="size-3.5" />
+                Open Coach <ArrowUpRight className="size-3.5" />
               </button>
             </div>
           </div>
         </section>
 
-        {/* Today list */}
-        <section className="mt-6">
-          <div className="flex items-end justify-between">
-            <h3 className="font-display text-base font-bold text-ink">Today so far</h3>
-            <button
-              onClick={() => flash("Your week so far: 4 shifts · 34 hrs — strong work, Amina")}
-              className="text-xs font-semibold text-primary active:scale-95 transition-transform"
-            >
-              All shifts
-            </button>
-          </div>
-          <ul className="mt-3 space-y-2">
-            {RECENT.slice(0, 4).map((t) => (
-              <TxRow key={t.id} t={t} />
-            ))}
-          </ul>
-          <p className="mt-3 text-center text-[11px] font-medium text-ink-soft">
-            You're building, not behind — every shift counts.
-          </p>
-        </section>
-
         {/* Disclaimer */}
-        <div className="mt-5 rounded-2xl bg-card p-3.5 ring-1 ring-border">
+        <div className="rounded-2xl bg-card p-3.5 ring-1 ring-border">
           <div className="flex items-start gap-2">
             <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" />
             <p className="text-[11px] leading-relaxed text-ink-soft">
-              Flow Coach gives general information and estimates only — not financial, tax, legal, payroll or banking advice.
+              Guidance only — estimates, not financial advice.
             </p>
           </div>
         </div>
       </div>
+
 
       {/* Toast */}
       {toast && (
