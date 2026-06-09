@@ -26,14 +26,15 @@ const fmt = (n: number) =>
   `£${n.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Live earnings hook — ticks up at hourly rate while "on shift"
-function useLiveEarnings() {
+// Live earnings hook — ticks up at hourly rate while "on shift" (pausable)
+function useLiveEarnings(paused: boolean) {
   const baseSeconds = USER.worked.hours * 3600 + USER.worked.minutes * 60;
   const [seconds, setSeconds] = useState(baseSeconds);
   useEffect(() => {
+    if (paused) return;
     const id = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [paused]);
   const earned = (seconds / 3600) * USER.hourly;
   const hh = Math.floor(seconds / 3600);
   const mm = Math.floor((seconds % 3600) / 60);
@@ -42,14 +43,25 @@ function useLiveEarnings() {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TODAY TAB
-export function TodayScreen() {
-  const { earned, hh, mm } = useLiveEarnings();
+export function TodayScreen({ goToTab }: { goToTab?: (t: "today" | "pay" | "save" | "life" | "coach") => void }) {
+  const [onBreak, setOnBreak] = useState(false);
+  const [payslipOpen, setPayslipOpen] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const [savedBoost, setSavedBoost] = useState(0);
+
+  const { earned, hh, mm } = useLiveEarnings(onBreak);
   const shiftPctRaw = ((hh * 60 + mm) / (6 * 60)) * 100;
   const shiftPct = Math.min(100, shiftPctRaw);
 
+  function flash(msg: string) {
+    setToast(msg);
+    window.clearTimeout((flash as any)._t);
+    (flash as any)._t = window.setTimeout(() => setToast(null), 2400);
+  }
+
   return (
     <div className="flex h-full flex-col">
-      <Header subtitle="On shift · Maple Care Home" name={USER.name} />
+      <Header subtitle={onBreak ? "On break · paused" : "On shift · Maple Care Home"} name={USER.name} />
 
       <div className="flex-1 overflow-y-auto px-5 pb-6">
         {/* Live earnings hero */}
@@ -58,8 +70,8 @@ export function TodayScreen() {
           <div className="absolute -bottom-16 -left-8 size-40 rounded-full bg-accent/30 blur-3xl" />
           <div className="relative">
             <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] opacity-80">
-              <span className="size-1.5 rounded-full bg-accent animate-pulse-dot" />
-              Earning now · £{USER.hourly}/hr
+              <span className={`size-1.5 rounded-full ${onBreak ? "bg-white/50" : "bg-accent animate-pulse-dot"}`} />
+              {onBreak ? "Paused for break" : `Earning now · £${USER.hourly}/hr`}
             </div>
             <div className="mt-3 flex items-baseline gap-1 font-display tabular-nums tracking-tight">
               <span className="text-[56px] leading-none font-extrabold">
@@ -91,10 +103,33 @@ export function TodayScreen() {
 
         {/* Quick actions */}
         <section className="mt-5 grid grid-cols-4 gap-2">
-          <QuickAction icon={Clock} label="Log break" />
-          <QuickAction icon={PiggyBank} label="Save £5" />
-          <QuickAction icon={Receipt} label="Payslip" />
-          <QuickAction icon={Sparkles} label="Coach" />
+          <QuickAction
+            icon={onBreak ? Play : Pause}
+            label={onBreak ? "Resume" : "Log break"}
+            active={onBreak}
+            onClick={() => {
+              setOnBreak((b) => !b);
+              flash(onBreak ? "Welcome back — earnings resumed" : "Break started — clock paused");
+            }}
+          />
+          <QuickAction
+            icon={PiggyBank}
+            label="Save £5"
+            onClick={() => {
+              setSavedBoost((s) => s + 5);
+              flash(`£5 moved to Eid trip · +${fmt(savedBoost + 5)} today`);
+            }}
+          />
+          <QuickAction
+            icon={Receipt}
+            label="Payslip"
+            onClick={() => setPayslipOpen(true)}
+          />
+          <QuickAction
+            icon={Sparkles}
+            label="Coach"
+            onClick={() => goToTab?.("coach")}
+          />
         </section>
 
         {/* Coach nudge */}
@@ -111,7 +146,10 @@ export function TodayScreen() {
                 You're <span className="font-semibold">£12 ahead</span> of last Friday at this hour. Round-ups this week could add{" "}
                 <span className="font-semibold">£8.40</span> to your Eid trip.
               </p>
-              <button className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary">
+              <button
+                onClick={() => goToTab?.("coach")}
+                className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary"
+              >
                 Enable smart round-ups <ArrowUpRight className="size-3.5" />
               </button>
             </div>
@@ -130,6 +168,154 @@ export function TodayScreen() {
             ))}
           </ul>
         </section>
+      </div>
+
+      {/* Toast */}
+      {toast && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-24 z-30 flex justify-center px-6">
+          <div className="pointer-events-auto rounded-2xl bg-ink px-4 py-2.5 text-xs font-semibold text-white shadow-lg animate-in fade-in slide-in-from-bottom-2">
+            {toast}
+          </div>
+        </div>
+      )}
+
+      {/* Payslip translator overlay */}
+      {payslipOpen && <PayslipTranslator onClose={() => setPayslipOpen(false)} />}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PAYSLIP TRANSLATOR
+const PAYSLIP_LINES: { code: string; label: string; value: number; positive?: boolean; plain: string }[] = [
+  {
+    code: "GROSS PAY",
+    label: "Gross pay",
+    value: TAKEHOME.gross,
+    positive: true,
+    plain:
+      "What you earned in total before anything is taken off. 34 hours × £14.50/hr = £493.00. This is the headline number — your real take-home is below.",
+  },
+  {
+    code: "PAYE TAX",
+    label: "Income tax (PAYE)",
+    value: -TAKEHOME.tax,
+    plain:
+      "Income tax taken a bit each payday so you don't get a big bill later. PAYE means 'Pay As You Earn'. You only pay tax on what you earn above £12,570 a year.",
+  },
+  {
+    code: "NI CAT A",
+    label: "National Insurance",
+    value: -TAKEHOME.ni,
+    plain:
+      "This goes toward your State Pension, NHS and benefits if you ever need them. 'Cat A' just means the standard category for most workers.",
+  },
+  {
+    code: "PENSION EE",
+    label: "Pension (5%)",
+    value: -TAKEHOME.pension,
+    plain:
+      "Still your money — just saved for later you. Your employer adds 3% on top. You can stop or change it any time through HR.",
+  },
+  {
+    code: "NET PAY",
+    label: "Take-home pay",
+    value: TAKEHOME.net,
+    positive: true,
+    plain:
+      "The number that actually lands in your account on Friday. This is the figure to budget with — everything above adds up to exactly £398.02.",
+  },
+];
+
+function PayslipTranslator({ onClose }: { onClose: () => void }) {
+  const [open, setOpen] = useState<string | null>("PAYE TAX");
+  return (
+    <div className="absolute inset-0 z-40 flex flex-col bg-sand">
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 pt-12 pb-3">
+        <div>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-soft">
+            Week ending Sun 7 Jun
+          </div>
+          <div className="font-display text-2xl font-extrabold tracking-tight text-ink">
+            Payslip translator
+          </div>
+        </div>
+        <button
+          onClick={onClose}
+          className="grid size-10 place-items-center rounded-2xl bg-card ring-1 ring-border text-ink"
+          aria-label="Close payslip"
+        >
+          <X className="size-5" />
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-5 pb-6">
+        <div className="rounded-2xl bg-primary-soft px-3.5 py-2.5 text-[11px] font-semibold text-primary flex items-center gap-2">
+          <Info className="size-3.5 shrink-0" /> Tap any line to see what it really means
+        </div>
+
+        <div className="mt-4 overflow-hidden rounded-3xl bg-card ring-1 ring-border">
+          {PAYSLIP_LINES.map((line, i) => {
+            const isOpen = open === line.code;
+            const isLast = i === PAYSLIP_LINES.length - 1;
+            return (
+              <div key={line.code} className={isLast ? "bg-primary-soft/40" : ""}>
+                <button
+                  onClick={() => setOpen(isOpen ? null : line.code)}
+                  className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left active:bg-sand-deep/40 transition-colors"
+                >
+                  <div className="min-w-0">
+                    <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-ink-soft">
+                      {line.code}
+                    </div>
+                    <div className={`mt-0.5 text-sm font-semibold ${isLast ? "text-primary" : "text-ink"}`}>
+                      {line.label}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`tabular-nums font-display ${
+                        isLast
+                          ? "text-xl font-extrabold text-primary"
+                          : line.positive
+                            ? "text-base font-bold text-ink"
+                            : "text-base font-bold text-ink-soft"
+                      }`}
+                    >
+                      {line.value < 0 ? "−" : ""}{fmt(Math.abs(line.value))}
+                    </span>
+                    <ChevronRight
+                      className={`size-4 text-ink-soft transition-transform ${isOpen ? "rotate-90" : ""}`}
+                    />
+                  </div>
+                </button>
+                {isOpen && (
+                  <div className="mx-3 mb-3 rounded-2xl bg-sand px-3.5 py-3 ring-1 ring-border">
+                    <div className="flex items-start gap-2">
+                      <Sparkles className="mt-0.5 size-4 shrink-0 text-primary" />
+                      <p className="text-[13px] leading-relaxed text-ink">{line.plain}</p>
+                    </div>
+                  </div>
+                )}
+                {!isLast && <div className="mx-4 h-px bg-border" />}
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="mt-4 rounded-2xl bg-card p-4 ring-1 ring-border">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-soft">
+            The maths
+          </div>
+          <p className="mt-1.5 text-sm leading-snug text-ink">
+            £493.00 − £50.25 − £20.08 − £24.65 = <span className="font-bold text-primary">£398.02</span> in your account on Friday.
+          </p>
+        </div>
+
+        <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-[11px] font-semibold text-ink-soft ring-1 ring-border">
+          <ShieldCheck className="size-3.5 text-primary" /> Estimate · not financial advice
+        </div>
       </div>
     </div>
   );
