@@ -293,11 +293,41 @@ export function TodayScreen({ goToTab, onProfileClick }: { goToTab?: (t: "today"
           </div>
         </section>
 
+        {/* Goal ring strip — Eid trip progress */}
+        <section className="mt-4 flex items-center gap-4 rounded-3xl bg-card p-4 ring-1 ring-border">
+          <div className="relative size-16 shrink-0">
+            <svg viewBox="0 0 64 64" className="size-full -rotate-90">
+              <circle cx="32" cy="32" r="26" stroke="var(--sand-deep)" strokeWidth="7" fill="none" />
+              <circle
+                cx="32" cy="32" r="26"
+                stroke="var(--primary)" strokeWidth="7" fill="none" strokeLinecap="round"
+                strokeDasharray={RC} strokeDashoffset={ringOffset}
+                style={{ transition: "stroke-dashoffset 0.6s ease-out" }}
+              />
+            </svg>
+            <div className="absolute inset-0 grid place-items-center font-display text-sm font-extrabold tabular-nums text-ink">
+              {Math.round(goalPctAnim)}%
+            </div>
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-primary">
+              <Target className="-mt-0.5 mr-1 inline size-3" />
+              Eid trip goal
+            </div>
+            <div className="mt-0.5 font-display text-sm font-extrabold leading-snug text-ink">
+              You're {Math.round(goalPctAnim)}% to your {fmt(USER.savingsGoal)} — keep going.
+            </div>
+            <div className="text-[11px] text-ink-soft tabular-nums">
+              {fmt(balance)} saved · {fmt(USER.savingsGoal - balance)} to go
+            </div>
+          </div>
+        </section>
+
         {/* Quick actions */}
         <section className="mt-5 grid grid-cols-4 gap-2">
           <QuickAction
             icon={onBreak ? Play : Pause}
-            label={onBreak ? "Resume" : "Log break"}
+            label={onBreak ? "Clock in" : "Log break"}
             active={onBreak}
             onClick={() => {
               setOnBreak((b) => !b);
@@ -306,11 +336,11 @@ export function TodayScreen({ goToTab, onProfileClick }: { goToTab?: (t: "today"
           />
           <QuickAction
             icon={PiggyBank}
-            label="Save £5"
+            label="Stash £5"
             onClick={() => {
               setSavedBoost((s) => s + 5);
               flash(`£5 tucked away for your Eid trip — kind to future you`);
-              celebrate("£5 set aside");
+              celebrate("£5 stashed");
             }}
           />
           <QuickAction
@@ -324,6 +354,7 @@ export function TodayScreen({ goToTab, onProfileClick }: { goToTab?: (t: "today"
             onClick={() => goToTab?.("coach")}
           />
         </section>
+
 
         {/* Coach nudge */}
         <section className="mt-5 rounded-3xl bg-card p-4 ring-1 ring-border">
