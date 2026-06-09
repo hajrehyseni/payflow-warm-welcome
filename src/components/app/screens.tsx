@@ -838,6 +838,7 @@ function PrePaydayCheck({ onClose }: { onClose: () => void }) {
 // PAY TAB
 export function PayScreen({ onProfileClick }: { onProfileClick?: () => void }) {
   const max = Math.max(...WEEK.map((d) => d.earned), 1);
+  const netAnim = useCountUp(TAKEHOME.net, 1100);
   return (
     <div className="flex h-full flex-col">
       <Header subtitle="This week · estimate" name="Pay" small onProfileClick={onProfileClick} />
