@@ -870,10 +870,11 @@ export function CoachScreen() {
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared bits
 function Header({ name, subtitle, small }: { name: string; subtitle: string; small?: boolean }) {
+  const { streak } = useStreak();
   return (
     <div className="px-5 pt-12 pb-3">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
           <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-soft">
             {subtitle}
           </div>
@@ -881,8 +882,17 @@ function Header({ name, subtitle, small }: { name: string; subtitle: string; sma
             {small ? name : `Hi, ${name}`}
           </div>
         </div>
-        <div className="grid size-11 place-items-center rounded-2xl bg-primary-soft font-display text-base font-bold text-primary ring-1 ring-primary/10">
-          A
+        <div className="flex items-center gap-2 shrink-0">
+          <div
+            title={`${streak}-week saving streak`}
+            className="flex items-center gap-1 rounded-full bg-accent-soft px-2.5 py-1 text-[11px] font-bold text-accent ring-1 ring-accent/20"
+          >
+            <Flame className="size-3.5" />
+            <span className="tabular-nums">{streak} wk</span>
+          </div>
+          <div className="grid size-11 place-items-center rounded-2xl bg-primary-soft font-display text-base font-bold text-primary ring-1 ring-primary/10">
+            A
+          </div>
         </div>
       </div>
     </div>
