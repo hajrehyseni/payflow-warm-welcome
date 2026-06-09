@@ -503,6 +503,7 @@ export function PayScreen() {
           </ul>
         </section>
       </div>
+      <CelebrationToast />
     </div>
   );
 }
