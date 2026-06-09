@@ -604,6 +604,7 @@ export function SaveScreen() {
 // ─────────────────────────────────────────────────────────────────────────────
 // LIFE TAB
 export function LifeScreen() {
+  const { streak } = useStreak();
   const [toast, setToast] = useState<string | null>(null);
   function flash(msg: string) {
     setToast(msg);
