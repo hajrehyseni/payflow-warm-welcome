@@ -30,6 +30,18 @@ const TABS: { id: Tab; label: string; icon: typeof Home }[] = [
 function AppDemo() {
   const [tab, setTab] = useState<Tab>("today");
   const [profileOpen, setProfileOpen] = useState(false);
+  const [welcomeOpen, setWelcomeOpen] = useState(false);
+
+  // Show welcome card on first open per browser.
+  useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        if (!localStorage.getItem("payflow.welcomed")) setWelcomeOpen(true);
+      } catch { setWelcomeOpen(true); }
+    }
+    return null;
+  });
+
 
   return (
     <div className="min-h-screen bg-sand">
