@@ -125,19 +125,12 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
   }
 
   function handleEnd() {
-    const before = shifts.length;
-    endShift();
-    // The shift list updates synchronously via the store.
-    queueMicrotask(() => {
-      const after = useStore.length; // noop, just to satisfy linter
-      void after;
-    });
     const earnedNow = earned;
-    celebrate(
+    endShift();
+    toast.success(
       earnedNow > 0 ? `Shift saved — ${gbp(earnedNow)} earned` : "Shift saved",
-      "Nice work. Take a breath.",
+      { description: "Nice work today. Take a breath.", duration: 3200 },
     );
-    void before;
   }
 
   function handleSave() {
