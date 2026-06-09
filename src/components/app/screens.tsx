@@ -511,6 +511,7 @@ export function PayScreen() {
 // ─────────────────────────────────────────────────────────────────────────────
 // SAVE TAB
 export function SaveScreen() {
+  const { streak } = useStreak();
   const pct = (USER.savingsBalance / USER.savingsGoal) * 100;
   const C = 2 * Math.PI * 70;
   const offset = C - (pct / 100) * C;
@@ -518,6 +519,29 @@ export function SaveScreen() {
     <div className="flex h-full flex-col">
       <Header subtitle="Gentle, automatic" name="Save" small />
       <div className="flex-1 overflow-y-auto px-5 pb-6">
+        {/* Streak chip */}
+        <section className="mb-4 rounded-3xl bg-gradient-to-br from-accent-soft to-primary-soft p-4 ring-1 ring-border">
+          <div className="flex items-center gap-3">
+            <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-white/70">
+              <Flame className="size-5 text-accent" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="font-display text-sm font-extrabold text-ink tabular-nums">
+                {streak}-week saving streak
+              </div>
+              <div className="text-[11px] text-ink-soft">
+                Come back tomorrow to keep your streak.
+              </div>
+            </div>
+            <button
+              onClick={() => celebrate("Habit ticked")}
+              className="shrink-0 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground shadow active:scale-95 transition-all"
+            >
+              Tick today
+            </button>
+          </div>
+        </section>
+
         {/* Goal ring */}
         <section className="rounded-3xl bg-card p-6 ring-1 ring-border">
           <div className="text-center">
