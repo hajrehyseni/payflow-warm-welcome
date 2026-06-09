@@ -130,6 +130,48 @@ export function useStore<T>(sel: (s: State) => T): T {
 // ---------- actions ----------
 export function setOnboarded() { store.set((s) => ({ ...s, onboarded: true })); }
 
+export function computeNextPayday(cycle: PayCycle, anchor: Date = new Date()): string {
+  const d = new Date(anchor);
+  d.setHours(0, 0, 0, 0);
+  if (cycle === "weekly") {
+    // Next Friday
+    const day = d.getDay();
+    const diff = (5 - day + 7) % 7 || 7;
+    d.setDate(d.getDate() + diff);
+  } else if (cycle === "biweekly") {
+    d.setDate(d.getDate() + 14);
+  } else {
+    // Monthly: last working day of next month, approximated as last day of month
+    d.setMonth(d.getMonth() + 1);
+    d.setDate(0); // last day of current (post-increment) month — actually last day of THIS month
+    // Move to last day of next month from original anchor:
+    const last = new Date(anchor.getFullYear(), anchor.getMonth() + 2, 0);
+    return last.toISOString().slice(0, 10);
+  }
+  return d.toISOString().slice(0, 10);
+}
+
+export function applySetup(input: { hourlyRate: number; workplace: string; payCycle: PayCycle; nextPayday: string }) {
+  store.set((s) => ({
+    ...s,
+    onboarded: true,
+    hourlyRateDefault: input.hourlyRate,
+    workplaceDefault: input.workplace,
+    payCycle: input.payCycle,
+    nextPayday: input.nextPayday,
+    // Wipe demo data on first real setup
+    shifts: [],
+    savedTotal: 0,
+    usingSampleData: false,
+    live: { ...s.live, workplace: input.workplace, hourlyRate: input.hourlyRate },
+  }));
+}
+
+export function setPendingJoinCode(code: string | undefined) {
+  store.set((s) => ({ ...s, pendingJoinCode: code }));
+}
+
+
 export function startShift(workplace?: string, hourlyRate?: number) {
   store.set((s) => ({
     ...s,
