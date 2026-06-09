@@ -105,6 +105,10 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
   const user = useAuth();
   const [now, setNow] = useState(Date.now());
   const [setupOpen, setSetupOpen] = useState(false);
+  const [payCheckOpen, setPayCheckOpen] = useState(false);
+  const recap = useWeeklyRecap();
+  const [recapOpen, setRecapOpen] = useState(false);
+  useEffect(() => { if (recap) setRecapOpen(true); }, [recap?.weekISO]);
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), live.active ? 1000 : 60000);
