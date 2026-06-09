@@ -315,7 +315,7 @@ export function PayScreen() {
   const shifts = useStore((s) => s.shifts);
   const week = weeklyTotals(shifts);
   const ded = estimateDeductions(week.gross);
-  const payday = nextFriday();
+  const payday = new Date(useStore((s) => s.nextPayday) + "T00:00:00");
   const daysToPay = daysUntil(payday);
   const confidence = Math.min(100, Math.round((week.count >= 4 ? 90 : 60 + week.count * 7)));
 
