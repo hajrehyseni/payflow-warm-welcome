@@ -126,6 +126,7 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: "today" | "pay" | "save
               onClick={() => {
                 setSavedBoost((s) => s + 5);
                 flash(`£5 moved to your Eid trip · ${fmt(savedBoost + 5)} saved today`);
+                celebrate("£5 set aside");
               }}
               className="shrink-0 rounded-2xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 active:scale-95 transition-all"
             >
