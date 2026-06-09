@@ -160,7 +160,12 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: "today" | "pay" | "save
         <section className="mt-6">
           <div className="flex items-end justify-between">
             <h3 className="font-display text-base font-bold text-ink">Today so far</h3>
-            <button className="text-xs font-semibold text-primary">All shifts</button>
+            <button
+              onClick={() => flash("Showing this week's 4 shifts · 34 hrs total")}
+              className="text-xs font-semibold text-primary active:scale-95 transition-transform"
+            >
+              All shifts
+            </button>
           </div>
           <ul className="mt-3 space-y-2">
             {RECENT.slice(0, 4).map((t) => (
