@@ -64,7 +64,34 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: "today" | "pay" | "save
       <Header subtitle={onBreak ? "On break · paused" : "On shift · Maple Care Home"} name={USER.name} />
 
       <div className="flex-1 overflow-y-auto px-5 pb-6">
+        {/* Your next move */}
+        <section className="mt-4 rounded-3xl bg-card p-4 ring-1 ring-border">
+          <div className="flex items-center gap-3">
+            <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-primary-soft">
+              <Heart className="size-5 text-primary" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-primary">
+                Your next move
+              </div>
+              <p className="mt-0.5 text-sm font-medium text-ink leading-snug">
+                Set aside £5 from today's shift — it'll feel good later.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setSavedBoost((s) => s + 5);
+                flash(`£5 moved to your Eid trip · ${fmt(savedBoost + 5)} saved today`);
+              }}
+              className="shrink-0 rounded-2xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 active:scale-95 transition-all"
+            >
+              Do it
+            </button>
+          </div>
+        </section>
+
         {/* Live earnings hero */}
+
         <section className="relative overflow-hidden rounded-3xl bg-primary p-5 text-primary-foreground shadow-[0_20px_40px_-20px_rgba(14,124,102,0.6)]">
           <div className="absolute -right-12 -top-12 size-44 rounded-full bg-white/10 blur-2xl" />
           <div className="absolute -bottom-16 -left-8 size-40 rounded-full bg-accent/30 blur-3xl" />
