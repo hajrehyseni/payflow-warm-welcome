@@ -698,8 +698,8 @@ export function CoachScreen() {
               Your Saturday shift is unconfirmed. Want me to remind you to chase the rota by 5pm Friday?
             </p>
             <div className="mt-3 flex gap-2">
-              <ChipBtn primary>Yes, remind me</ChipBtn>
-              <ChipBtn>Not needed</ChipBtn>
+              <ChipBtn primary onClick={() => flash("Reminder set · Friday 5pm")}>Yes, remind me</ChipBtn>
+              <ChipBtn onClick={() => flash("Okay — I'll leave it with you")}>Not needed</ChipBtn>
             </div>
           </div>
         </div>
