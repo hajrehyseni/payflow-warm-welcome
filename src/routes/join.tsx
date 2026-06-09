@@ -24,7 +24,7 @@ function JoinPage() {
     if (!code.trim()) return;
     if (!user) { nav({ to: "/signup" }); return; }
     setState("joining"); setMsg("");
-    const { data, error } = await supabase.rpc("join_org_with_code", { _code: code.trim().toUpperCase() });
+    const { data, error } = await (supabase.rpc as any)("join_org_with_code", { _code: code.trim().toUpperCase() });
     if (error || !data || !Array.isArray(data) || data.length === 0) {
       setState("error");
       setMsg("That code doesn't match a workplace. Double-check with your manager.");
