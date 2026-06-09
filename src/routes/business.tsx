@@ -203,6 +203,16 @@ function BusinessPage() {
           <div className="mt-6 rounded-2xl bg-red-50 p-4 text-sm text-red-700 ring-1 ring-red-200">{error}</div>
         )}
 
+        {/* ROI panel — first, always-on, aggregate only */}
+        <div className="mt-8">
+          <BusinessROIPanel
+            active={active}
+            hours={Number(m.total_hours)}
+            queriesAvoided={m.queries_avoided}
+            engagementPct={m.engagement_pct}
+          />
+        </div>
+
         <div className="mt-8 grid gap-4 md:grid-cols-4">
           <Metric icon={Users} label="Active workers" value={String(active)} hint="Tracked a shift in the last 30 days" />
           <Metric icon={Clock} label="Hours tracked" value={Number(m.total_hours).toLocaleString()} hint="Across the team" />
