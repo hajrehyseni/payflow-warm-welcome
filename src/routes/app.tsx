@@ -33,14 +33,17 @@ function AppDemo() {
   const [welcomeOpen, setWelcomeOpen] = useState(false);
 
   // Show welcome card on first open per browser.
-  useState(() => {
-    if (typeof window !== "undefined") {
-      try {
-        if (!localStorage.getItem("payflow.welcomed")) setWelcomeOpen(true);
-      } catch { setWelcomeOpen(true); }
-    }
-    return null;
-  });
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem("payflow.welcomed")) setWelcomeOpen(true);
+    } catch { setWelcomeOpen(true); }
+  }, []);
+
+  const acceptWelcome = () => {
+    try { localStorage.setItem("payflow.welcomed", "1"); } catch {}
+    setWelcomeOpen(false);
+  };
+
 
 
   return (
