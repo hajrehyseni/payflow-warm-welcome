@@ -5,8 +5,8 @@ export const USER = {
   shiftStart: "07:30",
   shiftEnd: "15:30",
   worked: { hours: 5, minutes: 42 }, // current shift progress
-  weeklyHours: 32,
-  weeklyGross: 464,
+  weeklyHours: 34,
+  weeklyGross: 493.0,
   weeklyEstimatedNet: 398.02,
   savingsBalance: 312.4,
   savingsGoal: 600,
