@@ -274,6 +274,17 @@ export function addToSavings(amount: number) {
   void cloudUpsertSavings();
 }
 
+// ---------- pay checks (local-only) ----------
+export function addPayCheck(input: Omit<PayCheck, "id" | "createdAt">) {
+  const pc: PayCheck = { ...input, id: crypto.randomUUID(), createdAt: Date.now() };
+  store.set((s) => ({ ...s, payChecks: [pc, ...s.payChecks].slice(0, 24) }));
+  return pc;
+}
+
+export function dismissWeeklyRecap(weekMondayISO: string) {
+  store.set((s) => ({ ...s, recapDismissedWeek: weekMondayISO }));
+}
+
 // ---------- cloud sync ----------
 async function cloudInsertShift(shift: Shift) {
   if (!cloudUserId) return;
