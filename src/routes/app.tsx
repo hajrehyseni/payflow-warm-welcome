@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Home, Wallet, PiggyBank, Sparkles, Heart, ChevronLeft } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { PhoneFrame } from "@/components/PhoneFrame";
-import { TodayScreen, PayScreen, SaveScreen, LifeScreen, CoachScreen } from "@/components/app/screens";
+import { TodayScreen, PayScreen, SaveScreen, LifeScreen, CoachScreen, ProfileScreen } from "@/components/app/screens";
 
 export const Route = createFileRoute("/app")({
   head: () => ({
@@ -29,6 +29,7 @@ const TABS: { id: Tab; label: string; icon: typeof Home }[] = [
 
 function AppDemo() {
   const [tab, setTab] = useState<Tab>("today");
+  const [profileOpen, setProfileOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-sand">
@@ -64,11 +65,14 @@ function AppDemo() {
         {/* Phone */}
         <PhoneFrame>
           <div className="relative h-full w-full">
-            {tab === "today" && <TodayScreen goToTab={setTab} />}
-            {tab === "pay" && <PayScreen />}
-            {tab === "save" && <SaveScreen />}
-            {tab === "life" && <LifeScreen />}
-            {tab === "coach" && <CoachScreen />}
+            {tab === "today" && <TodayScreen goToTab={setTab} onProfileClick={() => setProfileOpen(true)} />}
+            {tab === "pay" && <PayScreen onProfileClick={() => setProfileOpen(true)} />}
+            {tab === "save" && <SaveScreen onProfileClick={() => setProfileOpen(true)} />}
+            {tab === "life" && <LifeScreen onProfileClick={() => setProfileOpen(true)} />}
+            {tab === "coach" && <CoachScreen onProfileClick={() => setProfileOpen(true)} />}
+
+            {/* Profile overlay */}
+            {profileOpen && <ProfileScreen onClose={() => setProfileOpen(false)} />}
 
             {/* Bottom tab bar */}
             <nav className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-1 rounded-full bg-card/95 p-1.5 ring-1 ring-border backdrop-blur-xl shadow-[0_10px_30px_-10px_rgba(0,0,0,0.15)]">

@@ -20,6 +20,10 @@ import {
   Pause,
   Play,
   Info,
+  Building2,
+  Users,
+  Copy,
+  Send,
 } from "lucide-react";
 
 const fmt = (n: number) =>
@@ -87,7 +91,7 @@ function useLiveEarnings(paused: boolean) {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TODAY TAB
-export function TodayScreen({ goToTab }: { goToTab?: (t: "today" | "pay" | "save" | "life" | "coach") => void }) {
+export function TodayScreen({ goToTab, onProfileClick }: { goToTab?: (t: "today" | "pay" | "save" | "life" | "coach") => void; onProfileClick?: () => void }) {
   const [onBreak, setOnBreak] = useState(false);
   const [payslipOpen, setPayslipOpen] = useState(false);
   const [checkOpen, setCheckOpen] = useState(false);
@@ -106,7 +110,7 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: "today" | "pay" | "save
 
   return (
     <div className="flex h-full flex-col">
-      <Header subtitle={onBreak ? "On break · paused" : "On shift · Maple Care Home"} name={USER.name} />
+      <Header subtitle={onBreak ? "On break · paused" : "On shift · Maple Care Home"} name={USER.name} onProfileClick={onProfileClick} />
 
       <div className="flex-1 overflow-y-auto px-5 pb-6">
         {/* Your next move — Pre-payday check (hero) */}
@@ -678,11 +682,11 @@ function PrePaydayCheck({ onClose }: { onClose: () => void }) {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PAY TAB
-export function PayScreen() {
+export function PayScreen({ onProfileClick }: { onProfileClick?: () => void }) {
   const max = Math.max(...WEEK.map((d) => d.earned), 1);
   return (
     <div className="flex h-full flex-col">
-      <Header subtitle="This week · estimate" name="Pay" small />
+      <Header subtitle="This week · estimate" name="Pay" small onProfileClick={onProfileClick} />
       <div className="flex-1 overflow-y-auto px-5 pb-6">
         {/* Weekly hero */}
         <section className="rounded-3xl bg-card p-5 ring-1 ring-border">
@@ -776,14 +780,14 @@ export function PayScreen() {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SAVE TAB
-export function SaveScreen() {
+export function SaveScreen({ onProfileClick }: { onProfileClick?: () => void }) {
   const { streak } = useStreak();
   const pct = (USER.savingsBalance / USER.savingsGoal) * 100;
   const C = 2 * Math.PI * 70;
   const offset = C - (pct / 100) * C;
   return (
     <div className="flex h-full flex-col">
-      <Header subtitle="Gentle, automatic" name="Save" small />
+      <Header subtitle="Gentle, automatic" name="Save" small onProfileClick={onProfileClick} />
       <div className="flex-1 overflow-y-auto px-5 pb-6">
         {/* Streak chip */}
         <section className="mb-4 rounded-3xl bg-gradient-to-br from-accent-soft to-primary-soft p-4 ring-1 ring-border">
@@ -869,7 +873,7 @@ export function SaveScreen() {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LIFE TAB
-export function LifeScreen() {
+export function LifeScreen({ onProfileClick }: { onProfileClick?: () => void }) {
   const { streak } = useStreak();
   const [toast, setToast] = useState<string | null>(null);
   function flash(msg: string) {
@@ -879,7 +883,7 @@ export function LifeScreen() {
   }
   return (
     <div className="flex h-full flex-col">
-      <Header subtitle="Small wins that add up" name="Life" small />
+      <Header subtitle="Small wins that add up" name="Life" small onProfileClick={onProfileClick} />
       <div className="flex-1 overflow-y-auto px-5 pb-6 space-y-4">
         {/* Money-confidence score */}
         <section className="rounded-3xl bg-card p-5 ring-1 ring-border">
@@ -1021,7 +1025,7 @@ const COACH_QA = [
   },
 ];
 
-export function CoachScreen() {
+export function CoachScreen({ onProfileClick }: { onProfileClick?: () => void }) {
   const [asked, setAsked] = useState<string[]>([]);
   const [checkOpen, setCheckOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -1034,7 +1038,7 @@ export function CoachScreen() {
 
   return (
     <div className="flex h-full flex-col">
-      <Header subtitle="Your weekly check-in" name="Flow Coach" small />
+      <Header subtitle="Your weekly check-in" name="Flow Coach" small onProfileClick={onProfileClick} />
       <div className="flex-1 overflow-y-auto px-5 pb-6 space-y-4">
         {/* Greeting bubble */}
         <div className="flex items-start gap-3">
@@ -1151,6 +1155,46 @@ export function CoachScreen() {
           </div>
         </div>
 
+        {/* Bring PayFlow to workplace */}
+        <div className="flex items-start gap-3">
+          <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground">
+            <Building2 className="size-5" />
+          </div>
+          <div className="rounded-3xl rounded-tl-md bg-gradient-to-br from-primary to-primary/90 p-4 text-primary-foreground shadow-lg shadow-primary/20">
+            <p className="text-sm leading-relaxed opacity-95">
+              Get your shifts and pay clear for everyone — <span className="font-semibold">takes your manager 2 minutes</span>.
+            </p>
+            <div className="mt-3 flex gap-2">
+              <button
+                onClick={() => {
+                  const draft = "Hi, I wanted to share PayFlow — a free app that helps hourly workers like our team see shifts and pay clearly in real time. It only takes a couple of minutes to set up. Would you be open to taking a look? Thanks, Amina";
+                  if (typeof navigator !== "undefined" && navigator.clipboard) {
+                    navigator.clipboard.writeText(draft).catch(() => {});
+                  }
+                  celebrate("Manager invite copied");
+                }}
+                className="rounded-full px-3.5 py-1.5 text-xs font-semibold bg-white text-primary shadow active:scale-95 transition-all"
+              >
+                Invite manager
+              </button>
+              <button
+                onClick={() => {
+                  const text = "I'm using PayFlow to track my shifts and pay in real time. It's free and made for hourly workers like us. Want to try it?";
+                  if (typeof navigator !== "undefined" && navigator.share) {
+                    navigator.share({ title: "PayFlow", text }).catch(() => {});
+                  } else if (typeof navigator !== "undefined" && navigator.clipboard) {
+                    navigator.clipboard.writeText(text).catch(() => {});
+                  }
+                  celebrate("Invite shared with a coworker");
+                }}
+                className="rounded-full px-3.5 py-1.5 text-xs font-semibold bg-white/15 text-white ring-1 ring-white/25 hover:bg-white/25 active:scale-95 transition-all"
+              >
+                Invite coworker
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* User reply prompt */}
         <button
           onClick={() => flash("Tap a suggested question above to see a warm, plain-English answer")}
@@ -1190,8 +1234,179 @@ export function CoachScreen() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// PROFILE SCREEN
+export function ProfileScreen({ onClose }: { onClose: () => void }) {
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [copiedManager, setCopiedManager] = useState(false);
+  const [copiedCoworker, setCopiedCoworker] = useState(false);
+
+  const managerDraft = `Hi,
+
+I wanted to share PayFlow — a free app that helps hourly workers like our team see shifts and pay clearly in real time.
+
+It only takes a couple of minutes to set up and it could really help everyone understand their rota and take-home better.
+
+Would you be open to taking a look?
+
+Thanks,
+Amina`;
+
+  const coworkerText = "I'm using PayFlow to track my shifts and pay in real time. It's free and made for hourly workers like us. Want to try it?";
+
+  const shareCoworker = () => {
+    if (typeof navigator !== "undefined" && navigator.share) {
+      navigator.share({ title: "PayFlow", text: coworkerText }).catch(() => {});
+    } else if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(coworkerText).catch(() => {});
+      setCopiedCoworker(true);
+      setTimeout(() => setCopiedCoworker(false), 2000);
+    }
+    celebrate("Invite shared with a coworker");
+  };
+
+  return (
+    <div className="absolute inset-0 z-40 flex flex-col bg-sand">
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 pt-12 pb-3">
+        <div>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-soft">Your profile</div>
+          <div className="font-display text-2xl font-extrabold tracking-tight text-ink">Profile</div>
+        </div>
+        <button
+          onClick={onClose}
+          className="grid size-10 place-items-center rounded-2xl bg-card ring-1 ring-border text-ink"
+          aria-label="Close profile"
+        >
+          <X className="size-5" />
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-5 pb-6 space-y-4">
+        {/* User card */}
+        <section className="rounded-3xl bg-card p-5 ring-1 ring-border">
+          <div className="flex items-center gap-3">
+            <div className="grid size-14 place-items-center rounded-2xl bg-primary text-primary-foreground font-display text-xl font-bold">
+              A
+            </div>
+            <div>
+              <div className="font-display text-lg font-bold text-ink">{USER.name}</div>
+              <div className="text-sm text-ink-soft">Care worker · Maple Care Home</div>
+              <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-primary-soft px-2 py-0.5 text-[10px] font-bold text-primary">
+                <ShieldCheck className="size-3" /> Verified
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Employer pull — hero card */}
+        <section className="overflow-hidden rounded-3xl bg-gradient-to-br from-primary to-primary/90 p-5 text-primary-foreground shadow-lg shadow-primary/20">
+          <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] opacity-90">
+            <Building2 className="size-4" /> For your whole team
+          </div>
+          <div className="mt-2 font-display text-xl font-extrabold leading-tight">
+            Bring PayFlow to your workplace
+          </div>
+          <p className="mt-2 text-sm leading-relaxed opacity-95">
+            Get your shifts and pay clear for everyone — <span className="font-semibold">takes your manager 2 minutes</span>.
+          </p>
+          <button
+            onClick={() => setInviteOpen(true)}
+            className="mt-4 inline-flex items-center gap-1.5 rounded-2xl bg-white px-4 py-2.5 text-sm font-bold text-primary shadow active:scale-95 transition-all"
+          >
+            Invite my manager <ArrowUpRight className="size-4" />
+          </button>
+        </section>
+
+        {/* Invite a coworker */}
+        <section className="rounded-3xl bg-card p-5 ring-1 ring-border">
+          <div className="flex items-center gap-3">
+            <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-accent-soft">
+              <Users className="size-5 text-accent" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="font-display text-base font-bold text-ink">Invite a coworker</div>
+              <p className="text-sm text-ink-soft">Share PayFlow with someone on your team.</p>
+            </div>
+            <button
+              onClick={shareCoworker}
+              className="shrink-0 rounded-xl bg-accent px-3 py-2 text-xs font-bold text-accent-foreground shadow active:scale-95 transition-all"
+            >
+              {copiedCoworker ? "Copied ✓" : "Share"}
+            </button>
+          </div>
+        </section>
+
+        {/* Manager invite expanded */}
+        {inviteOpen && (
+          <section className="rounded-3xl bg-card p-5 ring-1 ring-border animate-in fade-in slide-in-from-bottom-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-primary">Pre-filled draft</div>
+                <div className="font-display text-base font-bold text-ink">To your manager</div>
+              </div>
+              <div className="rounded-full bg-primary-soft px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-primary">
+                Ready to send
+              </div>
+            </div>
+            <textarea
+              readOnly
+              rows={8}
+              className="mt-3 w-full resize-none rounded-2xl bg-sand p-3 text-[13px] leading-relaxed text-ink ring-1 ring-border focus:outline-none"
+              value={managerDraft}
+            />
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                onClick={() => {
+                  if (typeof navigator !== "undefined" && navigator.clipboard) {
+                    navigator.clipboard.writeText(managerDraft).catch(() => {});
+                  }
+                  setCopiedManager(true);
+                  celebrate("Manager invite copied");
+                  setTimeout(() => setCopiedManager(false), 2000);
+                }}
+                className="inline-flex items-center gap-1.5 rounded-2xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground shadow active:scale-95 transition-all"
+              >
+                {copiedManager ? "Copied ✓" : <><Copy className="size-3.5" /> Copy message</>}
+              </button>
+              <button
+                onClick={() => {
+                  celebrate("Invite sent to manager");
+                  setInviteOpen(false);
+                }}
+                className="inline-flex items-center gap-1.5 rounded-2xl bg-card px-4 py-2.5 text-sm font-bold text-ink ring-1 ring-border active:scale-95 transition-all"
+              >
+                <Send className="size-3.5" /> Send
+              </button>
+              <button
+                onClick={() => setInviteOpen(false)}
+                className="rounded-2xl px-3 py-2.5 text-sm font-semibold text-ink-soft active:scale-95 transition-all"
+              >
+                Close
+              </button>
+            </div>
+            <p className="mt-3 text-[11px] leading-relaxed text-ink-soft">
+              Tip: a short, kind message works best. Most managers are happy to explore tools that help the team.
+            </p>
+          </section>
+        )}
+
+        {/* Disclaimer */}
+        <div className="rounded-2xl bg-card p-3.5 ring-1 ring-border">
+          <div className="flex items-start gap-2">
+            <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" />
+            <p className="text-[11px] leading-relaxed text-ink-soft">
+              Flow Coach gives general information and estimates only — not financial, tax, legal, payroll or banking advice.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Shared bits
-function Header({ name, subtitle, small }: { name: string; subtitle: string; small?: boolean }) {
+function Header({ name, subtitle, small, onProfileClick }: { name: string; subtitle: string; small?: boolean; onProfileClick?: () => void }) {
   const { streak } = useStreak();
   return (
     <div className="px-5 pt-12 pb-3">
@@ -1212,9 +1427,12 @@ function Header({ name, subtitle, small }: { name: string; subtitle: string; sma
             <Flame className="size-3.5" />
             <span className="tabular-nums">{streak} wk</span>
           </div>
-          <div className="grid size-11 place-items-center rounded-2xl bg-primary-soft font-display text-base font-bold text-primary ring-1 ring-primary/10">
+          <button
+            onClick={onProfileClick}
+            className="grid size-11 place-items-center rounded-2xl bg-primary-soft font-display text-base font-bold text-primary ring-1 ring-primary/10 active:scale-95 transition-transform"
+          >
             A
-          </div>
+          </button>
         </div>
       </div>
     </div>
