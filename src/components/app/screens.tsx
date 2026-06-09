@@ -268,6 +268,9 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: "today" | "pay" | "save
 
       {/* Payslip translator overlay */}
       {payslipOpen && <PayslipTranslator onClose={() => setPayslipOpen(false)} />}
+
+      {/* Pre-payday check overlay */}
+      {checkOpen && <PrePaydayCheck onClose={() => setCheckOpen(false)} />}
     </div>
   );
 }
