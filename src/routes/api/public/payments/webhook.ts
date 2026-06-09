@@ -24,8 +24,7 @@ async function upsertOrgSubscription(sub: any, env: StripeEnv) {
   const periodEnd = item?.current_period_end ?? sub.current_period_end;
   const customer = typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
 
-  await getSupabase()
-    .from("organisations")
+  await (getSupabase().from("organisations") as any)
     .update({
       stripe_customer_id: customer,
       stripe_subscription_id: sub.id,
@@ -38,8 +37,7 @@ async function upsertOrgSubscription(sub: any, env: StripeEnv) {
 }
 
 async function markCanceled(sub: any, env: StripeEnv) {
-  await getSupabase()
-    .from("organisations")
+  await (getSupabase().from("organisations") as any)
     .update({ subscription_status: "canceled", plan: "pilot", environment: env })
     .eq("stripe_subscription_id", sub.id);
 }
