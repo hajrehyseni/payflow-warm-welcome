@@ -917,6 +917,9 @@ export function CoachScreen() {
         </div>
       )}
       <CelebrationToast />
+
+      {/* Pre-payday check overlay */}
+      {checkOpen && <PrePaydayCheck onClose={() => setCheckOpen(false)} />}
     </div>
   );
 }
