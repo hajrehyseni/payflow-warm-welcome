@@ -239,12 +239,30 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
         </div>
       </section>
 
+      {/* Check my pay — hero feature */}
+      <section className="mx-5 mt-4">
+        <button
+          onClick={() => setPayCheckOpen(true)}
+          className="w-full flex items-center gap-3 rounded-2xl bg-card p-4 ring-1 ring-border text-left active:scale-[0.99] transition-transform"
+        >
+          <div className="grid size-11 place-items-center rounded-2xl bg-accent text-accent-foreground"><FileCheck2 className="size-5" /></div>
+          <div className="min-w-0 flex-1">
+            <div className="text-[14px] font-bold">Check my pay</div>
+            <div className="text-[12px] text-ink-soft truncate">Got your payslip? Make sure it matches what you tracked.</div>
+          </div>
+          <ChevronRight className="size-4 text-ink-soft" />
+        </button>
+      </section>
+
       {/* Quick actions */}
       <section className="mx-5 mt-4 grid grid-cols-3 gap-2">
         <QuickAction icon={Plus} label="Add shift" onClick={() => goToTab?.("pay")} />
         <QuickAction icon={PiggyBank} label="Save" onClick={handleSave} />
         <QuickAction icon={Sparkles} label="Coach" onClick={() => goToTab?.("coach")} />
       </section>
+
+      {payCheckOpen && <PayCheckModal onClose={() => setPayCheckOpen(false)} />}
+      {recap && recapOpen && <WeeklyRecap data={recap} onClose={() => setRecapOpen(false)} />}
 
       {/* Guest nudge — only if signed out and they've logged at least one shift today */}
       {!user && hasEndedToday && (
