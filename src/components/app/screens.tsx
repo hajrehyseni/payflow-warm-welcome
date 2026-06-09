@@ -183,7 +183,7 @@ export function TodayScreen({ goToTab, onProfileClick }: { goToTab?: (t: "today"
             active={onBreak}
             onClick={() => {
               setOnBreak((b) => !b);
-              flash(onBreak ? "Welcome back — earnings resumed" : "Break started — clock paused");
+              flash(onBreak ? "Welcome back — your clock's ticking again" : "Break started — rest up, you've earned it");
             }}
           />
           <QuickAction
