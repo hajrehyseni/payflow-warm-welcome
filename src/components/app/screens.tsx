@@ -267,10 +267,10 @@ export function TodayScreen({ goToTab, onProfileClick }: { goToTab?: (t: "today"
             </div>
             <div className="mt-3 flex items-baseline gap-1 font-display tabular-nums tracking-tight">
               <span className="text-[56px] leading-none font-extrabold">
-                £{Math.floor(earned)}
+                £{Math.floor(earnedAnim)}
               </span>
               <span className="text-3xl font-bold opacity-85">
-                .{(earned % 1).toFixed(2).slice(2)}
+                .{(earnedAnim % 1).toFixed(2).slice(2)}
               </span>
             </div>
             <div className="mt-2 text-sm opacity-85">
