@@ -115,7 +115,11 @@ function BusinessPage() {
     }
   }
 
-  if (!ready || !user || user.role !== "business") return null;
+  if (!ready || !user) return null;
+  // After bootstrap creates the org, the DB trigger promotes the user to
+  // 'business' and refreshProfile() updates the client state. Until then
+  // (or for non-business users redirected above), render nothing.
+  if (user.role !== "business" && !org) return null;
 
   const m = agg ?? { active_workers: 0, total_hours: 0, engagement_pct: 0, queries_avoided: 0 };
   const active = Number(m.active_workers);
