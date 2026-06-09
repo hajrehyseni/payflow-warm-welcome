@@ -90,6 +90,7 @@ function useLiveEarnings(paused: boolean) {
 export function TodayScreen({ goToTab }: { goToTab?: (t: "today" | "pay" | "save" | "life" | "coach") => void }) {
   const [onBreak, setOnBreak] = useState(false);
   const [payslipOpen, setPayslipOpen] = useState(false);
+  const [checkOpen, setCheckOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [savedBoost, setSavedBoost] = useState(0);
 
@@ -108,32 +109,29 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: "today" | "pay" | "save
       <Header subtitle={onBreak ? "On break · paused" : "On shift · Maple Care Home"} name={USER.name} />
 
       <div className="flex-1 overflow-y-auto px-5 pb-6">
-        {/* Your next move */}
-        <section className="mt-4 rounded-3xl bg-card p-4 ring-1 ring-border">
+        {/* Your next move — Pre-payday check (hero) */}
+        <section className="mt-4 overflow-hidden rounded-3xl bg-gradient-to-br from-primary to-primary/90 p-4 text-primary-foreground shadow-lg shadow-primary/20">
           <div className="flex items-center gap-3">
-            <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-primary-soft">
-              <Heart className="size-5 text-primary" />
+            <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-white/15 ring-1 ring-white/20">
+              <ShieldCheck className="size-5" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-primary">
+              <div className="text-[11px] font-semibold uppercase tracking-wider opacity-90">
                 Your next move
               </div>
-              <p className="mt-0.5 text-sm font-medium text-ink leading-snug">
-                Set aside £5 from today's shift — it'll feel good later.
+              <p className="mt-0.5 text-sm font-semibold leading-snug">
+                Run your pre-payday check — 30 seconds.
               </p>
             </div>
             <button
-              onClick={() => {
-                setSavedBoost((s) => s + 5);
-                flash(`£5 moved to your Eid trip · ${fmt(savedBoost + 5)} saved today`);
-                celebrate("£5 set aside");
-              }}
-              className="shrink-0 rounded-2xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 active:scale-95 transition-all"
+              onClick={() => setCheckOpen(true)}
+              className="shrink-0 rounded-2xl bg-white px-4 py-2.5 text-sm font-bold text-primary shadow-lg active:scale-95 transition-all"
             >
-              Do it
+              Check
             </button>
           </div>
         </section>
+
 
         {/* Live earnings hero */}
 
