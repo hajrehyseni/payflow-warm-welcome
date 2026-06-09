@@ -16,6 +16,9 @@ export const Route = createFileRoute("/pricing")({
 });
 
 function Pricing() {
+  const [workers, setWorkers] = useState(50);
+  const tier = tierFor(workers);
+  const monthly = estimateMonthlyGBP(workers);
   return (
     <div className="min-h-screen bg-sand text-ink">
       <header className="sticky top-0 z-40 border-b border-border/60 bg-sand/80 backdrop-blur-md">
