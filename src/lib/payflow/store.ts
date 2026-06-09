@@ -173,6 +173,7 @@ export function endShift() {
     shifts: [shift, ...st.shifts],
     live: { ...DEFAULT.live, workplace: st.workplaceDefault, hourlyRate: st.hourlyRateDefault },
   }));
+  void cloudInsertShift(shift);
 }
 
 export function addShift(input: Omit<Shift, "id" | "hours" | "gross">) {
