@@ -191,7 +191,7 @@ export function TodayScreen({ goToTab, onProfileClick }: { goToTab?: (t: "today"
             label="Save £5"
             onClick={() => {
               setSavedBoost((s) => s + 5);
-              flash(`£5 moved to Eid trip · +${fmt(savedBoost + 5)} today`);
+              flash(`£5 tucked away for your Eid trip — kind to future you`);
               celebrate("£5 set aside");
             }}
           />
