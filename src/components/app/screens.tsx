@@ -792,6 +792,15 @@ export function SaveScreen({ onProfileClick }: { onProfileClick?: () => void }) 
     <div className="flex h-full flex-col">
       <Header subtitle="Gentle, automatic" name="Save" small onProfileClick={onProfileClick} />
       <div className="flex-1 overflow-y-auto px-5 pb-6">
+        {/* Kindness banner */}
+        <section className="mb-3 rounded-2xl bg-primary-soft px-4 py-3 text-center">
+          <div className="font-display text-sm font-bold text-primary">
+            You're building, not behind.
+          </div>
+          <div className="mt-0.5 text-[11px] text-primary/80">
+            Every £ moves you closer — no shame in starting small.
+          </div>
+        </section>
         {/* Streak chip */}
         <section className="mb-4 rounded-3xl bg-gradient-to-br from-accent-soft to-primary-soft p-4 ring-1 ring-border">
           <div className="flex items-center gap-3">
