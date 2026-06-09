@@ -1002,9 +1002,9 @@ export function SaveScreen({ onProfileClick }: { onProfileClick?: () => void }) 
               <div className="absolute inset-0 grid place-items-center text-center">
                 <div>
                   <div className="font-display text-3xl font-extrabold tabular-nums text-ink">
-                    {fmt(USER.savingsBalance)}
+                    {fmt(balanceAnim)}
                   </div>
-                  <div className="text-xs text-ink-soft">of {fmt(USER.savingsGoal)}</div>
+                  <div className="text-xs font-semibold text-primary tabular-nums">{Math.round(pctAnim)}% of {fmt(USER.savingsGoal)}</div>
                 </div>
               </div>
             </div>
