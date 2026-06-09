@@ -89,6 +89,9 @@ function AppDemo() {
             {/* Profile overlay */}
             {profileOpen && <ProfileScreen onClose={() => setProfileOpen(false)} />}
 
+            {/* Welcome / compliance card */}
+            {welcomeOpen && <WelcomeCard onAccept={acceptWelcome} />}
+
             {/* Bottom tab bar */}
             <nav className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-1 rounded-full bg-card/95 p-1.5 ring-1 ring-border backdrop-blur-xl shadow-[0_10px_30px_-10px_rgba(0,0,0,0.15)]">
               {TABS.map((t) => {
