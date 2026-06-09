@@ -363,6 +363,9 @@ export function PayScreen() {
   const confidence = Math.min(100, Math.round((week.count >= 4 ? 90 : 60 + week.count * 7)));
 
   const [modal, setModal] = useState<PayModal>(null);
+  const [payCheckOpen, setPayCheckOpen] = useState(false);
+  const payChecks = useStore((s) => s.payChecks);
+  const lastCheck = payChecks[0];
 
   return (
     <div className="pb-[120px]">
