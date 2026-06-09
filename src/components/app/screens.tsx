@@ -760,12 +760,15 @@ export function CoachScreen() {
         </div>
 
         {/* User reply prompt */}
-        <div className="sticky bottom-2 rounded-full bg-card px-4 py-3 ring-1 ring-border flex items-center gap-2 shadow-sm">
+        <button
+          onClick={() => flash("Tap a suggested question above to see a warm, plain-English answer")}
+          className="sticky bottom-2 w-full rounded-full bg-card px-4 py-3 ring-1 ring-border flex items-center gap-2 shadow-sm active:scale-[0.99] transition-transform text-left"
+        >
           <span className="text-sm text-ink-soft flex-1">Ask Flow Coach anything…</span>
-          <button className="grid size-8 place-items-center rounded-full bg-primary text-primary-foreground">
+          <span className="grid size-8 place-items-center rounded-full bg-primary text-primary-foreground">
             <ArrowUpRight className="size-4" />
-          </button>
-        </div>
+          </span>
+        </button>
 
         {/* Disclaimer */}
         <div className="rounded-2xl bg-card p-3.5 ring-1 ring-border">
@@ -777,6 +780,15 @@ export function CoachScreen() {
           </div>
         </div>
       </div>
+
+      {/* Toast */}
+      {toast && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-24 z-30 flex justify-center px-6">
+          <div className="pointer-events-auto rounded-2xl bg-ink px-4 py-2.5 text-xs font-semibold text-white shadow-lg animate-in fade-in slide-in-from-bottom-2">
+            {toast}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
