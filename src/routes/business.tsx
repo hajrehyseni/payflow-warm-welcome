@@ -131,8 +131,23 @@ function BusinessPage() {
 
   async function handleSignOut() { await signOut(); nav({ to: "/" }); }
 
+  const planBadge = isActive
+    ? { text: "Active subscription", className: "bg-primary-soft text-primary" }
+    : isPastDue
+      ? { text: "Past due — update billing", className: "bg-red-100 text-red-700" }
+      : onPilot
+        ? { text: `Pilot · ${daysLeft} days left`, className: "bg-accent-soft text-accent" }
+        : { text: "Pilot ended — start subscription", className: "bg-amber-100 text-amber-800" };
+
+  const nextInvoice = isActive && org?.current_period_end
+    ? new Date(org.current_period_end).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+    : onPilot
+      ? `After ${daysLeft}-day pilot`
+      : "—";
+
   return (
     <div className="min-h-screen bg-sand text-ink">
+      <PaymentTestModeBanner />
       <header className="sticky top-0 z-40 border-b border-border/60 bg-sand/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link to="/" className="flex items-center gap-2">
@@ -158,8 +173,18 @@ function BusinessPage() {
             <h1 className="mt-3 font-display text-3xl md:text-4xl font-extrabold tracking-tight">Workforce overview</h1>
             <p className="mt-1 text-ink-soft">Last 30 days · aggregate only · no individual pay shown.</p>
           </div>
-          <div className="rounded-full bg-primary-soft px-3 py-1.5 text-xs font-bold text-primary">90-day pilot · active</div>
+          <div className={`rounded-full px-3 py-1.5 text-xs font-bold ${planBadge.className}`}>{planBadge.text}</div>
         </div>
+
+        {search.checkout === "success" && (
+          <div className="mt-6 flex items-start gap-2 rounded-2xl bg-primary-soft p-4 ring-1 ring-primary/20">
+            <Rocket className="mt-0.5 size-4 shrink-0 text-primary" />
+            <p className="text-sm text-primary"><strong>You're subscribed.</strong> Thanks for backing your team — the new plan is now active.</p>
+          </div>
+        )}
+        {error && (
+          <div className="mt-6 rounded-2xl bg-red-50 p-4 text-sm text-red-700 ring-1 ring-red-200">{error}</div>
+        )}
 
         <div className="mt-8 grid gap-4 md:grid-cols-4">
           <Metric icon={Users} label="Active workers" value={String(active)} hint="Tracked a shift in the last 30 days" />
@@ -194,18 +219,35 @@ function BusinessPage() {
               <CreditCard className="size-3.5" /> Billing
             </div>
             <div className="mt-3 flex items-baseline gap-1.5">
-              <span className="font-display text-3xl font-extrabold">£{billing}</span>
+              <span className="font-display text-3xl font-extrabold">£{monthly}</span>
               <span className="text-sm text-ink-soft">/ month</span>
             </div>
-            <p className="mt-1 text-xs text-ink-soft">{active} active × £{pricePerWorker.toFixed(2)} · £99 minimum</p>
+            <p className="mt-1 text-xs text-ink-soft">{active} active × £{tier.perWorker.toFixed(2)} · £99 minimum</p>
 
             <div className="mt-4 space-y-2 text-sm">
-              <Row k="Seats used" v={`${active} active`} />
-              <Row k="Plan" v="Business · pilot" />
-              <Row k="Next invoice" v="—" />
+              <Row k="Billable seats" v={`${qty} (min ${Math.ceil(99 / tier.perWorker)})`} />
+              <Row k="Tier" v={`${tier.label} workers`} />
+              <Row k="Next invoice" v={nextInvoice} />
             </div>
-            <Link to="/pricing" className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-ink px-4 py-2.5 text-sm font-bold text-sand hover:bg-primary">
-              View pricing
+
+            {isActive || isPastDue ? (
+              <button
+                onClick={handlePortal}
+                disabled={portalBusy}
+                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-ink px-4 py-2.5 text-sm font-bold text-sand hover:bg-primary disabled:opacity-60"
+              >
+                {portalBusy ? "Opening…" : <>Manage billing <ExternalLink className="size-3.5" /></>}
+              </button>
+            ) : (
+              <button
+                onClick={() => setCheckoutOpen(true)}
+                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-accent px-4 py-2.5 text-sm font-bold text-accent-foreground hover:scale-[1.01] transition-transform"
+              >
+                <Rocket className="size-4" /> Start subscription
+              </button>
+            )}
+            <Link to="/pricing" className="mt-2 block text-center text-xs font-semibold text-ink-soft hover:text-ink">
+              See pricing details →
             </Link>
           </div>
         </div>
@@ -217,10 +259,12 @@ function BusinessPage() {
           </p>
         </div>
 
-        {orgId && (
-          <p className="mt-4 text-[10px] text-ink-soft/70">org · {orgId.slice(0, 8)}</p>
+        {org?.id && (
+          <p className="mt-4 text-[10px] text-ink-soft/70">org · {org.id.slice(0, 8)}</p>
         )}
       </main>
+
+      {checkoutOpen && <BusinessCheckoutModal onClose={() => setCheckoutOpen(false)} />}
     </div>
   );
 }
