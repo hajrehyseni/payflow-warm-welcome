@@ -160,7 +160,12 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: "today" | "pay" | "save
         <section className="mt-6">
           <div className="flex items-end justify-between">
             <h3 className="font-display text-base font-bold text-ink">Today so far</h3>
-            <button className="text-xs font-semibold text-primary">All shifts</button>
+            <button
+              onClick={() => flash("Showing this week's 4 shifts · 34 hrs total")}
+              className="text-xs font-semibold text-primary active:scale-95 transition-transform"
+            >
+              All shifts
+            </button>
           </div>
           <ul className="mt-3 space-y-2">
             {RECENT.slice(0, 4).map((t) => (
@@ -499,6 +504,12 @@ export function SaveScreen() {
 // ─────────────────────────────────────────────────────────────────────────────
 // LIFE TAB
 export function LifeScreen() {
+  const [toast, setToast] = useState<string | null>(null);
+  function flash(msg: string) {
+    setToast(msg);
+    window.clearTimeout((flash as any)._t);
+    (flash as any)._t = window.setTimeout(() => setToast(null), 2400);
+  }
   return (
     <div className="flex h-full flex-col">
       <Header subtitle="Small wins that add up" name="Life" small />
@@ -573,30 +584,44 @@ export function LifeScreen() {
               title="NHS workers — 20% off rail travel"
               body="Use your work ID for off-peak journeys until 30 Jun."
               accent
+              onLearnMore={() => flash("Saved · we'll text you the rail code on Friday")}
             />
             <LifeCard
               tag="Wellbeing"
               title="2 free counselling sessions"
               body="Confidential support through your care provider's wellbeing fund."
+              onLearnMore={() => flash("Booking link sent to your inbox")}
             />
             <LifeCard
               tag="Skill up"
               title="Level 3 Care Cert · funded"
               body="Boost your hourly rate by ~£1.20. 12 weeks, evenings only."
+              onLearnMore={() => flash("Saved · enrolment opens next Monday")}
             />
             <LifeCard
               tag="Save on bills"
               title="Council Tax — check your band"
               body="1 in 5 carers are on the wrong band. 4-min check."
+              onLearnMore={() => flash("Opening the 4-minute band checker…")}
             />
             <LifeCard
               tag="Community"
               title="Carers' Sunday brunch · Hackney"
               body="Free brunch this Sunday. 14 carers going."
+              onLearnMore={() => flash("You're on the list · see you Sunday 🤍")}
             />
           </div>
         </section>
       </div>
+
+      {/* Toast */}
+      {toast && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-24 z-30 flex justify-center px-6">
+          <div className="pointer-events-auto rounded-2xl bg-ink px-4 py-2.5 text-xs font-semibold text-white shadow-lg animate-in fade-in slide-in-from-bottom-2">
+            {toast}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -624,6 +649,13 @@ const COACH_QA = [
 
 export function CoachScreen() {
   const [asked, setAsked] = useState<string[]>([]);
+  const [toast, setToast] = useState<string | null>(null);
+  function flash(msg: string) {
+    setToast(msg);
+    window.clearTimeout((flash as any)._t);
+    (flash as any)._t = window.setTimeout(() => setToast(null), 2400);
+  }
+
 
   return (
     <div className="flex h-full flex-col">
@@ -651,8 +683,8 @@ export function CoachScreen() {
               Quick win: skipping one takeaway this week could move <span className="font-semibold">£12</span> toward your Eid trip — that's 2% closer.
             </p>
             <div className="mt-3 flex gap-2">
-              <ChipBtn primary>Add £12 to goal</ChipBtn>
-              <ChipBtn>Not this week</ChipBtn>
+              <ChipBtn primary onClick={() => flash("£12 added to Eid trip · nice one")}>Add £12 to goal</ChipBtn>
+              <ChipBtn onClick={() => flash("No worries — I'll ask again next week")}>Not this week</ChipBtn>
             </div>
           </div>
         </div>
@@ -666,8 +698,8 @@ export function CoachScreen() {
               Your Saturday shift is unconfirmed. Want me to remind you to chase the rota by 5pm Friday?
             </p>
             <div className="mt-3 flex gap-2">
-              <ChipBtn primary>Yes, remind me</ChipBtn>
-              <ChipBtn>Not needed</ChipBtn>
+              <ChipBtn primary onClick={() => flash("Reminder set · Friday 5pm")}>Yes, remind me</ChipBtn>
+              <ChipBtn onClick={() => flash("Okay — I'll leave it with you")}>Not needed</ChipBtn>
             </div>
           </div>
         </div>
@@ -728,12 +760,15 @@ export function CoachScreen() {
         </div>
 
         {/* User reply prompt */}
-        <div className="sticky bottom-2 rounded-full bg-card px-4 py-3 ring-1 ring-border flex items-center gap-2 shadow-sm">
+        <button
+          onClick={() => flash("Tap a suggested question above to see a warm, plain-English answer")}
+          className="sticky bottom-2 w-full rounded-full bg-card px-4 py-3 ring-1 ring-border flex items-center gap-2 shadow-sm active:scale-[0.99] transition-transform text-left"
+        >
           <span className="text-sm text-ink-soft flex-1">Ask Flow Coach anything…</span>
-          <button className="grid size-8 place-items-center rounded-full bg-primary text-primary-foreground">
+          <span className="grid size-8 place-items-center rounded-full bg-primary text-primary-foreground">
             <ArrowUpRight className="size-4" />
-          </button>
-        </div>
+          </span>
+        </button>
 
         {/* Disclaimer */}
         <div className="rounded-2xl bg-card p-3.5 ring-1 ring-border">
@@ -745,6 +780,15 @@ export function CoachScreen() {
           </div>
         </div>
       </div>
+
+      {/* Toast */}
+      {toast && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-24 z-30 flex justify-center px-6">
+          <div className="pointer-events-auto rounded-2xl bg-ink px-4 py-2.5 text-xs font-semibold text-white shadow-lg animate-in fade-in slide-in-from-bottom-2">
+            {toast}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -832,7 +876,7 @@ function SaveRule({ icon: Icon, title, sub, on }: { icon: typeof Clock; title: s
   );
 }
 
-function LifeCard({ tag, title, body, accent }: { tag: string; title: string; body: string; accent?: boolean }) {
+function LifeCard({ tag, title, body, accent, onLearnMore }: { tag: string; title: string; body: string; accent?: boolean; onLearnMore?: () => void }) {
   return (
     <div className="rounded-3xl bg-card p-4 ring-1 ring-border">
       <span className={`inline-block rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${accent ? "bg-accent-soft text-accent" : "bg-primary-soft text-primary"}`}>
@@ -840,16 +884,22 @@ function LifeCard({ tag, title, body, accent }: { tag: string; title: string; bo
       </span>
       <div className="mt-2.5 font-display text-base font-bold leading-snug text-ink">{title}</div>
       <p className="mt-1 text-sm leading-snug text-ink-soft">{body}</p>
-      <button className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary">
+      <button
+        onClick={onLearnMore}
+        className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary active:scale-95 transition-transform"
+      >
         Learn more <ChevronRight className="size-3.5" />
       </button>
     </div>
   );
 }
 
-function ChipBtn({ primary, children }: { primary?: boolean; children: React.ReactNode }) {
+function ChipBtn({ primary, children, onClick }: { primary?: boolean; children: React.ReactNode; onClick?: () => void }) {
   return (
-    <button className={`rounded-full px-3.5 py-1.5 text-xs font-semibold ring-1 transition-colors ${primary ? "bg-primary text-primary-foreground ring-primary" : "bg-card text-ink ring-border"}`}>
+    <button
+      onClick={onClick}
+      className={`rounded-full px-3.5 py-1.5 text-xs font-semibold ring-1 transition-all active:scale-95 ${primary ? "bg-primary text-primary-foreground ring-primary" : "bg-card text-ink ring-border hover:bg-primary-soft"}`}
+    >
       {children}
     </button>
   );
