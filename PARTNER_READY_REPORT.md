@@ -16,7 +16,7 @@ and the Lovable/Vite/Supabase/Stripe markers.
 | Area | Change | Why it matters |
 |---|---|---|
 | **Shift accuracy** | Clocked shifts now file under the **local** date, not UTC (`localISODate`) | A shift ended just after midnight in UK summer time (BST) was landing on the wrong day / pay week. Verified fix: `2026-06-14` → `2026-06-15`. |
-| **PWA foundation** | `manifest.webmanifest`, app `icon.svg`, `theme-color`, `apple-touch-icon`, `apple-mobile-web-app-*`, root `viewport-fit=cover` | Installs to the home screen and opens standalone at `/app` — feels like a real app, not a website. |
+| **PWA foundation** | `manifest.webmanifest`, PNG icons (192/512 + 180 apple-touch) and `icon.svg`, `theme-color`, `apple-mobile-web-app-*`, root `viewport-fit=cover` | Installs to the home screen with a crisp brand tile and opens standalone at `/app` — feels like a real app, not a website. |
 | **Mobile sign-in** | Landing header now shows **Sign in** on phones (was hidden behind `md:`) | Returning workers on a phone can reach their account, not just the guest app. |
 | **App load** | Branded splash instead of a blank flash during cloud hydration | Smoother, calmer first paint. |
 
@@ -58,6 +58,7 @@ logic, Supabase security rules, or major screens were touched.**
 
 ## Optional follow-ups (not blocking partner share)
 
-- Real PNG PWA icons (180/192/512) for a crisper iOS home-screen tile — the SVG is a clean foundation.
-- `npm run format` for green lint.
+- `npm run format` for green lint (pre-existing Prettier noise only).
 - Decide whether to untrack `.env` (safe to leave: client-safe + the deploy may rely on it).
+
+_PNG PWA icons (192/512 + 180 apple-touch) added in the release-gate pass._
