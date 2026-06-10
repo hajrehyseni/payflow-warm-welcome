@@ -122,7 +122,6 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <StripeStatusBanner />
       <Toaster position="top-center" richColors closeButton={false} />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
