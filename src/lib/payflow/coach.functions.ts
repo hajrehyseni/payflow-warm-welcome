@@ -1,7 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { generateText } from "ai";
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 
 const CoachInput = z.object({
   question: z.string().min(1).max(800),
@@ -33,7 +31,20 @@ export const askCoach = createServerFn({ method: "POST" })
     const key = process.env.LOVABLE_API_KEY;
     if (!key) return { answer: "Coach isn't available right now — please try again shortly.\n\nFlow Coach gives general information only — not financial, tax, legal or payroll advice." };
 
-    const gateway = createLovableAiGatewayProvider(key);
+    const [{ generateText }, { createOpenAICompatible }] = await Promise.all([
+      import("ai"),
+      import("@ai-sdk/openai-compatible"),
+    ]);
+
+    const gateway = createOpenAICompatible({
+      name: "lovable",
+      baseURL: "https://ai.gateway.lovable.dev/v1",
+      headers: {
+        "Lovable-API-Key": key,
+        "X-Lovable-AIG-SDK": "vercel-ai-sdk",
+      },
+    });
+
     const ctx = data.context
       ? `\n\nUser context (rough estimates from PayFlow, may be incomplete): ${JSON.stringify(data.context)}`
       : "";
