@@ -27,6 +27,17 @@ const TABS: { id: Tab; label: string; icon: typeof Home }[] = [
   { id: "coach", label: "Coach", icon: Sparkles },
 ];
 
+function AppSplash() {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-sand">
+      <div className="grid size-14 place-items-center rounded-2xl bg-primary text-primary-foreground animate-pulse-dot">
+        <Sparkles className="size-7" />
+      </div>
+      <span className="font-display text-sm font-bold text-ink-soft">PayFlow</span>
+    </div>
+  );
+}
+
 function AppShell() {
   const user = useAuth();
   const nav = useNavigate();
@@ -44,7 +55,7 @@ function AppShell() {
     else { clearCloudUser(); setHydrated(true); }
   }, [ready, user?.id]);
 
-  if (!ready || !hydrated) return null;
+  if (!ready || !hydrated) return <AppSplash />;
 
   // Guest-first: no login wall. Local onboarding flag is enough.
   const onboarded = (user?.onboardingComplete) || localOnboarded;

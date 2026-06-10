@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import { hoursBetween, round2 } from "./calc";
+import { hoursBetween, round2, localISODate } from "./calc";
 import { supabase } from "@/integrations/supabase/client";
 
 let cloudUserId: string | null = null;
@@ -234,7 +234,7 @@ export function endShift() {
   const shift: Shift = {
     id: crypto.randomUUID(),
     workplace: s.live.workplace,
-    date: startD.toISOString().slice(0, 10),
+    date: localISODate(startD),
     start: fmt(startD),
     end: fmt(endD),
     breakMins: Math.round(breakMs / 60000),
