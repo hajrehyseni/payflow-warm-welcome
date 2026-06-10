@@ -134,12 +134,15 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
 
 
   function handleEnd() {
+    const elapsedNow = elapsedMs;
     const earnedNow = earned;
     endShift();
-    toast.success(
-      earnedNow > 0 ? `Shift saved — ${gbp(earnedNow)} earned` : "Shift saved",
-      { description: "Nice work today. Take a breath.", duration: 3200 },
-    );
+    const hrs = elapsedNow / 3600000;
+    const summary = hrs >= 0.02 ? `${fmtHours(hrs)} · ${gbp(earnedNow)}` : "Saved";
+    toast.success(`Shift saved · ${summary}`, {
+      description: "Added to your week. Nice work.",
+      duration: 3400,
+    });
   }
 
   function handleSave() {
