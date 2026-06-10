@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Home, Wallet, PiggyBank, Sparkles, Heart, LogOut, CloudUpload } from "lucide-react";
-import { TodayScreen, PayScreen, SaveScreen, LifeScreen, CoachScreen, Onboarding } from "@/components/app/screens";
+import { Home, Wallet, PiggyBank, Sparkles, LogOut, CloudUpload } from "lucide-react";
+import { TodayScreen, PayScreen, SaveScreen, CoachScreen, Onboarding } from "@/components/app/screens";
 import { useStore, setOnboarded as setLocalOnboarded } from "@/lib/payflow/store";
 import { hydrateFromCloud, clearCloudUser } from "@/lib/payflow/store";
 import { useAuth, signOut, ensureInitialised, updateProfile } from "@/lib/payflow/auth";
@@ -18,13 +18,12 @@ export const Route = createFileRoute("/app")({
   component: AppShell,
 });
 
-type Tab = "today" | "pay" | "save" | "life" | "coach";
+type Tab = "today" | "pay" | "save" | "coach";
 
 const TABS: { id: Tab; label: string; icon: typeof Home }[] = [
   { id: "today", label: "Today", icon: Home },
   { id: "pay", label: "Pay", icon: Wallet },
   { id: "save", label: "Save", icon: PiggyBank },
-  { id: "life", label: "Life", icon: Heart },
   { id: "coach", label: "Coach", icon: Sparkles },
 ];
 
@@ -85,7 +84,6 @@ function AppShell() {
         {tab === "today" && <TodayScreen goToTab={(t) => setTab(t as Tab)} />}
         {tab === "pay" && <PayScreen />}
         {tab === "save" && <SaveScreen />}
-        {tab === "life" && <LifeScreen />}
         {tab === "coach" && <CoachScreen />}
       </main>
 

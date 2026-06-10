@@ -134,12 +134,15 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
 
 
   function handleEnd() {
+    const elapsedNow = elapsedMs;
     const earnedNow = earned;
     endShift();
-    toast.success(
-      earnedNow > 0 ? `Shift saved — ${gbp(earnedNow)} earned` : "Shift saved",
-      { description: "Nice work today. Take a breath.", duration: 3200 },
-    );
+    const hrs = elapsedNow / 3600000;
+    const summary = hrs >= 0.02 ? `${fmtHours(hrs)} · ${gbp(earnedNow)}` : "Saved";
+    toast.success(`Shift saved · ${summary}`, {
+      description: "Added to your week. Nice work.",
+      duration: 3400,
+    });
   }
 
   function handleSave() {
@@ -754,49 +757,148 @@ export function LifeScreen() {
 
 // ---------------- COACH ----------------
 
-const COACH_PROMPTS: { q: string; a: string }[] = [
-  { q: "How is my week going?", a: "You're on track for a steady week. Logging every shift keeps your take-home estimate accurate — that's the single best habit." },
-  { q: "How can I save without feeling it?", a: "Try the £1-per-shift rule. It's quiet, it's small, and over a year of regular shifts it builds a real cushion." },
-  { q: "How does PAYE work?", a: "Your employer takes income tax from your pay before you see it, then sends it to HMRC. It's based on your tax code (most people are 1257L). Your payslip shows how much was taken." },
-  { q: "What about National Insurance?", a: "It's a separate UK contribution that builds your State Pension and benefits over time. You pay it on weekly earnings above £242." },
-  { q: "Should I opt into the pension?", a: "Most workers do. Auto-enrolment gives you employer contributions too — that's extra money you wouldn't get otherwise. PayFlow can't advise; talk to MoneyHelper or a regulated adviser for guidance." },
+const COACH_QUICK: string[] = [
+  "How is my week going?",
+  "How can I save without feeling it?",
+  "How does PAYE work?",
+  "What is National Insurance?",
+  "Why is my take-home less than my gross?",
 ];
 
+type CoachMsg = { role: "user" | "coach"; text: string };
+
 export function CoachScreen() {
-  const [open, setOpen] = useState<number | null>(null);
   const shifts = useStore((s) => s.shifts);
+  const hourlyRate = useStore((s) => s.hourlyRateDefault);
+  const payCycle = useStore((s) => s.payCycle);
   const week = weeklyTotals(shifts);
   const ded = estimateDeductions(week.gross);
 
+  const [messages, setMessages] = useState<CoachMsg[]>([]);
+  const [input, setInput] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function ask(question: string) {
+    const q = question.trim();
+    if (!q || busy) return;
+    setInput("");
+    setMessages((m) => [...m, { role: "user", text: q }]);
+    setBusy(true);
+    try {
+      const { askCoach } = await import("@/lib/payflow/coach.functions");
+      const res = await askCoach({
+        data: {
+          question: q,
+          context: {
+            weekHours: week.hours,
+            weekNet: ded.net,
+            hourlyRate,
+            payCycle,
+          },
+        },
+      });
+      setMessages((m) => [...m, { role: "coach", text: res.answer }]);
+    } catch {
+      setMessages((m) => [...m, { role: "coach", text: "Couldn't reach Coach just now. Please try again.\n\nFlow Coach gives general information only — not financial, tax, legal or payroll advice." }]);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="pb-[120px]">
-      <AppHeader title="Flow Coach" subtitle="Calm, plain English" />
+      <AppHeader title="Flow Coach" subtitle="Ask anything about your pay" />
 
       {/* Today's insight */}
-      <section className="mx-5 mt-5">
-        <div className="rounded-[28px] bg-primary p-6 text-primary-foreground">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-[10px] font-bold uppercase tracking-wider">
+      <section className="mx-5 mt-4">
+        <div className="rounded-[24px] bg-primary p-5 text-primary-foreground">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider">
             <Sparkles className="size-3" /> Today
           </div>
-          <p className="mt-3 text-[15px] leading-relaxed font-medium">
+          <p className="mt-2.5 text-[14px] leading-relaxed font-medium">
             {week.count > 0
-              ? `You've logged ${fmtHours(week.hours)} this week. On track for around ${gbp(ded.net)} take-home. Steady work — well done.`
-              : `Welcome to Coach. Log a shift today and I'll start showing you a real take-home estimate.`}
+              ? `You've logged ${fmtHours(week.hours)} this week — on track for around ${gbp(ded.net)} take-home.`
+              : `Log a shift and I'll start showing you a real take-home estimate.`}
           </p>
+        </div>
+      </section>
+
+      {/* Conversation */}
+      <section className="mx-5 mt-4 space-y-2">
+        {messages.length === 0 && (
+          <div className="rounded-2xl bg-card p-4 ring-1 ring-border text-[13px] leading-relaxed text-ink-soft">
+            Hi — I'm Flow Coach. Ask me anything about your pay, payslips or saving habits. I can't give financial advice, but I'll explain things in plain English.
+          </div>
+        )}
+        {messages.map((m, i) => (
+          <div
+            key={i}
+            className={`rounded-2xl px-4 py-3 text-[13.5px] leading-relaxed whitespace-pre-wrap ${
+              m.role === "user"
+                ? "ml-8 bg-primary text-primary-foreground"
+                : "mr-2 bg-card ring-1 ring-border"
+            }`}
+          >
+            {m.text}
+          </div>
+        ))}
+        {busy && (
+          <div className="mr-2 rounded-2xl bg-card px-4 py-3 ring-1 ring-border text-[13px] text-ink-soft">
+            Thinking…
+          </div>
+        )}
+      </section>
+
+      {/* Composer */}
+      <section className="mx-5 mt-3">
+        <form
+          onSubmit={(e) => { e.preventDefault(); ask(input); }}
+          className="flex items-end gap-2 rounded-2xl bg-card p-2 ring-1 ring-border"
+        >
+          <textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); ask(input); } }}
+            placeholder="Ask Flow Coach…"
+            rows={1}
+            className="flex-1 resize-none bg-transparent px-2 py-2 text-[14px] outline-none placeholder:text-ink-soft"
+          />
+          <button
+            type="submit"
+            disabled={busy || !input.trim()}
+            className="inline-flex items-center justify-center rounded-xl bg-ink px-3.5 py-2.5 text-[13px] font-bold text-sand disabled:opacity-50"
+          >
+            Ask
+          </button>
+        </form>
+      </section>
+
+      {/* Quick prompts */}
+      <section className="mx-5 mt-3">
+        <div className="flex flex-wrap gap-1.5">
+          {COACH_QUICK.map((q) => (
+            <button
+              key={q}
+              onClick={() => ask(q)}
+              disabled={busy}
+              className="rounded-full bg-card px-3 py-1.5 text-[12px] font-bold ring-1 ring-border hover:bg-sand-deep disabled:opacity-50"
+            >
+              {q}
+            </button>
+          ))}
         </div>
       </section>
 
       {/* Before payday checklist */}
       <section className="mx-5 mt-5">
-        <h2 className="text-[13px] font-bold text-ink-soft uppercase tracking-wider mb-2">Before payday — quick check</h2>
-        <ul className="space-y-2">
+        <h2 className="text-[12px] font-bold text-ink-soft uppercase tracking-wider mb-2">Before payday — quick check</h2>
+        <ul className="space-y-1.5">
           {[
             "All shifts this week are logged",
             "Hourly rate looks right on each shift",
             "Any overtime is recorded",
-            "Holiday or sick days noted (if any)",
           ].map((t, i) => (
-            <li key={i} className="flex items-start gap-3 rounded-2xl bg-card p-3.5 ring-1 ring-border">
+            <li key={i} className="flex items-start gap-3 rounded-2xl bg-card p-3 ring-1 ring-border">
               <div className="mt-0.5 grid size-5 place-items-center rounded-full bg-primary-soft text-primary"><Check className="size-3" strokeWidth={3} /></div>
               <span className="text-[13px]">{t}</span>
             </li>
@@ -804,34 +906,15 @@ export function CoachScreen() {
         </ul>
       </section>
 
-      {/* Prompts */}
-      <section className="mx-5 mt-5">
-        <h2 className="text-[13px] font-bold text-ink-soft uppercase tracking-wider mb-2">Ask Flow Coach</h2>
-        <div className="space-y-2">
-          {COACH_PROMPTS.map((p, i) => (
-            <div key={i} className="rounded-2xl bg-card ring-1 ring-border overflow-hidden">
-              <button onClick={() => setOpen(open === i ? null : i)} className="w-full flex items-center justify-between p-4 text-left">
-                <span className="text-[13px] font-bold">{p.q}</span>
-                <ChevronRight className={`size-4 text-ink-soft transition-transform ${open === i ? "rotate-90" : ""}`} />
-              </button>
-              {open === i && <div className="px-4 pb-4 text-[13px] leading-relaxed text-ink-soft">{p.a}</div>}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Next step */}
-      <section className="mx-5 mt-5">
-        <div className="rounded-2xl bg-card p-4 ring-1 ring-border">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-primary">Your next small step</div>
-          <p className="mt-2 text-[14px] font-medium">Log any missing shifts from this week before payday on Friday.</p>
-        </div>
-      </section>
-
-      <Compliance />
+      <div className="mx-5 mt-4 rounded-2xl bg-card p-3 ring-1 ring-border">
+        <p className="text-[11px] leading-snug text-ink-soft">
+          Flow Coach gives general information only — not financial, tax, legal or payroll advice.
+        </p>
+      </div>
     </div>
   );
 }
+
 
 // ---------------- Setup Wizard / Onboarding ----------------
 
