@@ -84,7 +84,6 @@ function AppShell() {
         {tab === "today" && <TodayScreen goToTab={(t) => setTab(t as Tab)} />}
         {tab === "pay" && <PayScreen />}
         {tab === "save" && <SaveScreen />}
-        {tab === "life" && <LifeScreen />}
         {tab === "coach" && <CoachScreen />}
       </main>
 
