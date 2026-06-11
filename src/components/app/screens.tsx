@@ -158,15 +158,15 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
   const latest = shifts[0];
 
   return (
-    <div className="pb-[96px]">
+    <div className="pb-[104px]">
       {/* Compact header */}
-      <header className="sticky top-0 z-30 bg-sand/95 backdrop-blur-xl border-b border-border/60 px-5 pt-[max(env(safe-area-inset-top),0.5rem)] pb-2">
-        <h1 className="font-display text-[20px] font-extrabold leading-tight tracking-tight">{g.title}</h1>
-        <p className="text-[12px] text-ink-soft leading-tight truncate">{g.sub}</p>
+      <header className="sticky top-0 z-30 bg-sand/95 backdrop-blur-xl border-b border-border/60 px-5 pt-[max(env(safe-area-inset-top),0.5rem)] pb-3">
+        <h1 className="font-display text-[22px] font-extrabold leading-tight tracking-tight">{g.title}</h1>
+        <p className="text-[12.5px] text-ink-soft leading-tight truncate">{g.sub}</p>
       </header>
 
       {usingSample && (
-        <section className="mx-4 mt-2">
+        <section className="mx-4 mt-3">
           <button
             onClick={() => setSetupOpen(true)}
             className="w-full flex items-center justify-between gap-2 rounded-xl bg-accent-soft px-3 py-1.5 ring-1 ring-accent/20 text-left"
@@ -183,9 +183,9 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
 
       {setupOpen && <SetupWizard onClose={() => setSetupOpen(false)} initial={{ hourlyRate: live.hourlyRate, workplace: live.workplace }} />}
 
-      {/* Compact live shift card */}
+      {/* Hero live shift card */}
       <section className="mx-4 mt-3">
-        <div className="rounded-2xl bg-ink p-4 text-sand shadow-[0_10px_30px_-18px_rgba(0,0,0,0.5)]">
+        <div className="rounded-3xl bg-ink p-5 text-sand shadow-[0_14px_34px_-20px_rgba(15,23,42,0.55)]">
           <div className="flex items-center justify-between text-[10.5px] font-bold uppercase tracking-[0.14em] opacity-80">
             <span className="inline-flex items-center gap-1.5">
               <span className={`size-1.5 rounded-full ${live.active && !onBreak ? "bg-accent animate-pulse-dot" : "bg-white/50"}`} />
@@ -193,32 +193,32 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
             </span>
             <span className="truncate ml-2">{gbp(live.hourlyRate)}/hr</span>
           </div>
-          <div className="mt-2 flex items-end justify-between gap-2">
-            <div className="font-display text-[34px] font-extrabold tracking-tight leading-none tabular-nums">
+          <div className="mt-3 flex items-end justify-between gap-2">
+            <div className="font-display text-[38px] font-extrabold tracking-tight leading-none tabular-nums">
               {gbp(earned)}
             </div>
-            <div className="text-[12px] opacity-80 tabular-nums pb-0.5">{fmtClock(elapsedMs)}</div>
+            <div className="text-[12.5px] opacity-80 tabular-nums pb-1">{fmtClock(elapsedMs)}</div>
           </div>
 
-          <div className="mt-3 grid grid-cols-1 gap-1.5">
+          <div className="mt-4">
             {!live.active ? (
               <button
                 onClick={() => { startShift(); toast("Shift started", { description: "Earning live. Take breaks when you need them." }); }}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-accent text-accent-foreground px-4 py-2.5 text-[14px] font-bold active:scale-[0.98]"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-accent text-accent-foreground px-4 py-3 text-[15px] font-bold active:scale-[0.98]"
               >
                 <Play className="size-4" fill="currentColor" /> Start shift
               </button>
             ) : (
-              <div className="grid grid-cols-2 gap-1.5">
+              <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={handleEnd}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-accent text-accent-foreground px-3 py-2.5 text-[13.5px] font-bold active:scale-[0.98]"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-2xl bg-accent text-accent-foreground px-3 py-3 text-[14px] font-bold active:scale-[0.98]"
                 >
                   <Square className="size-3.5" fill="currentColor" /> End shift
                 </button>
                 <button
                   onClick={toggleBreak}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-white/10 text-sand ring-1 ring-white/15 px-3 py-2.5 text-[13.5px] font-bold active:scale-[0.98]"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-2xl bg-white/10 text-sand ring-1 ring-white/15 px-3 py-3 text-[14px] font-bold active:scale-[0.98]"
                 >
                   {onBreak ? <><Play className="size-3.5" fill="currentColor" /> Resume</> : <><Coffee className="size-3.5" /> Break</>}
                 </button>
@@ -228,33 +228,37 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
         </div>
       </section>
 
-      {/* Compact stat row */}
-      <section className="mx-4 mt-2.5 grid grid-cols-3 gap-1.5">
+      {/* Money summary: hero take-home + supporting tiles */}
+      <section className="mx-4 mt-3 grid grid-cols-2 gap-2">
+        <div className="row-span-2 rounded-2xl bg-money text-money-foreground p-4 ring-1 ring-transparent shadow-[0_8px_20px_-14px_rgba(20,120,90,0.55)]">
+          <div className="text-[10.5px] font-bold uppercase tracking-wider opacity-85">Take-home</div>
+          <div className="mt-1 font-display text-[26px] font-extrabold tracking-tight tabular-nums leading-none">{gbp(ded.net)}</div>
+          <div className="mt-1.5 text-[11px] opacity-85 leading-snug">Estimate this week</div>
+        </div>
         <MiniStat label="Hours" value={fmtHours(week.hours)} />
-        <MiniStat label="Take-home" value={gbp(ded.net)} accent />
-        <MiniStat label="Saved" value={gbp(saved)} />
+        <MiniStat label="Saved" value={gbp(saved)} money />
       </section>
 
-      {/* Two main actions */}
-      <section className="mx-4 mt-2.5 grid grid-cols-2 gap-1.5">
+      {/* Main actions */}
+      <section className="mx-4 mt-3 grid grid-cols-2 gap-2">
         <button
           onClick={() => setPayCheckOpen(true)}
-          className="flex items-center gap-2 rounded-2xl bg-card p-3 ring-1 ring-border text-left active:scale-[0.99]"
+          className="flex items-center gap-2.5 rounded-2xl bg-card p-3.5 ring-1 ring-border text-left active:scale-[0.99]"
         >
-          <div className="grid size-9 place-items-center rounded-xl bg-accent text-accent-foreground shrink-0"><FileCheck2 className="size-4" /></div>
+          <div className="grid size-10 place-items-center rounded-xl bg-accent text-accent-foreground shrink-0"><FileCheck2 className="size-4" /></div>
           <div className="min-w-0">
-            <div className="text-[13px] font-bold leading-tight">Check payslip</div>
-            <div className="text-[10.5px] text-ink-soft leading-tight truncate">Match with hours</div>
+            <div className="text-[13.5px] font-bold leading-tight">Check payslip</div>
+            <div className="text-[11px] text-ink-soft leading-tight truncate">Compare with hours</div>
           </div>
         </button>
         <button
           onClick={() => goToTab?.("pay")}
-          className="flex items-center gap-2 rounded-2xl bg-card p-3 ring-1 ring-border text-left active:scale-[0.99]"
+          className="flex items-center gap-2.5 rounded-2xl bg-card p-3.5 ring-1 ring-border text-left active:scale-[0.99]"
         >
-          <div className="grid size-9 place-items-center rounded-xl bg-primary-soft text-primary shrink-0"><Plus className="size-4" /></div>
+          <div className="grid size-10 place-items-center rounded-xl bg-primary-soft text-primary shrink-0"><Plus className="size-4" /></div>
           <div className="min-w-0">
-            <div className="text-[13px] font-bold leading-tight">Add shift</div>
-            <div className="text-[10.5px] text-ink-soft leading-tight truncate">Add one manually</div>
+            <div className="text-[13.5px] font-bold leading-tight">Add shift</div>
+            <div className="text-[11px] text-ink-soft leading-tight truncate">Forgot to clock in?</div>
           </div>
         </button>
       </section>
@@ -263,38 +267,39 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
       {recap && recapOpen && <WeeklyRecap data={recap} onClose={() => setRecapOpen(false)} />}
 
       {/* Latest shift (single row) */}
-      <section className="mx-4 mt-3">
+      <section className="mx-4 mt-4">
         <div className="flex items-center justify-between mb-1.5 px-1">
           <h2 className="text-[11px] font-bold text-ink-soft uppercase tracking-wider">Latest shift</h2>
           {shifts.length > 0 && (
             <button onClick={() => goToTab?.("pay")} className="text-[11px] font-bold text-primary inline-flex items-center gap-0.5">
-              View all <ChevronRight className="size-3" />
+              View all shifts <ChevronRight className="size-3" />
             </button>
           )}
         </div>
         {latest ? (
-          <button onClick={() => goToTab?.("pay")} className="w-full flex items-center gap-2.5 rounded-2xl bg-card p-2.5 ring-1 ring-border text-left active:scale-[0.99]">
-            <div className="grid size-8 place-items-center rounded-lg bg-primary-soft text-primary shrink-0"><Clock className="size-3.5" /></div>
+          <button onClick={() => goToTab?.("pay")} className="w-full flex items-center gap-2.5 rounded-2xl bg-card p-3 ring-1 ring-border text-left active:scale-[0.99]">
+            <div className="grid size-9 place-items-center rounded-lg bg-primary-soft text-primary shrink-0"><Clock className="size-4" /></div>
             <div className="min-w-0 flex-1">
-              <div className="truncate text-[13px] font-bold leading-tight">{latest.workplace}</div>
-              <div className="text-[11px] text-ink-soft leading-tight truncate">{fmtHours(latest.hours)} · {latest.start}–{latest.end}</div>
+              <div className="truncate text-[13.5px] font-bold leading-tight">{latest.workplace}</div>
+              <div className="text-[11.5px] text-ink-soft leading-tight truncate">{fmtHours(latest.hours)} · {latest.start}–{latest.end}</div>
             </div>
-            <div className="font-display text-[14px] font-extrabold tabular-nums">{gbp(latest.gross)}</div>
+            <div className="font-display text-[15px] font-extrabold tabular-nums">{gbp(latest.gross)}</div>
           </button>
         ) : (
-          <div className="rounded-2xl bg-card p-3 ring-1 ring-border text-center text-[12px] text-ink-soft">
+          <div className="rounded-2xl bg-card p-3.5 ring-1 ring-border text-center text-[12.5px] text-ink-soft">
             No shifts yet. Start one above.
           </div>
         )}
       </section>
 
       {/* Compact disclaimer */}
-      <p className="mx-4 mt-3 text-[10.5px] text-ink-soft text-center leading-snug">
-        Estimates only. Your payslip may differ.
+      <p className="mx-4 mt-3 text-[11px] text-ink-soft text-center leading-snug">
+        Estimates only. Your actual payslip may differ.
       </p>
     </div>
   );
 }
+
 
 
 
@@ -309,14 +314,20 @@ function Tile({ label, value, icon: Icon, accent }: { label: string; value: stri
   );
 }
 
-function MiniStat({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+function MiniStat({ label, value, accent, money }: { label: string; value: string; accent?: boolean; money?: boolean }) {
+  const tone = money
+    ? "bg-money text-money-foreground ring-transparent"
+    : accent
+      ? "bg-primary text-primary-foreground ring-transparent"
+      : "bg-card ring-border";
   return (
-    <div className={`rounded-xl px-2.5 py-2 ring-1 ${accent ? "bg-primary text-primary-foreground ring-transparent" : "bg-card ring-border"}`}>
-      <div className="text-[10px] font-bold uppercase tracking-wider opacity-75 truncate">{label}</div>
-      <div className="mt-0.5 font-display text-[16px] font-extrabold tracking-tight tabular-nums truncate">{value}</div>
+    <div className={`rounded-2xl px-3 py-2.5 ring-1 ${tone}`}>
+      <div className="text-[10px] font-bold uppercase tracking-wider opacity-80 truncate">{label}</div>
+      <div className="mt-0.5 font-display text-[17px] font-extrabold tracking-tight tabular-nums truncate">{value}</div>
     </div>
   );
 }
+
 
 function QuickAction({ icon: Icon, label, onClick }: { icon: any; label: string; onClick?: () => void }) {
   return (
