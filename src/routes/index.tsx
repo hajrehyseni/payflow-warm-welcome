@@ -35,12 +35,20 @@ function Landing() {
             <a href="#business" className="hover:text-ink">For business</a>
             <Link to="/login" className="hover:text-ink">Sign in</Link>
           </nav>
-          <Link
-            to="/app"
-            className="inline-flex items-center gap-1.5 rounded-full bg-ink px-4 py-2 text-sm font-bold text-sand hover:bg-primary transition-colors"
-          >
-            Open PayFlow <ArrowRight className="size-3.5" />
-          </Link>
+          <div className="flex items-center gap-1">
+            <Link
+              to="/login"
+              className="rounded-full px-3 py-2 text-sm font-semibold text-ink-soft hover:text-ink md:hidden"
+            >
+              Sign in
+            </Link>
+            <Link
+              to="/app"
+              className="inline-flex items-center gap-1.5 rounded-full bg-ink px-4 py-2 text-sm font-bold text-sand hover:bg-primary transition-colors"
+            >
+              Open PayFlow <ArrowRight className="size-3.5" />
+            </Link>
+          </div>
         </div>
       </header>
 

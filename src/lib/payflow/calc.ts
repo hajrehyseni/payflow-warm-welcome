@@ -24,6 +24,16 @@ export function round2(n: number) {
   return Math.round(n * 100) / 100;
 }
 
+// Local calendar date as YYYY-MM-DD. Unlike Date.toISOString().slice(0,10),
+// this does not shift to UTC — so a shift ending just after midnight in UK
+// summer time (BST) is filed under the correct local day and pay week.
+export function localISODate(d: Date = new Date()): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 export function gbp(n: number, opts: { decimals?: number } = {}) {
   const d = opts.decimals ?? 2;
   return "£" + n.toLocaleString("en-GB", { minimumFractionDigits: d, maximumFractionDigits: d });
