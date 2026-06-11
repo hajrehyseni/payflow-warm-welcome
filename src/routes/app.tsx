@@ -110,8 +110,9 @@ function AppShell() {
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
-                className={`relative flex flex-1 flex-col items-center gap-0.5 rounded-2xl py-2 transition-colors ${active ? "text-primary" : "text-ink-soft"}`}
+                className={`relative flex flex-1 flex-col items-center gap-0.5 rounded-2xl py-2 mx-0.5 transition-colors ${active ? "text-primary bg-primary-soft" : "text-ink-soft"}`}
                 aria-label={t.label}
+                aria-current={active ? "page" : undefined}
               >
                 {active && <span className="absolute top-0 h-[3px] w-7 rounded-full bg-primary" />}
                 <Icon className="size-[22px]" strokeWidth={active ? 2.6 : 2} />
