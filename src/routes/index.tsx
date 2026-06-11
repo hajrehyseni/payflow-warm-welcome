@@ -18,8 +18,8 @@ function Landing() {
   return (
     <div className="min-h-screen bg-sand text-ink overflow-x-hidden">
       <div className="pointer-events-none fixed inset-0 -z-10">
-        <div className="absolute -top-32 left-1/3 size-[700px] rounded-full bg-primary-soft/70 blur-3xl opacity-60" />
-        <div className="absolute top-[40%] -right-32 size-[600px] rounded-full bg-accent-soft/70 blur-3xl opacity-50" />
+        <div className="absolute -top-32 left-1/3 size-[700px] rounded-full bg-primary/30 blur-3xl opacity-80" />
+        <div className="absolute top-[40%] -right-32 size-[600px] rounded-full bg-primary-soft blur-3xl opacity-90" />
       </div>
 
       <header className="sticky top-0 z-40 backdrop-blur-md bg-sand/70 border-b border-border/60">
