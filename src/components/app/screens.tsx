@@ -185,7 +185,7 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
 
       {/* Hero live shift card */}
       <section className="mx-4 mt-3">
-        <div className="rounded-3xl bg-ink p-5 text-sand shadow-[0_14px_34px_-20px_rgba(15,23,42,0.55)]">
+        <div className="rounded-3xl bg-gradient-to-br from-primary to-ink p-5 text-sand shadow-[0_14px_34px_-20px_rgba(36,90,180,0.45)]">
           <div className="flex items-center justify-between text-[10.5px] font-bold uppercase tracking-[0.14em] opacity-80">
             <span className="inline-flex items-center gap-1.5">
               <span className={`size-1.5 rounded-full ${live.active && !onBreak ? "bg-accent animate-pulse-dot" : "bg-white/50"}`} />
