@@ -314,14 +314,20 @@ function Tile({ label, value, icon: Icon, accent }: { label: string; value: stri
   );
 }
 
-function MiniStat({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+function MiniStat({ label, value, accent, money }: { label: string; value: string; accent?: boolean; money?: boolean }) {
+  const tone = money
+    ? "bg-money text-money-foreground ring-transparent"
+    : accent
+      ? "bg-primary text-primary-foreground ring-transparent"
+      : "bg-card ring-border";
   return (
-    <div className={`rounded-xl px-2.5 py-2 ring-1 ${accent ? "bg-primary text-primary-foreground ring-transparent" : "bg-card ring-border"}`}>
-      <div className="text-[10px] font-bold uppercase tracking-wider opacity-75 truncate">{label}</div>
-      <div className="mt-0.5 font-display text-[16px] font-extrabold tracking-tight tabular-nums truncate">{value}</div>
+    <div className={`rounded-2xl px-3 py-2.5 ring-1 ${tone}`}>
+      <div className="text-[10px] font-bold uppercase tracking-wider opacity-80 truncate">{label}</div>
+      <div className="mt-0.5 font-display text-[17px] font-extrabold tracking-tight tabular-nums truncate">{value}</div>
     </div>
   );
 }
+
 
 function QuickAction({ icon: Icon, label, onClick }: { icon: any; label: string; onClick?: () => void }) {
   return (
