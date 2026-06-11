@@ -156,6 +156,21 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
   }
 
   const latest = shifts[0];
+  const [showJourney, setShowJourney] = useState(true);
+
+  // Next step banner: one calm, contextual line that tells the worker what to do next.
+  type Next = { tone: "primary" | "money" | "accent"; icon: any; title: string; sub?: string; cta?: { label: string; onClick: () => void } };
+  const nextStep: Next = (() => {
+    if (live.active && onBreak) return { tone: "primary", icon: Coffee, title: "Enjoy your break", sub: "Tap Resume when you’re back." };
+    if (live.active) return { tone: "primary", icon: Play, title: "You’re earning", sub: "Take a break when you need one, then end your shift when you finish." };
+    if (hasEndedToday) {
+      if (daysToPay <= 2) return { tone: "money", icon: FileCheck2, title: "Shift saved ✓ Payslip due soon", sub: "Check it against your tracked hours when it arrives.", cta: { label: "Check payslip", onClick: () => setPayCheckOpen(true) } };
+      return { tone: "money", icon: Check, title: "Shift saved ✓ You’re done for now", sub: "We’ve added it to your week." };
+    }
+    if (daysToPay <= 2) return { tone: "primary", icon: FileCheck2, title: `Payday ${paydayLabel} — payslip due soon`, sub: "Check it against your tracked hours when it arrives.", cta: { label: "Check payslip", onClick: () => setPayCheckOpen(true) } };
+    if (shifts.length === 0) return { tone: "primary", icon: Play, title: "Ready when you are", sub: "Tap Start shift above when you clock in." };
+    return { tone: "primary", icon: Play, title: "Ready when you are", sub: "Tap Start shift above when you clock in, or add a shift you forgot.", cta: { label: "Add a shift", onClick: () => goToTab?.("pay") } };
+  })();
 
   return (
     <div className="pb-[104px]">
