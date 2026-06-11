@@ -155,21 +155,26 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
     goToTab?.("save");
   }
 
+  const latest = shifts[0];
+
   return (
-    <div className="pb-[120px]">
-      <AppHeader title={g.title} subtitle={g.sub} />
+    <div className="pb-[96px]">
+      {/* Compact header */}
+      <header className="sticky top-0 z-30 bg-sand/95 backdrop-blur-xl border-b border-border/60 px-5 pt-[max(env(safe-area-inset-top),0.5rem)] pb-2">
+        <h1 className="font-display text-[20px] font-extrabold leading-tight tracking-tight">{g.title}</h1>
+        <p className="text-[12px] text-ink-soft leading-tight truncate">{g.sub}</p>
+      </header>
 
       {usingSample && (
-        <section className="mx-5 mt-3">
+        <section className="mx-4 mt-2">
           <button
             onClick={() => setSetupOpen(true)}
-            className="w-full flex items-center justify-between gap-2 rounded-2xl bg-accent-soft px-3.5 py-2.5 ring-1 ring-accent/20 text-left"
+            className="w-full flex items-center justify-between gap-2 rounded-xl bg-accent-soft px-3 py-1.5 ring-1 ring-accent/20 text-left"
           >
             <div className="min-w-0">
-              <div className="text-[12px] font-bold text-accent">Showing sample data</div>
-              <div className="text-[11px] text-ink-soft truncate">Tap to use your own numbers — takes 10 seconds.</div>
+              <div className="text-[11px] font-bold text-accent truncate">Showing sample data — tap to use yours</div>
             </div>
-            <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-[11px] font-bold text-accent-foreground shrink-0">
+            <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-[10.5px] font-bold text-accent-foreground shrink-0">
               <Pencil className="size-3" /> Use mine
             </span>
           </button>
@@ -178,132 +183,115 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
 
       {setupOpen && <SetupWizard onClose={() => setSetupOpen(false)} initial={{ hourlyRate: live.hourlyRate, workplace: live.workplace }} />}
 
-      <section className="mx-5 mt-5">
-        <div className="rounded-[28px] bg-ink p-6 text-sand shadow-[0_14px_40px_-18px_rgba(0,0,0,0.5)]">
-          <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-[0.18em] opacity-80">
+      {/* Compact live shift card */}
+      <section className="mx-4 mt-3">
+        <div className="rounded-2xl bg-ink p-4 text-sand shadow-[0_10px_30px_-18px_rgba(0,0,0,0.5)]">
+          <div className="flex items-center justify-between text-[10.5px] font-bold uppercase tracking-[0.14em] opacity-80">
             <span className="inline-flex items-center gap-1.5">
               <span className={`size-1.5 rounded-full ${live.active && !onBreak ? "bg-accent animate-pulse-dot" : "bg-white/50"}`} />
-              {live.active ? (onBreak ? "On break" : "Earning live") : "Off shift"}
+              {live.active ? (onBreak ? "On break" : "On shift") : "Off shift"}
             </span>
-            <span>{gbp(live.hourlyRate)}/hr · {live.workplace}</span>
+            <span className="truncate ml-2">{gbp(live.hourlyRate)}/hr</span>
           </div>
-          <div className="mt-4 font-display text-[56px] font-extrabold tracking-tight leading-none tabular-nums">
-            {gbp(earned)}
+          <div className="mt-2 flex items-end justify-between gap-2">
+            <div className="font-display text-[34px] font-extrabold tracking-tight leading-none tabular-nums">
+              {gbp(earned)}
+            </div>
+            <div className="text-[12px] opacity-80 tabular-nums pb-0.5">{fmtClock(elapsedMs)}</div>
           </div>
-          <div className="mt-1 text-sm opacity-80">{fmtClock(elapsedMs)} this shift</div>
 
-          <div className="mt-6 grid grid-cols-1 gap-2">
+          <div className="mt-3 grid grid-cols-1 gap-1.5">
             {!live.active ? (
-              <Btn variant="accent" onClick={() => { startShift(); toast("Shift started", { description: "Earning live. Take breaks when you need them." }); }}>
-                <Play className="size-5" fill="currentColor" /> Start shift
-              </Btn>
+              <button
+                onClick={() => { startShift(); toast("Shift started", { description: "Earning live. Take breaks when you need them." }); }}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-accent text-accent-foreground px-4 py-2.5 text-[14px] font-bold active:scale-[0.98]"
+              >
+                <Play className="size-4" fill="currentColor" /> Start shift
+              </button>
             ) : (
-              <>
-                <Btn variant="accent" onClick={handleEnd}>
-                  <Square className="size-4" fill="currentColor" /> End shift
-                </Btn>
-                <Btn variant="ghost" onClick={toggleBreak} className="!bg-white/10 !text-sand !ring-white/15">
-                  {onBreak ? <><Play className="size-4" fill="currentColor" /> Resume shift</> : <><Coffee className="size-4" /> Start break</>}
-                </Btn>
-              </>
+              <div className="grid grid-cols-2 gap-1.5">
+                <button
+                  onClick={handleEnd}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-accent text-accent-foreground px-3 py-2.5 text-[13.5px] font-bold active:scale-[0.98]"
+                >
+                  <Square className="size-3.5" fill="currentColor" /> End shift
+                </button>
+                <button
+                  onClick={toggleBreak}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-white/10 text-sand ring-1 ring-white/15 px-3 py-2.5 text-[13.5px] font-bold active:scale-[0.98]"
+                >
+                  {onBreak ? <><Play className="size-3.5" fill="currentColor" /> Resume</> : <><Coffee className="size-3.5" /> Break</>}
+                </button>
+              </div>
             )}
           </div>
         </div>
       </section>
 
-      {/* Momentum strip */}
-      <section className="mx-5 mt-4 grid grid-cols-3 gap-2">
-        <Tile label="Hours" value={fmtHours(week.hours)} icon={Clock} />
-        <Tile label="Take-home" value={gbp(ded.net)} icon={Wallet} accent />
-        <Tile label="Saved" value={gbp(saved)} icon={PiggyBank} />
+      {/* Compact stat row */}
+      <section className="mx-4 mt-2.5 grid grid-cols-3 gap-1.5">
+        <MiniStat label="Hours" value={fmtHours(week.hours)} />
+        <MiniStat label="Take-home" value={gbp(ded.net)} accent />
+        <MiniStat label="Saved" value={gbp(saved)} />
       </section>
 
-      {/* Streak + payday */}
-      <section className="mx-5 mt-3 flex items-center gap-2">
-        <div className="flex-1 inline-flex items-center gap-2 rounded-2xl bg-card px-3.5 py-2.5 ring-1 ring-border">
-          <Flame className={`size-4 ${streak > 0 ? "text-accent" : "text-ink-soft"}`} />
-          <div className="min-w-0">
-            <div className="text-[12px] font-bold">
-              {streak > 0 ? `${streak}-day streak` : "Start a streak"}
-            </div>
-            <div className="text-[11px] text-ink-soft leading-tight truncate">
-              {streak > 0 ? "Open tomorrow to keep it going" : "Log a shift to begin"}
-            </div>
-          </div>
-        </div>
-        <div className="flex-1 inline-flex items-center gap-2 rounded-2xl bg-card px-3.5 py-2.5 ring-1 ring-border">
-          <Calendar className="size-4 text-primary" />
-          <div className="min-w-0">
-            <div className="text-[12px] font-bold">
-              Payday in {daysToPay} day{daysToPay === 1 ? "" : "s"}
-            </div>
-            <div className="text-[11px] text-ink-soft leading-tight truncate">{paydayLabel}</div>
-          </div>
-        </div>
-      </section>
-
-      {/* Check my pay — hero feature */}
-      <section className="mx-5 mt-4">
+      {/* Two main actions */}
+      <section className="mx-4 mt-2.5 grid grid-cols-2 gap-1.5">
         <button
           onClick={() => setPayCheckOpen(true)}
-          className="w-full flex items-center gap-3 rounded-2xl bg-card p-4 ring-1 ring-border text-left active:scale-[0.99] transition-transform"
+          className="flex items-center gap-2 rounded-2xl bg-card p-3 ring-1 ring-border text-left active:scale-[0.99]"
         >
-          <div className="grid size-11 place-items-center rounded-2xl bg-accent text-accent-foreground"><FileCheck2 className="size-5" /></div>
-          <div className="min-w-0 flex-1">
-            <div className="text-[14px] font-bold">Check my pay</div>
-            <div className="text-[12px] text-ink-soft truncate">Got your payslip? Make sure it matches what you tracked.</div>
+          <div className="grid size-9 place-items-center rounded-xl bg-accent text-accent-foreground shrink-0"><FileCheck2 className="size-4" /></div>
+          <div className="min-w-0">
+            <div className="text-[13px] font-bold leading-tight">Check payslip</div>
+            <div className="text-[10.5px] text-ink-soft leading-tight truncate">Match with hours</div>
           </div>
-          <ChevronRight className="size-4 text-ink-soft" />
         </button>
-      </section>
-
-      {/* Quick actions */}
-      <section className="mx-5 mt-4 grid grid-cols-3 gap-2">
-        <QuickAction icon={Plus} label="Add shift" onClick={() => goToTab?.("pay")} />
-        <QuickAction icon={PiggyBank} label="Save" onClick={handleSave} />
-        <QuickAction icon={Sparkles} label="Coach" onClick={() => goToTab?.("coach")} />
+        <button
+          onClick={() => goToTab?.("pay")}
+          className="flex items-center gap-2 rounded-2xl bg-card p-3 ring-1 ring-border text-left active:scale-[0.99]"
+        >
+          <div className="grid size-9 place-items-center rounded-xl bg-primary-soft text-primary shrink-0"><Plus className="size-4" /></div>
+          <div className="min-w-0">
+            <div className="text-[13px] font-bold leading-tight">Add shift</div>
+            <div className="text-[10.5px] text-ink-soft leading-tight truncate">Add one manually</div>
+          </div>
+        </button>
       </section>
 
       {payCheckOpen && <PayCheckModal onClose={() => setPayCheckOpen(false)} />}
       {recap && recapOpen && <WeeklyRecap data={recap} onClose={() => setRecapOpen(false)} />}
 
-      {/* Guest nudge — only if signed out and they've logged at least one shift today */}
-      {!user && hasEndedToday && (
-        <section className="mx-5 mt-5">
-          <div className="rounded-2xl bg-primary-soft p-4 ring-1 ring-primary/15">
-            <div className="flex items-start gap-3">
-              <div className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground">
-                <CloudUpload className="size-4" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-[14px] font-bold text-ink">Keep your shifts safe</div>
-                <p className="mt-0.5 text-[12.5px] leading-snug text-ink-soft">
-                  Create a free account to save your shifts across devices — never lose them.
-                </p>
-                <Link to="/login" className="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-ink px-3.5 py-1.5 text-[12px] font-bold text-sand">
-                  Create free account <ChevronRight className="size-3.5" />
-                </Link>
-              </div>
+      {/* Latest shift (single row) */}
+      <section className="mx-4 mt-3">
+        <div className="flex items-center justify-between mb-1.5 px-1">
+          <h2 className="text-[11px] font-bold text-ink-soft uppercase tracking-wider">Latest shift</h2>
+          {shifts.length > 0 && (
+            <button onClick={() => goToTab?.("pay")} className="text-[11px] font-bold text-primary inline-flex items-center gap-0.5">
+              View all <ChevronRight className="size-3" />
+            </button>
+          )}
+        </div>
+        {latest ? (
+          <button onClick={() => goToTab?.("pay")} className="w-full flex items-center gap-2.5 rounded-2xl bg-card p-2.5 ring-1 ring-border text-left active:scale-[0.99]">
+            <div className="grid size-8 place-items-center rounded-lg bg-primary-soft text-primary shrink-0"><Clock className="size-3.5" /></div>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-[13px] font-bold leading-tight">{latest.workplace}</div>
+              <div className="text-[11px] text-ink-soft leading-tight truncate">{fmtHours(latest.hours)} · {latest.start}–{latest.end}</div>
             </div>
-          </div>
-        </section>
-      )}
-
-      {/* Recent shifts */}
-      <section className="mx-5 mt-6">
-        <h2 className="text-[13px] font-bold text-ink-soft uppercase tracking-wider mb-2">Recent shifts</h2>
-        {shifts.length === 0 ? (
-          <div className="rounded-2xl bg-card p-5 ring-1 ring-border text-center text-sm text-ink-soft">
-            No shifts yet. Start one above or add one in Pay — you're building, not behind.
-          </div>
+            <div className="font-display text-[14px] font-extrabold tabular-nums">{gbp(latest.gross)}</div>
+          </button>
         ) : (
-          <ul className="space-y-2">
-            {shifts.slice(0, 3).map((s) => <ShiftRow key={s.id} s={s} />)}
-          </ul>
+          <div className="rounded-2xl bg-card p-3 ring-1 ring-border text-center text-[12px] text-ink-soft">
+            No shifts yet. Start one above.
+          </div>
         )}
       </section>
 
-      <Compliance short />
+      {/* Compact disclaimer */}
+      <p className="mx-4 mt-3 text-[10.5px] text-ink-soft text-center leading-snug">
+        Estimates only. Your payslip may differ.
+      </p>
     </div>
   );
 }
@@ -317,6 +305,15 @@ function Tile({ label, value, icon: Icon, accent }: { label: string; value: stri
         <Icon className="size-3.5" /> {label}
       </div>
       <div className="mt-1.5 font-display text-2xl font-extrabold tracking-tight tabular-nums">{value}</div>
+    </div>
+  );
+}
+
+function MiniStat({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+  return (
+    <div className={`rounded-xl px-2.5 py-2 ring-1 ${accent ? "bg-primary text-primary-foreground ring-transparent" : "bg-card ring-border"}`}>
+      <div className="text-[10px] font-bold uppercase tracking-wider opacity-75 truncate">{label}</div>
+      <div className="mt-0.5 font-display text-[16px] font-extrabold tracking-tight tabular-nums truncate">{value}</div>
     </div>
   );
 }
