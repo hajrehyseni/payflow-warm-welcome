@@ -243,6 +243,58 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
         </div>
       </section>
 
+      {/* Next step banner — one obvious, contextual action */}
+      <section className="mx-4 mt-3">
+        <div className={`flex items-center gap-3 rounded-2xl p-3.5 ring-1 ${
+          nextStep.tone === "money" ? "bg-money-soft ring-money/20" :
+          nextStep.tone === "accent" ? "bg-accent-soft ring-accent/20" :
+          "bg-primary-soft ring-primary/15"
+        }`}>
+          <div className={`grid size-9 place-items-center rounded-xl shrink-0 ${
+            nextStep.tone === "money" ? "bg-money text-money-foreground" :
+            nextStep.tone === "accent" ? "bg-accent text-accent-foreground" :
+            "bg-primary text-primary-foreground"
+          }`}>
+            <nextStep.icon className="size-4" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className={`text-[13px] font-bold leading-tight ${nextStep.tone === "money" ? "text-money" : nextStep.tone === "accent" ? "text-accent" : "text-primary"}`}>
+              {nextStep.title}
+            </div>
+            {nextStep.sub && <div className="text-[11.5px] text-ink-soft leading-snug mt-0.5">{nextStep.sub}</div>}
+          </div>
+          {nextStep.cta && (
+            <button
+              onClick={nextStep.cta.onClick}
+              className={`shrink-0 inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[11.5px] font-bold ${
+                nextStep.tone === "money" ? "bg-money text-money-foreground" : "bg-primary text-primary-foreground"
+              } active:scale-[0.97]`}
+            >
+              {nextStep.cta.label} <ChevronRight className="size-3" />
+            </button>
+          )}
+        </div>
+      </section>
+
+      {/* Journey strip — only for new users, dismissible (no persistence) */}
+      {shifts.length === 0 && showJourney && (
+        <section className="mx-4 mt-2.5">
+          <div className="flex items-center gap-2 rounded-2xl bg-card px-3 py-2 ring-1 ring-border">
+            <span className="text-[10.5px] font-bold text-ink-soft uppercase tracking-wider shrink-0">How it works</span>
+            <div className="flex items-center gap-1 flex-1 min-w-0 text-[11px] font-bold text-ink">
+              <span className="inline-flex items-center gap-1"><span className="grid size-4 place-items-center rounded-full bg-primary text-primary-foreground text-[9px]">1</span>Start</span>
+              <ChevronRight className="size-3 text-ink-soft shrink-0" />
+              <span className="inline-flex items-center gap-1"><span className="grid size-4 place-items-center rounded-full bg-primary text-primary-foreground text-[9px]">2</span>End</span>
+              <ChevronRight className="size-3 text-ink-soft shrink-0" />
+              <span className="inline-flex items-center gap-1"><span className="grid size-4 place-items-center rounded-full bg-primary text-primary-foreground text-[9px]">3</span>Check payslip</span>
+            </div>
+            <button onClick={() => setShowJourney(false)} aria-label="Dismiss" className="grid size-6 place-items-center rounded-full text-ink-soft hover:bg-sand-deep shrink-0">
+              <X className="size-3.5" />
+            </button>
+          </div>
+        </section>
+      )}
+
       {/* Money summary: hero take-home + supporting tiles */}
       <section className="mx-4 mt-3 grid grid-cols-2 gap-2">
         <div className="row-span-2 rounded-2xl bg-money text-money-foreground p-4 ring-1 ring-transparent shadow-[0_8px_20px_-14px_rgba(20,120,90,0.55)]">
