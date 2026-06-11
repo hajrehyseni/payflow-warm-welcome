@@ -315,7 +315,7 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
           <div className="grid size-10 place-items-center rounded-xl bg-accent text-accent-foreground shrink-0"><FileCheck2 className="size-4" /></div>
           <div className="min-w-0">
             <div className="text-[13.5px] font-bold leading-tight">Check payslip</div>
-            <div className="text-[11px] text-ink-soft leading-tight truncate">Compare with hours</div>
+            <div className="text-[11px] text-ink-soft leading-tight truncate">When your payslip arrives</div>
           </div>
         </button>
         <button
@@ -324,8 +324,8 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
         >
           <div className="grid size-10 place-items-center rounded-xl bg-primary-soft text-primary shrink-0"><Plus className="size-4" /></div>
           <div className="min-w-0">
-            <div className="text-[13.5px] font-bold leading-tight">Add shift</div>
-            <div className="text-[11px] text-ink-soft leading-tight truncate">Forgot to clock in?</div>
+            <div className="text-[13.5px] font-bold leading-tight">Add a shift</div>
+            <div className="text-[11px] text-ink-soft leading-tight truncate">If you forgot to start one</div>
           </div>
         </button>
       </section>
