@@ -85,7 +85,7 @@ function AppShell() {
       ) : (
         <Link
           to="/login"
-          className="fixed right-3 top-3 z-50 inline-flex items-center gap-1.5 rounded-full bg-ink/90 px-3 py-1.5 text-[11px] font-bold text-sand ring-1 ring-ink backdrop-blur hover:bg-ink"
+          className="fixed right-3 top-3 z-50 inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-[11px] font-bold text-primary-foreground ring-1 ring-primary/30 shadow-[0_6px_18px_-8px_rgba(0,87,255,0.55)] backdrop-blur hover:opacity-95"
           aria-label="Save across devices"
         >
           <CloudUpload className="size-3.5" /> Save across devices
