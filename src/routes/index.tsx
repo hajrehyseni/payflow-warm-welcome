@@ -44,7 +44,7 @@ function Landing() {
             </Link>
             <Link
               to="/app"
-              className="inline-flex items-center gap-1.5 rounded-full bg-ink px-4 py-2 text-sm font-bold text-sand hover:bg-primary transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground hover:opacity-90 transition-opacity"
             >
               Open PayFlow <ArrowRight className="size-3.5" />
             </Link>
