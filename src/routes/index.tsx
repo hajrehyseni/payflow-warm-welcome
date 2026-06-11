@@ -174,7 +174,7 @@ function Landing() {
               </ul>
               <Link
                 to="/app"
-                className="mt-7 inline-flex items-center gap-2 rounded-full bg-ink px-6 py-3 text-sm font-bold text-sand hover:bg-primary transition-colors"
+                className="mt-7 inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-foreground shadow-[0_10px_26px_-12px_rgba(0,87,255,0.6)] hover:opacity-95 transition-opacity"
               >
                 Try Pay Check <ArrowRight className="size-4" />
               </Link>
