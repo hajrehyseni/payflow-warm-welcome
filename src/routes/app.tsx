@@ -12,7 +12,7 @@ export const Route = createFileRoute("/app")({
       { title: "PayFlow — Know your pay before payday" },
       { name: "description", content: "Track your hours, estimate your take-home pay and save from every shift. Built for UK hourly workers." },
       { name: "viewport", content: "width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1" },
-      { name: "theme-color", content: "#f5efe4" },
+      { name: "theme-color", content: "#F2F7FF" },
     ],
   }),
   component: AppShell,
@@ -85,7 +85,7 @@ function AppShell() {
       ) : (
         <Link
           to="/login"
-          className="fixed right-3 top-3 z-50 inline-flex items-center gap-1.5 rounded-full bg-ink/90 px-3 py-1.5 text-[11px] font-bold text-sand ring-1 ring-ink backdrop-blur hover:bg-ink"
+          className="fixed right-3 top-3 z-50 inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-[11px] font-bold text-primary-foreground ring-1 ring-primary/30 shadow-[0_6px_18px_-8px_rgba(0,87,255,0.55)] backdrop-blur hover:opacity-95"
           aria-label="Save across devices"
         >
           <CloudUpload className="size-3.5" /> Save across devices
@@ -110,9 +110,10 @@ function AppShell() {
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
-                className={`flex flex-1 flex-col items-center gap-0.5 rounded-2xl py-2 transition-colors ${active ? "text-primary" : "text-ink-soft"}`}
+                className={`relative flex flex-1 flex-col items-center gap-0.5 rounded-2xl py-2 transition-colors ${active ? "text-primary" : "text-ink-soft"}`}
                 aria-label={t.label}
               >
+                {active && <span className="absolute top-0 h-[3px] w-7 rounded-full bg-primary" />}
                 <Icon className="size-[22px]" strokeWidth={active ? 2.6 : 2} />
                 <span className={`text-[10.5px] ${active ? "font-extrabold" : "font-semibold"}`}>{t.label}</span>
               </button>
