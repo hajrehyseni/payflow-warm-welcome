@@ -30,7 +30,7 @@ export function HeroDemo() {
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <PhoneFrame className="w-[300px]">
+      <PhoneFrame className="w-[min(72vw,288px)] sm:w-[300px] md:w-[340px] lg:w-[360px]">
         <div className="relative flex h-full w-full flex-col bg-gradient-to-b from-sand to-sand-deep">
           {/* status bar */}
           <div className="flex items-center justify-between px-6 pt-6 pb-2 text-[10px] font-semibold text-ink-soft">
