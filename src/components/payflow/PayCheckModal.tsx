@@ -38,6 +38,11 @@ export function PayCheckModal({ onClose }: { onClose: () => void }) {
     return { hours: +hours.toFixed(2), gross, net: ded.net };
   }, [shifts, periodStart, periodEnd]);
 
+  // Both figures must be sensible before comparing.
+  const bothEntered = actualNet > 0 && actualHours > 0;
+  // Friendly warning for obviously unrealistic entries (still allowed to proceed).
+  const looksLow = (actualNet > 0 && actualNet < 10) || (actualHours > 0 && actualHours < 1);
+
   function run() {
     const ev = evaluate(actualNet, actualHours, expected.net, expected.hours);
     const pc = addPayCheck({
@@ -61,7 +66,8 @@ export function PayCheckModal({ onClose }: { onClose: () => void }) {
         <div className="p-5">
           {!result && !showHistory && (
             <>
-              <p className="text-[13px] text-ink-soft mb-4">Got your payslip? Pop the numbers in and we'll compare to what you tracked.</p>
+              <p className="text-[14px] font-bold text-ink mb-1.5">Enter the figures shown on your payslip. PayFlow will compare them with the shifts you tracked.</p>
+              <p className="text-[12px] text-ink-soft mb-4">PayFlow can't read your payslip automatically — you type in the figures, and we compare them with what you tracked.</p>
 
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
@@ -80,21 +86,36 @@ export function PayCheckModal({ onClose }: { onClose: () => void }) {
                 </div>
 
                 <label className="block">
-                  <span className="block text-[12px] font-bold text-ink-soft mb-1.5">Take-home on payslip (£)</span>
+                  <span className="block text-[12px] font-bold text-ink-soft mb-1.5">Take-home pay shown on your payslip (£)</span>
                   <input type="number" min={0} step="0.01" inputMode="decimal" placeholder="0.00" value={actualNet || ""} onChange={(e) => setActualNet(Number(e.target.value))} className="w-full rounded-2xl bg-card px-4 py-3 ring-1 ring-border text-[15px]" />
                 </label>
                 <label className="block">
-                  <span className="block text-[12px] font-bold text-ink-soft mb-1.5">Hours paid on payslip</span>
+                  <span className="block text-[12px] font-bold text-ink-soft mb-1.5">Paid hours shown on your payslip</span>
                   <input type="number" min={0} step="0.25" inputMode="decimal" placeholder="0" value={actualHours || ""} onChange={(e) => setActualHours(Number(e.target.value))} className="w-full rounded-2xl bg-card px-4 py-3 ring-1 ring-border text-[15px]" />
                 </label>
               </div>
 
+              {!bothEntered && (
+                <p className="mt-3 text-[12px] text-ink-soft">
+                  Add the take-home pay and paid hours from your payslip to compare.
+                </p>
+              )}
+
+              {looksLow && (
+                <div className="mt-3 flex items-start gap-2 rounded-2xl bg-accent-soft p-3 ring-1 ring-accent/20">
+                  <AlertCircle className="mt-0.5 size-3.5 shrink-0 text-accent" />
+                  <p className="text-[12px] leading-snug text-ink">
+                    These figures look very low. Check you entered the full payslip amount and paid hours.
+                  </p>
+                </div>
+              )}
+
               <button
                 onClick={run}
-                disabled={actualNet <= 0 || actualHours <= 0}
+                disabled={!bothEntered}
                 className="mt-5 w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-primary text-primary-foreground py-3.5 font-bold disabled:opacity-50"
               >
-                <Check className="size-4" /> Check it
+                <Check className="size-4" /> Compare with PayFlow
               </button>
 
               {payChecks.length > 0 && (
@@ -142,12 +163,15 @@ function ResultView({ result, hourlyRate, onQuery, onClose, onAgain }: {
   const over = !ok && gapNet < 0;
   const hoursDiff = +(expectedHours - actualHours).toFixed(2);
   const hourGapPay = +(Math.abs(hoursDiff) * hourlyRate).toFixed(2);
+  const hoursOff = Math.abs(hoursDiff) >= 0.25;
+  // Plain-English verdict a worker can grasp in a glance.
+  const verdict = ok ? "Looks close" : hoursOff ? "Hours may be missing" : "Take-home looks different";
 
   return (
     <div>
       <div className={`rounded-[24px] p-5 ${ok ? "bg-primary text-primary-foreground" : short ? "bg-accent text-accent-foreground" : "bg-ink text-sand"}`}>
         <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider">
-          {ok ? <><Check className="size-3" /> Looks right</> : <><AlertCircle className="size-3" /> Heads up</>}
+          {ok ? <Check className="size-3" /> : <AlertCircle className="size-3" />} {verdict}
         </div>
         <h3 className="mt-3 font-display text-2xl font-extrabold tracking-tight">
           {ok
@@ -173,9 +197,12 @@ function ResultView({ result, hourlyRate, onQuery, onClose, onAgain }: {
       </div>
 
       {!ok && (
-        <button onClick={onQuery} className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-ink text-sand py-3.5 font-bold">
-          <MessageSquare className="size-4" /> Draft a polite payroll query
-        </button>
+        <>
+          <p className="mt-4 text-center text-[13px] font-bold text-ink">Ask payroll to check this.</p>
+          <button onClick={onQuery} className="mt-2 w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-ink text-sand py-3.5 font-bold">
+            <MessageSquare className="size-4" /> Draft a polite payroll query
+          </button>
+        </>
       )}
 
       <div className="mt-3 grid grid-cols-2 gap-2">
