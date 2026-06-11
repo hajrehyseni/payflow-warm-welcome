@@ -12,7 +12,7 @@ export const Route = createFileRoute("/app")({
       { title: "PayFlow — Know your pay before payday" },
       { name: "description", content: "Track your hours, estimate your take-home pay and save from every shift. Built for UK hourly workers." },
       { name: "viewport", content: "width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1" },
-      { name: "theme-color", content: "#f5efe4" },
+      { name: "theme-color", content: "#F2F7FF" },
     ],
   }),
   component: AppShell,
