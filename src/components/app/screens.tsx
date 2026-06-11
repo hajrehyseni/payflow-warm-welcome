@@ -339,7 +339,7 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
           <h2 className="text-[11px] font-bold text-ink-soft uppercase tracking-wider">Latest shift</h2>
           {shifts.length > 0 && (
             <button onClick={() => goToTab?.("pay")} className="text-[11px] font-bold text-primary inline-flex items-center gap-0.5">
-              View all shifts <ChevronRight className="size-3" />
+              See all shifts <ChevronRight className="size-3" />
             </button>
           )}
         </div>
@@ -354,7 +354,7 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
           </button>
         ) : (
           <div className="rounded-2xl bg-card p-3.5 ring-1 ring-border text-center text-[12.5px] text-ink-soft">
-            No shifts yet. Start one above.
+            Your finished shifts will appear here.
           </div>
         )}
       </section>
