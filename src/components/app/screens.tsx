@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { useStore, startShift, endShift, toggleBreak, liveElapsedMs, liveEarnings, weeklyTotals, addShift, deleteShift, setSaveRule, addToSavings, applySetup, computeNextPayday, type SaveRule, type Shift, type PayCycle } from "@/lib/payflow/store";
+import { useStore, startShift, endShift, toggleBreak, liveElapsedMs, liveEarnings, weeklyTotals, addShift, deleteShift, editShift, restoreShift, setSaveRule, addToSavings, withdrawFromSavings, toggleSavePaused, updateSettings, applySetup, computeNextPayday, type SaveRule, type Shift, type PayCycle } from "@/lib/payflow/store";
 import { estimateDeductions, gbp, fmtHours, fmtClock, daysUntil } from "@/lib/payflow/calc";
-import { useAuth } from "@/lib/payflow/auth";
-import { Play, Square, Pause, Plus, Clock, Wallet, PiggyBank, Sparkles, Heart, X, Copy, Check, ChevronRight, AlertCircle, ShieldCheck, TrendingUp, Calendar, FileText, MessageSquare, User, Trash2, Coffee, Flame, CloudUpload, Pencil, FileCheck2 } from "lucide-react";
+import { useAuth, signOut } from "@/lib/payflow/auth";
+import { Play, Square, Pause, Plus, Clock, Wallet, PiggyBank, Sparkles, Heart, X, Copy, Check, ChevronRight, AlertCircle, ShieldCheck, TrendingUp, Calendar, FileText, MessageSquare, User, Trash2, Coffee, Flame, CloudUpload, Pencil, FileCheck2, Settings, HelpCircle, LogOut, PauseCircle, PlayCircle, Info } from "lucide-react";
 import { PayCheckModal } from "@/components/payflow/PayCheckModal";
 import { WeeklyRecap, useWeeklyRecap } from "@/components/payflow/WeeklyRecap";
 
