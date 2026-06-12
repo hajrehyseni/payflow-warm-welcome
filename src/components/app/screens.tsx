@@ -661,6 +661,56 @@ function AddShiftModal({ onClose }: { onClose: () => void }) {
   );
 }
 
+function EditShiftModal({ shift, onClose }: { shift: Shift; onClose: () => void }) {
+  const [form, setForm] = useState({
+    workplace: shift.workplace, date: shift.date, start: shift.start, end: shift.end,
+    breakMins: shift.breakMins, hourlyRate: shift.hourlyRate, notes: shift.notes ?? "",
+  });
+  const [err, setErr] = useState<string | null>(null);
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.workplace.trim()) return setErr("Please add a workplace.");
+    if (!form.start || !form.end) return setErr("Please add start and end times.");
+    if (form.hourlyRate <= 0) return setErr("Hourly rate must be more than £0.");
+    editShift(shift.id, { ...form, breakMins: Number(form.breakMins) || 0, hourlyRate: Number(form.hourlyRate) });
+    toast.success("Shift updated");
+    onClose();
+  };
+
+  const remove = () => {
+    const snapshot = shift;
+    deleteShift(shift.id);
+    toast.success("Shift removed", {
+      duration: 6000,
+      action: { label: "Undo", onClick: () => { restoreShift(snapshot); } },
+    });
+    onClose();
+  };
+
+  return (
+    <Modal title="Edit shift" onClose={onClose}>
+      <form onSubmit={submit} className="space-y-3">
+        <Field label="Workplace"><input className={inputCls} value={form.workplace} onChange={(e) => setForm({ ...form, workplace: e.target.value })} maxLength={60} /></Field>
+        <Field label="Date"><input type="date" className={inputCls} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></Field>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Start"><input type="time" className={inputCls} value={form.start} onChange={(e) => setForm({ ...form, start: e.target.value })} /></Field>
+          <Field label="End"><input type="time" className={inputCls} value={form.end} onChange={(e) => setForm({ ...form, end: e.target.value })} /></Field>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Break (mins)"><input type="number" min={0} max={240} className={inputCls} value={form.breakMins} onChange={(e) => setForm({ ...form, breakMins: Number(e.target.value) })} /></Field>
+          <Field label="Hourly rate (£)"><input type="number" min={0} step="0.01" className={inputCls} value={form.hourlyRate} onChange={(e) => setForm({ ...form, hourlyRate: Number(e.target.value) })} /></Field>
+        </div>
+        {err && <div className="rounded-xl bg-destructive/10 text-destructive px-3 py-2 text-sm flex items-center gap-2"><AlertCircle className="size-4" /> {err}</div>}
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          <Btn type="button" variant="ghost" onClick={remove}><Trash2 className="size-4" /> Delete</Btn>
+          <Btn type="submit"><Check className="size-4" /> Save changes</Btn>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
 function ForecastModal({ onClose }: { onClose: () => void }) {
   const shifts = useStore((s) => s.shifts);
   const week = weeklyTotals(shifts);
