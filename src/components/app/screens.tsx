@@ -384,6 +384,17 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
   );
 }
 
+// Freshness label for the hero estimate stamp
+function freshnessLabel(now: number): string {
+  // Simple "Updated just now" — tied to the polling tick so it refreshes the user's sense of liveness.
+  const sec = Math.floor((Date.now() - now) / 1000);
+  if (sec < 30) return "Updated just now";
+  if (sec < 120) return "Updated a minute ago";
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `Updated ${min} min ago`;
+  return "Updated recently";
+}
+
 // Emoji + when helpers for the Recent shifts feed
 function shiftEmoji(workplace?: string): string {
   const w = (workplace || "").toLowerCase();
