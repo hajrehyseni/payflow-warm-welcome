@@ -165,6 +165,7 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
   const latest = shifts[0];
   const recentShifts = shifts.slice(0, 3);
   const [showJourney, setShowJourney] = useState(true);
+  const [editingShift, setEditingShift] = useState<Shift | null>(null);
 
   const dateLabel = new Date(now).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
 
