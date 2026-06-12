@@ -46,6 +46,10 @@ function AppShell() {
   const [ready, setReady] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const localOnboarded = useStore((s) => s.onboarded);
+  const nextPayday = useStore((s) => s.nextPayday);
+  const paydaySoon = (() => {
+    try { return daysUntil(new Date(nextPayday + "T00:00:00")) <= 1; } catch { return false; }
+  })();
 
   useEffect(() => { void ensureInitialised().then(() => setReady(true)); }, []);
 
