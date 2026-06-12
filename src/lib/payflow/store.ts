@@ -57,6 +57,7 @@ export type State = {
   pendingJoinCode?: string;  // captured from /join before sign-in
   payChecks: PayCheck[];
   recapDismissedWeek?: string;  // ISO date of Monday of the week most recently dismissed
+  savePaused?: boolean;         // pause the active save rule
 };
 
 const KEY = "payflow.state.v2";
