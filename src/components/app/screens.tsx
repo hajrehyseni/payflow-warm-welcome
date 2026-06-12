@@ -356,7 +356,7 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
           <ul className="space-y-2">
             {recentShifts.map((s) => (
               <li key={s.id}>
-                <button onClick={() => setEditShift(s)} className="w-full flex items-center gap-2.5 rounded-2xl bg-card p-3 ring-1 ring-border text-left active:scale-[0.99] transition-transform">
+                <button onClick={() => setEditingShift(s)} className="w-full flex items-center gap-2.5 rounded-2xl bg-card p-3 ring-1 ring-border text-left active:scale-[0.99] transition-transform">
                   <div className="grid size-10 place-items-center rounded-full bg-primary-soft text-[16px] shrink-0" aria-hidden>
                     {shiftEmoji(s.workplace)}
                   </div>
@@ -379,7 +379,7 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
         )}
       </section>
 
-      {editShift && <EditShiftModal shift={editShift} onClose={() => setEditShift(null)} />}
+      {editingShift && <EditShiftModal shift={editingShift} onClose={() => setEditingShift(null)} />}
 
 
       {/* Compact disclaimer */}
