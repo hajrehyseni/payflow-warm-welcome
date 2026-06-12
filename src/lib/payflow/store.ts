@@ -265,14 +265,72 @@ export function deleteShift(id: string) {
   if (cloudUserId) void supabase.from("shifts").delete().eq("id", id).eq("user_id", cloudUserId);
 }
 
+/** Re-insert a previously deleted shift, preserving id. Used for Undo. */
+export function restoreShift(shift: Shift) {
+  store.set((s) => ({ ...s, shifts: [shift, ...s.shifts.filter((x) => x.id !== shift.id)] }));
+  void cloudInsertShift(shift);
+}
+
+/** Edit an existing shift in place; recomputes hours + gross from inputs. */
+export function editShift(id: string, patch: Partial<Omit<Shift, "id" | "hours" | "gross">>) {
+  store.set((s) => ({
+    ...s,
+    shifts: s.shifts.map((x) => {
+      if (x.id !== id) return x;
+      const merged = { ...x, ...patch };
+      const hours = round2(hoursBetween(merged.start, merged.end, merged.breakMins));
+      const gross = round2(hours * merged.hourlyRate);
+      return { ...merged, hours, gross };
+    }),
+  }));
+  if (cloudUserId) {
+    const next = store.get().shifts.find((x) => x.id === id);
+    if (next) {
+      void supabase.from("shifts").update({
+        workplace: next.workplace,
+        shift_date: next.date,
+        start_time: next.start + ":00",
+        end_time: next.end + ":00",
+        break_minutes: next.breakMins,
+        hourly_rate: next.hourlyRate,
+        hours: next.hours,
+        gross_pay: next.gross,
+        notes: next.notes ?? null,
+      }).eq("id", id).eq("user_id", cloudUserId);
+    }
+  }
+}
+
 export function setSaveRule(rule: SaveRule) {
   store.set((s) => ({ ...s, saveRule: rule }));
   void cloudUpsertSavings();
 }
 
+export function toggleSavePaused() {
+  store.set((s) => ({ ...s, savePaused: !s.savePaused }));
+}
+
 export function addToSavings(amount: number) {
-  store.set((s) => ({ ...s, savedTotal: round2(s.savedTotal + amount) }));
+  store.set((s) => ({ ...s, savedTotal: round2(Math.max(0, s.savedTotal + amount)) }));
   void cloudUpsertSavings();
+}
+
+export function withdrawFromSavings(amount: number) {
+  store.set((s) => ({ ...s, savedTotal: round2(Math.max(0, s.savedTotal - amount)) }));
+  void cloudUpsertSavings();
+}
+
+/** Partial settings update from the Settings screen. */
+export function updateSettings(patch: Partial<Pick<State, "hourlyRateDefault" | "workplaceDefault" | "payCycle" | "nextPayday">>) {
+  store.set((s) => ({
+    ...s,
+    ...patch,
+    live: {
+      ...s.live,
+      workplace: patch.workplaceDefault ?? s.live.workplace,
+      hourlyRate: patch.hourlyRateDefault ?? s.live.hourlyRate,
+    },
+  }));
 }
 
 // ---------- pay checks (local-only) ----------
