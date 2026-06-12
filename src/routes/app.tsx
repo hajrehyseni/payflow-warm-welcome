@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Home, Wallet, PiggyBank, Sparkles, LogOut, CloudUpload } from "lucide-react";
 import { TodayScreen, PayScreen, SaveScreen, CoachScreen, Onboarding } from "@/components/app/screens";
 import { useStore, setOnboarded as setLocalOnboarded } from "@/lib/payflow/store";
+import { daysUntil } from "@/lib/payflow/calc";
 import { hydrateFromCloud, clearCloudUser } from "@/lib/payflow/store";
 import { useAuth, signOut, ensureInitialised, updateProfile } from "@/lib/payflow/auth";
 
@@ -45,6 +46,10 @@ function AppShell() {
   const [ready, setReady] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const localOnboarded = useStore((s) => s.onboarded);
+  const nextPayday = useStore((s) => s.nextPayday);
+  const paydaySoon = (() => {
+    try { return daysUntil(new Date(nextPayday + "T00:00:00")) <= 1; } catch { return false; }
+  })();
 
   useEffect(() => { void ensureInitialised().then(() => setReady(true)); }, []);
 
@@ -110,12 +115,17 @@ function AppShell() {
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
-                className={`relative flex flex-1 flex-col items-center gap-0.5 rounded-2xl py-2 mx-0.5 transition-colors ${active ? "text-primary bg-primary-soft" : "text-ink-soft"}`}
+                className={`relative flex flex-1 flex-col items-center gap-0.5 rounded-2xl py-2 mx-0.5 transition-all active:scale-[0.94] ${active ? "text-primary bg-primary-soft" : "text-ink-soft"}`}
                 aria-label={t.label}
                 aria-current={active ? "page" : undefined}
               >
                 {active && <span className="absolute top-0 h-[3px] w-7 rounded-full bg-primary" />}
-                <Icon className="size-[22px]" strokeWidth={active ? 2.6 : 2} />
+                <span className="relative">
+                  <Icon className="size-[22px]" strokeWidth={active ? 2.6 : 2} />
+                  {t.id === "pay" && paydaySoon && !active && (
+                    <span className="absolute -right-1 -top-0.5 size-2 rounded-full bg-accent ring-2 ring-sand" aria-label="Payday soon" />
+                  )}
+                </span>
                 <span className={`text-[10.5px] ${active ? "font-extrabold" : "font-semibold"}`}>{t.label}</span>
               </button>
             );

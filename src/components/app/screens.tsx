@@ -156,28 +156,30 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
   }
 
   const latest = shifts[0];
+  const recentShifts = shifts.slice(0, 3);
   const [showJourney, setShowJourney] = useState(true);
 
-  // Next step banner: one calm, contextual line that tells the worker what to do next.
-  type Next = { tone: "primary" | "money" | "accent"; icon: any; title: string; sub?: string; cta?: { label: string; onClick: () => void } };
+  const dateLabel = new Date(now).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+
+  // One calm next-step sentence (Monzo-style caption under the big number).
+  type Next = { tone: "primary" | "money" | "accent"; text: string; cta?: { label: string; onClick: () => void } };
   const nextStep: Next = (() => {
-    if (live.active && onBreak) return { tone: "primary", icon: Coffee, title: "Enjoy your break", sub: "Tap Resume when you’re back." };
-    if (live.active) return { tone: "primary", icon: Play, title: "You’re earning", sub: "Take a break when you need one, then end your shift when you finish." };
+    if (live.active && onBreak) return { tone: "primary", text: "Enjoy your break ☕ Tap Resume when you’re back." };
+    if (live.active) return { tone: "primary", text: "You’re on the clock — keep going, then end your shift when you finish." };
     if (hasEndedToday) {
-      if (daysToPay <= 2) return { tone: "money", icon: FileCheck2, title: "Shift saved ✓ Payslip due soon", sub: "Check it against your tracked hours when it arrives.", cta: { label: "Check payslip", onClick: () => setPayCheckOpen(true) } };
-      return { tone: "money", icon: Check, title: "Shift saved ✓ You’re done for now", sub: "We’ve added it to your week." };
+      if (daysToPay <= 2) return { tone: "money", text: "Nice one — shift saved ✅ Payslip due soon.", cta: { label: "Check payslip", onClick: () => setPayCheckOpen(true) } };
+      return { tone: "money", text: "Nice one — shift saved ✅ You’re done for now." };
     }
-    if (daysToPay <= 2) return { tone: "primary", icon: FileCheck2, title: `Payday ${paydayLabel} — payslip due soon`, sub: "Check it against your tracked hours when it arrives.", cta: { label: "Check payslip", onClick: () => setPayCheckOpen(true) } };
-    if (shifts.length === 0) return { tone: "primary", icon: Play, title: "Ready when you are", sub: "Tap Start shift above when you clock in." };
-    return { tone: "primary", icon: Play, title: "Ready when you are", sub: "Tap Start shift above when you clock in, or add a shift you forgot.", cta: { label: "Add a shift", onClick: () => goToTab?.("pay") } };
+    if (daysToPay <= 2) return { tone: "primary", text: `Payday ${paydayLabel} 💷 Payslip arrived? Check it against your hours.`, cta: { label: "Check payslip", onClick: () => setPayCheckOpen(true) } };
+    return { tone: "primary", text: "Whenever you’re ready 👋 Tap Start shift when you clock on." };
   })();
 
   return (
     <div className="pb-[104px]">
-      {/* Compact header */}
+      {/* Monzo-style header: greeting + date, calm */}
       <header className="sticky top-0 z-30 bg-sand/95 backdrop-blur-xl border-b border-border/60 px-5 pt-[max(env(safe-area-inset-top),0.5rem)] pb-3">
         <h1 className="font-display text-[22px] font-extrabold leading-tight tracking-tight">{g.title}</h1>
-        <p className="text-[12.5px] text-ink-soft leading-tight truncate">{g.sub}</p>
+        <p className="text-[12px] text-ink-soft leading-tight truncate">{dateLabel}</p>
       </header>
 
       {usingSample && (
@@ -198,28 +200,42 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
 
       {setupOpen && <SetupWizard onClose={() => setSetupOpen(false)} initial={{ hourlyRate: live.hourlyRate, workplace: live.workplace }} />}
 
-      {/* Hero live shift card */}
+      {/* Hero card — big number first, calm next-step caption underneath */}
       <section className="mx-4 mt-3">
         <div className="rounded-3xl bg-gradient-to-br from-primary to-ink p-5 text-sand shadow-[0_14px_34px_-20px_rgba(36,90,180,0.45)]">
-          <div className="flex items-center justify-between text-[10.5px] font-bold uppercase tracking-[0.14em] opacity-80">
+          <div className="flex items-center justify-between text-[10.5px] font-bold uppercase tracking-[0.14em] opacity-85">
             <span className="inline-flex items-center gap-1.5">
               <span className={`size-1.5 rounded-full ${live.active && !onBreak ? "bg-accent animate-pulse-dot" : "bg-white/50"}`} />
-              {live.active ? (onBreak ? "On break" : "On shift") : "Off shift"}
+              {live.active ? (onBreak ? "On break" : "On shift") : "Today"}
             </span>
             <span className="truncate ml-2">{gbp(live.hourlyRate)}/hr</span>
           </div>
+
           <div className="mt-3 flex items-end justify-between gap-2">
-            <div className="font-display text-[38px] font-extrabold tracking-tight leading-none tabular-nums">
+            <div className="font-display text-[42px] font-extrabold tracking-tight leading-none tabular-nums">
               {gbp(earned)}
             </div>
-            <div className="text-[12.5px] opacity-80 tabular-nums pb-1">{fmtClock(elapsedMs)}</div>
+            <div className="text-[12.5px] opacity-85 tabular-nums pb-1">{fmtClock(elapsedMs)}</div>
           </div>
 
-          <div className="mt-4">
+          {/* Calm next-step caption — single guiding sentence */}
+          <div className="mt-3 flex items-center gap-2 rounded-2xl bg-white/10 ring-1 ring-white/15 px-3 py-2">
+            <p className="flex-1 text-[12px] leading-snug text-sand/95 font-medium">{nextStep.text}</p>
+            {nextStep.cta && (
+              <button
+                onClick={nextStep.cta.onClick}
+                className="shrink-0 inline-flex items-center gap-0.5 rounded-full bg-sand text-primary px-2.5 py-1 text-[11px] font-bold active:scale-[0.97]"
+              >
+                {nextStep.cta.label} <ChevronRight className="size-3" />
+              </button>
+            )}
+          </div>
+
+          <div className="mt-3">
             {!live.active ? (
               <button
                 onClick={() => { startShift(); toast("Shift started", { description: "Earning live. Take breaks when you need them." }); }}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-accent text-accent-foreground px-4 py-3 text-[15px] font-bold active:scale-[0.98]"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-accent text-accent-foreground px-4 py-3.5 text-[15px] font-bold active:scale-[0.97] transition-transform shadow-[0_8px_18px_-10px_rgba(255,102,90,0.7)]"
               >
                 <Play className="size-4" fill="currentColor" /> Start shift
               </button>
@@ -227,13 +243,13 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={handleEnd}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-2xl bg-accent text-accent-foreground px-3 py-3 text-[14px] font-bold active:scale-[0.98]"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-2xl bg-accent text-accent-foreground px-3 py-3 text-[14px] font-bold active:scale-[0.97] transition-transform"
                 >
                   <Square className="size-3.5" fill="currentColor" /> End shift
                 </button>
                 <button
                   onClick={toggleBreak}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-2xl bg-white/10 text-sand ring-1 ring-white/15 px-3 py-3 text-[14px] font-bold active:scale-[0.98]"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-2xl bg-white/10 text-sand ring-1 ring-white/15 px-3 py-3 text-[14px] font-bold active:scale-[0.97] transition-transform"
                 >
                   {onBreak ? <><Play className="size-3.5" fill="currentColor" /> Resume</> : <><Coffee className="size-3.5" /> Break</>}
                 </button>
@@ -243,40 +259,7 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
         </div>
       </section>
 
-      {/* Next step banner — one obvious, contextual action */}
-      <section className="mx-4 mt-3">
-        <div className={`flex items-center gap-3 rounded-2xl p-3.5 ring-1 ${
-          nextStep.tone === "money" ? "bg-money-soft ring-money/20" :
-          nextStep.tone === "accent" ? "bg-accent-soft ring-accent/20" :
-          "bg-primary-soft ring-primary/15"
-        }`}>
-          <div className={`grid size-9 place-items-center rounded-xl shrink-0 ${
-            nextStep.tone === "money" ? "bg-money text-money-foreground" :
-            nextStep.tone === "accent" ? "bg-accent text-accent-foreground" :
-            "bg-primary text-primary-foreground"
-          }`}>
-            <nextStep.icon className="size-4" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className={`text-[13px] font-bold leading-tight ${nextStep.tone === "money" ? "text-money" : nextStep.tone === "accent" ? "text-accent" : "text-primary"}`}>
-              {nextStep.title}
-            </div>
-            {nextStep.sub && <div className="text-[11.5px] text-ink-soft leading-snug mt-0.5">{nextStep.sub}</div>}
-          </div>
-          {nextStep.cta && (
-            <button
-              onClick={nextStep.cta.onClick}
-              className={`shrink-0 inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[11.5px] font-bold ${
-                nextStep.tone === "money" ? "bg-money text-money-foreground" : "bg-primary text-primary-foreground"
-              } active:scale-[0.97]`}
-            >
-              {nextStep.cta.label} <ChevronRight className="size-3" />
-            </button>
-          )}
-        </div>
-      </section>
-
-      {/* Journey strip — only for new users, dismissible (no persistence) */}
+      {/* Journey strip — only for brand-new users, dismissible */}
       {shifts.length === 0 && showJourney && (
         <section className="mx-4 mt-2.5">
           <div className="flex items-center gap-2 rounded-2xl bg-card px-3 py-2 ring-1 ring-border">
@@ -295,24 +278,31 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
         </section>
       )}
 
-      {/* Money summary: hero take-home + supporting tiles */}
-      <section className="mx-4 mt-3 grid grid-cols-2 gap-2">
-        <div className="row-span-2 rounded-2xl bg-money text-money-foreground p-4 ring-1 ring-transparent shadow-[0_8px_20px_-14px_rgba(20,120,90,0.55)]">
-          <div className="text-[10.5px] font-bold uppercase tracking-wider opacity-85">Take-home</div>
-          <div className="mt-1 font-display text-[26px] font-extrabold tracking-tight tabular-nums leading-none">{gbp(ded.net)}</div>
-          <div className="mt-1.5 text-[11px] opacity-85 leading-snug">Estimate this week</div>
+      {/* This week — Monzo Pot-style money summary */}
+      <section className="mx-4 mt-4">
+        <div className="flex items-center justify-between mb-1.5 px-1">
+          <h2 className="text-[10.5px] font-bold text-ink-soft uppercase tracking-[0.14em]">This week</h2>
+          <span className="text-[10.5px] text-ink-soft">Estimate</span>
         </div>
-        <MiniStat label="Hours" value={fmtHours(week.hours)} />
-        <MiniStat label="Saved" value={gbp(saved)} money />
+        <div className="grid grid-cols-2 gap-2">
+          <div className="row-span-2 rounded-2xl bg-money text-money-foreground p-4 shadow-[0_8px_20px_-14px_rgba(20,120,90,0.55)] relative overflow-hidden">
+            <div className="absolute left-0 top-3 bottom-3 w-1 rounded-r-full bg-white/40" />
+            <div className="text-[10.5px] font-bold uppercase tracking-wider opacity-90">Take-home</div>
+            <div className="mt-1.5 font-display text-[28px] font-extrabold tracking-tight tabular-nums leading-none">{gbp(ded.net)}</div>
+            <div className="mt-2 text-[11px] opacity-90 leading-snug">{week.count} shift{week.count === 1 ? "" : "s"} this week</div>
+          </div>
+          <MiniStat label="Hours" value={fmtHours(week.hours)} />
+          <MiniStat label="Saved" value={gbp(saved)} money />
+        </div>
       </section>
 
       {/* Main actions */}
       <section className="mx-4 mt-3 grid grid-cols-2 gap-2">
         <button
           onClick={() => setPayCheckOpen(true)}
-          className="flex items-center gap-2.5 rounded-2xl bg-card p-3.5 ring-1 ring-border text-left active:scale-[0.99]"
+          className="flex items-center gap-2.5 rounded-2xl bg-card p-3.5 ring-1 ring-border text-left active:scale-[0.98] transition-transform"
         >
-          <div className="grid size-10 place-items-center rounded-xl bg-accent text-accent-foreground shrink-0"><FileCheck2 className="size-4" /></div>
+          <div className="grid size-10 place-items-center rounded-xl bg-primary text-primary-foreground shrink-0"><FileCheck2 className="size-4" /></div>
           <div className="min-w-0">
             <div className="text-[13.5px] font-bold leading-tight">Check payslip</div>
             <div className="text-[11px] text-ink-soft leading-tight truncate">When your payslip arrives</div>
@@ -320,7 +310,7 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
         </button>
         <button
           onClick={() => goToTab?.("pay")}
-          className="flex items-center gap-2.5 rounded-2xl bg-card p-3.5 ring-1 ring-border text-left active:scale-[0.99]"
+          className="flex items-center gap-2.5 rounded-2xl bg-card p-3.5 ring-1 ring-border text-left active:scale-[0.98] transition-transform"
         >
           <div className="grid size-10 place-items-center rounded-xl bg-primary-soft text-primary shrink-0"><Plus className="size-4" /></div>
           <div className="min-w-0">
@@ -333,28 +323,36 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
       {payCheckOpen && <PayCheckModal onClose={() => setPayCheckOpen(false)} />}
       {recap && recapOpen && <WeeklyRecap data={recap} onClose={() => setRecapOpen(false)} />}
 
-      {/* Latest shift (single row) */}
+      {/* Recent shifts — Monzo feed-style with emoji avatars */}
       <section className="mx-4 mt-4">
         <div className="flex items-center justify-between mb-1.5 px-1">
-          <h2 className="text-[11px] font-bold text-ink-soft uppercase tracking-wider">Latest shift</h2>
+          <h2 className="text-[10.5px] font-bold text-ink-soft uppercase tracking-[0.14em]">Recent shifts</h2>
           {shifts.length > 0 && (
             <button onClick={() => goToTab?.("pay")} className="text-[11px] font-bold text-primary inline-flex items-center gap-0.5">
-              See all shifts <ChevronRight className="size-3" />
+              See all <ChevronRight className="size-3" />
             </button>
           )}
         </div>
-        {latest ? (
-          <button onClick={() => goToTab?.("pay")} className="w-full flex items-center gap-2.5 rounded-2xl bg-card p-3 ring-1 ring-border text-left active:scale-[0.99]">
-            <div className="grid size-9 place-items-center rounded-lg bg-primary-soft text-primary shrink-0"><Clock className="size-4" /></div>
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-[13.5px] font-bold leading-tight">{latest.workplace}</div>
-              <div className="text-[11.5px] text-ink-soft leading-tight truncate">{fmtHours(latest.hours)} · {latest.start}–{latest.end}</div>
-            </div>
-            <div className="font-display text-[15px] font-extrabold tabular-nums">{gbp(latest.gross)}</div>
-          </button>
+        {recentShifts.length > 0 ? (
+          <ul className="space-y-2">
+            {recentShifts.map((s) => (
+              <li key={s.id}>
+                <button onClick={() => goToTab?.("pay")} className="w-full flex items-center gap-2.5 rounded-2xl bg-card p-3 ring-1 ring-border text-left active:scale-[0.99] transition-transform">
+                  <div className="grid size-10 place-items-center rounded-full bg-primary-soft text-[16px] shrink-0" aria-hidden>
+                    {shiftEmoji(s.workplace)}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[13.5px] font-bold leading-tight">{s.workplace}</div>
+                    <div className="text-[11.5px] text-ink-soft leading-tight truncate">{shiftWhen(s)} · {fmtHours(s.hours)}</div>
+                  </div>
+                  <div className="font-display text-[15px] font-extrabold tabular-nums text-money">+{gbp(s.gross)}</div>
+                </button>
+              </li>
+            ))}
+          </ul>
         ) : (
-          <div className="rounded-2xl bg-card p-3.5 ring-1 ring-border text-center text-[12.5px] text-ink-soft">
-            Your finished shifts will appear here.
+          <div className="rounded-2xl bg-card p-4 ring-1 ring-border text-center text-[12.5px] text-ink-soft">
+            Your finished shifts will appear here, like a little payday diary.
           </div>
         )}
       </section>
@@ -365,6 +363,32 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
       </p>
     </div>
   );
+}
+
+// Emoji + when helpers for the Recent shifts feed
+function shiftEmoji(workplace?: string): string {
+  const w = (workplace || "").toLowerCase();
+  if (/care|nurs|hosp|clinic|nhs/.test(w)) return "🏥";
+  if (/clean/.test(w)) return "🧹";
+  if (/secur|guard|door/.test(w)) return "🛡️";
+  if (/warehouse|amazon|pick|pack|depot/.test(w)) return "📦";
+  if (/bar|pub|restaurant|cafe|kitchen|hospitality|hotel|wait/.test(w)) return "🍽️";
+  if (/deliver|driver|uber|courier/.test(w)) return "🛵";
+  if (/retail|shop|store/.test(w)) return "🛍️";
+  if (/build|construct|site/.test(w)) return "🛠️";
+  return "⏱️";
+}
+
+function shiftWhen(s: Shift): string {
+  const d = new Date(s.date + "T00:00:00");
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const diffDays = Math.round((today.getTime() - d.getTime()) / 86400000);
+  const start = parseInt((s.start || "").split(":")[0] || "0", 10);
+  const part = start < 6 ? "night" : start < 12 ? "morning" : start < 17 ? "afternoon" : "evening";
+  if (diffDays === 0) return `Today ${part}`;
+  if (diffDays === 1) return `Yesterday ${part}`;
+  if (diffDays < 7) return `${d.toLocaleDateString("en-GB", { weekday: "short" })} ${part}`;
+  return d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
 }
 
 
