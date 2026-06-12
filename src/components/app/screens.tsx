@@ -356,7 +356,7 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
           <ul className="space-y-2">
             {recentShifts.map((s) => (
               <li key={s.id}>
-                <button onClick={() => goToTab?.("pay")} className="w-full flex items-center gap-2.5 rounded-2xl bg-card p-3 ring-1 ring-border text-left active:scale-[0.99] transition-transform">
+                <button onClick={() => setEditShift(s)} className="w-full flex items-center gap-2.5 rounded-2xl bg-card p-3 ring-1 ring-border text-left active:scale-[0.99] transition-transform">
                   <div className="grid size-10 place-items-center rounded-full bg-primary-soft text-[16px] shrink-0" aria-hidden>
                     {shiftEmoji(s.workplace)}
                   </div>
@@ -364,7 +364,10 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
                     <div className="truncate text-[13.5px] font-bold leading-tight">{s.workplace}</div>
                     <div className="text-[11.5px] text-ink-soft leading-tight truncate">{shiftWhen(s)} · {fmtHours(s.hours)}</div>
                   </div>
-                  <div className="font-display text-[15px] font-extrabold tabular-nums text-money">+{gbp(s.gross)}</div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="font-display text-[15px] font-extrabold tabular-nums text-money">+{gbp(s.gross)}</div>
+                    <Pencil className="size-3.5 text-ink-soft shrink-0" />
+                  </div>
                 </button>
               </li>
             ))}
@@ -375,6 +378,9 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
           </div>
         )}
       </section>
+
+      {editShift && <EditShiftModal shift={editShift} onClose={() => setEditShift(null)} />}
+
 
       {/* Compact disclaimer */}
       <p className="mx-4 mt-3 text-[11px] text-ink-soft text-center leading-snug">
