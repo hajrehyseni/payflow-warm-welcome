@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { useStore, startShift, endShift, toggleBreak, liveElapsedMs, liveEarnings, weeklyTotals, addShift, deleteShift, setSaveRule, addToSavings, applySetup, computeNextPayday, type SaveRule, type Shift, type PayCycle } from "@/lib/payflow/store";
+import { useStore, store, startShift, endShift, toggleBreak, liveElapsedMs, liveEarnings, weeklyTotals, addShift, deleteShift, editShift, restoreShift, setSaveRule, addToSavings, withdrawFromSavings, toggleSavePaused, updateSettings, applySetup, computeNextPayday, type SaveRule, type Shift, type PayCycle } from "@/lib/payflow/store";
 import { estimateDeductions, gbp, fmtHours, fmtClock, daysUntil } from "@/lib/payflow/calc";
-import { useAuth } from "@/lib/payflow/auth";
-import { Play, Square, Pause, Plus, Clock, Wallet, PiggyBank, Sparkles, Heart, X, Copy, Check, ChevronRight, AlertCircle, ShieldCheck, TrendingUp, Calendar, FileText, MessageSquare, User, Trash2, Coffee, Flame, CloudUpload, Pencil, FileCheck2 } from "lucide-react";
+import { useAuth, signOut } from "@/lib/payflow/auth";
+import { Play, Square, Pause, Plus, Clock, Wallet, PiggyBank, Sparkles, Heart, X, Copy, Check, ChevronRight, AlertCircle, ShieldCheck, TrendingUp, Calendar, FileText, MessageSquare, User, Trash2, Coffee, Flame, CloudUpload, Pencil, FileCheck2, Settings, HelpCircle, LogOut, PauseCircle, PlayCircle, Info } from "lucide-react";
 import { PayCheckModal } from "@/components/payflow/PayCheckModal";
 import { WeeklyRecap, useWeeklyRecap } from "@/components/payflow/WeeklyRecap";
 
@@ -138,10 +138,17 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
     const earnedNow = earned;
     endShift();
     const hrs = elapsedNow / 3600000;
-    const summary = hrs >= 0.02 ? `${fmtHours(hrs)} · ${gbp(earnedNow)}` : "Saved";
+    if (hrs < 0.02) return; // store doesn't insert micro-shifts
+    // The shift was just unshifted onto the list inside endShift().
+    const saved = store.get().shifts[0];
+    const summary = `${fmtHours(hrs)} · ${gbp(earnedNow)}`;
     toast.success(`Shift saved · ${summary}`, {
       description: "Added to your week. Nice work.",
-      duration: 3400,
+      duration: 6000,
+      action: saved ? {
+        label: "Undo",
+        onClick: () => { deleteShift(saved.id); toast("Shift removed", { description: "Back to where you were." }); },
+      } : undefined,
     });
   }
 
@@ -158,6 +165,7 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
   const latest = shifts[0];
   const recentShifts = shifts.slice(0, 3);
   const [showJourney, setShowJourney] = useState(true);
+  const [editingShift, setEditingShift] = useState<Shift | null>(null);
 
   const dateLabel = new Date(now).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
 
@@ -203,12 +211,19 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
       {/* Hero card — big number first, calm next-step caption underneath */}
       <section className="mx-4 mt-3">
         <div className="rounded-3xl bg-gradient-to-br from-primary to-ink p-5 text-sand shadow-[0_14px_34px_-20px_rgba(36,90,180,0.45)]">
-          <div className="flex items-center justify-between text-[10.5px] font-bold uppercase tracking-[0.14em] opacity-85">
-            <span className="inline-flex items-center gap-1.5">
+          <div className="flex items-center justify-between gap-2 text-[10.5px] font-bold uppercase tracking-[0.14em] opacity-85">
+            <span className="inline-flex items-center gap-1.5 min-w-0">
               <span className={`size-1.5 rounded-full ${live.active && !onBreak ? "bg-accent animate-pulse-dot" : "bg-white/50"}`} />
-              {live.active ? (onBreak ? "On break" : "On shift") : "Today"}
+              <span className="truncate">{live.active ? (onBreak ? "On break" : "On shift") : "Today"}</span>
             </span>
-            <span className="truncate ml-2">{gbp(live.hourlyRate)}/hr</span>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {streak >= 2 && (
+                <span className="inline-flex items-center gap-0.5 rounded-full bg-accent/90 text-accent-foreground px-1.5 py-0.5 text-[10px] normal-case tracking-normal">
+                  🔥 {streak}-day
+                </span>
+              )}
+              <span className="truncate">{gbp(live.hourlyRate)}/hr</span>
+            </div>
           </div>
 
           <div className="mt-3 flex items-end justify-between gap-2">
@@ -217,6 +232,11 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
             </div>
             <div className="text-[12.5px] opacity-85 tabular-nums pb-1">{fmtClock(elapsedMs)}</div>
           </div>
+
+          <div className="mt-1 text-[11px] opacity-75 leading-tight">
+            {live.active ? (onBreak ? "Paused · clock resumes when you tap Resume" : "Live · earning right now") : `Estimate · ${freshnessLabel(now)}`}
+          </div>
+
 
           {/* Calm next-step caption — single guiding sentence */}
           <div className="mt-3 flex items-center gap-2 rounded-2xl bg-white/10 ring-1 ring-white/15 px-3 py-2">
@@ -337,7 +357,7 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
           <ul className="space-y-2">
             {recentShifts.map((s) => (
               <li key={s.id}>
-                <button onClick={() => goToTab?.("pay")} className="w-full flex items-center gap-2.5 rounded-2xl bg-card p-3 ring-1 ring-border text-left active:scale-[0.99] transition-transform">
+                <button onClick={() => setEditingShift(s)} className="w-full flex items-center gap-2.5 rounded-2xl bg-card p-3 ring-1 ring-border text-left active:scale-[0.99] transition-transform">
                   <div className="grid size-10 place-items-center rounded-full bg-primary-soft text-[16px] shrink-0" aria-hidden>
                     {shiftEmoji(s.workplace)}
                   </div>
@@ -345,7 +365,10 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
                     <div className="truncate text-[13.5px] font-bold leading-tight">{s.workplace}</div>
                     <div className="text-[11.5px] text-ink-soft leading-tight truncate">{shiftWhen(s)} · {fmtHours(s.hours)}</div>
                   </div>
-                  <div className="font-display text-[15px] font-extrabold tabular-nums text-money">+{gbp(s.gross)}</div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="font-display text-[15px] font-extrabold tabular-nums text-money">+{gbp(s.gross)}</div>
+                    <Pencil className="size-3.5 text-ink-soft shrink-0" />
+                  </div>
                 </button>
               </li>
             ))}
@@ -357,12 +380,26 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
         )}
       </section>
 
+      {editingShift && <EditShiftModal shift={editingShift} onClose={() => setEditingShift(null)} />}
+
+
       {/* Compact disclaimer */}
       <p className="mx-4 mt-3 text-[11px] text-ink-soft text-center leading-snug">
         Estimates only. Your actual payslip may differ.
       </p>
     </div>
   );
+}
+
+// Freshness label for the hero estimate stamp
+function freshnessLabel(now: number): string {
+  // Simple "Updated just now" — tied to the polling tick so it refreshes the user's sense of liveness.
+  const sec = Math.floor((Date.now() - now) / 1000);
+  if (sec < 30) return "Updated just now";
+  if (sec < 120) return "Updated a minute ago";
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `Updated ${min} min ago`;
+  return "Updated recently";
 }
 
 // Emoji + when helpers for the Recent shifts feed
@@ -619,6 +656,56 @@ function AddShiftModal({ onClose }: { onClose: () => void }) {
         <Field label="Notes (optional)"><textarea className={inputCls} rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} maxLength={200} /></Field>
         {err && <div className="rounded-xl bg-destructive/10 text-destructive px-3 py-2 text-sm flex items-center gap-2"><AlertCircle className="size-4" /> {err}</div>}
         <Btn type="submit" className="w-full"><Check className="size-4" /> Save shift</Btn>
+      </form>
+    </Modal>
+  );
+}
+
+function EditShiftModal({ shift, onClose }: { shift: Shift; onClose: () => void }) {
+  const [form, setForm] = useState({
+    workplace: shift.workplace, date: shift.date, start: shift.start, end: shift.end,
+    breakMins: shift.breakMins, hourlyRate: shift.hourlyRate, notes: shift.notes ?? "",
+  });
+  const [err, setErr] = useState<string | null>(null);
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.workplace.trim()) return setErr("Please add a workplace.");
+    if (!form.start || !form.end) return setErr("Please add start and end times.");
+    if (form.hourlyRate <= 0) return setErr("Hourly rate must be more than £0.");
+    editShift(shift.id, { ...form, breakMins: Number(form.breakMins) || 0, hourlyRate: Number(form.hourlyRate) });
+    toast.success("Shift updated");
+    onClose();
+  };
+
+  const remove = () => {
+    const snapshot = shift;
+    deleteShift(shift.id);
+    toast.success("Shift removed", {
+      duration: 6000,
+      action: { label: "Undo", onClick: () => { restoreShift(snapshot); } },
+    });
+    onClose();
+  };
+
+  return (
+    <Modal title="Edit shift" onClose={onClose}>
+      <form onSubmit={submit} className="space-y-3">
+        <Field label="Workplace"><input className={inputCls} value={form.workplace} onChange={(e) => setForm({ ...form, workplace: e.target.value })} maxLength={60} /></Field>
+        <Field label="Date"><input type="date" className={inputCls} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></Field>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Start"><input type="time" className={inputCls} value={form.start} onChange={(e) => setForm({ ...form, start: e.target.value })} /></Field>
+          <Field label="End"><input type="time" className={inputCls} value={form.end} onChange={(e) => setForm({ ...form, end: e.target.value })} /></Field>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Break (mins)"><input type="number" min={0} max={240} className={inputCls} value={form.breakMins} onChange={(e) => setForm({ ...form, breakMins: Number(e.target.value) })} /></Field>
+          <Field label="Hourly rate (£)"><input type="number" min={0} step="0.01" className={inputCls} value={form.hourlyRate} onChange={(e) => setForm({ ...form, hourlyRate: Number(e.target.value) })} /></Field>
+        </div>
+        {err && <div className="rounded-xl bg-destructive/10 text-destructive px-3 py-2 text-sm flex items-center gap-2"><AlertCircle className="size-4" /> {err}</div>}
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          <Btn type="button" variant="ghost" onClick={remove}><Trash2 className="size-4" /> Delete</Btn>
+          <Btn type="submit"><Check className="size-4" /> Save changes</Btn>
+        </div>
       </form>
     </Modal>
   );
