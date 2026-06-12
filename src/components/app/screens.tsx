@@ -210,12 +210,19 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
       {/* Hero card — big number first, calm next-step caption underneath */}
       <section className="mx-4 mt-3">
         <div className="rounded-3xl bg-gradient-to-br from-primary to-ink p-5 text-sand shadow-[0_14px_34px_-20px_rgba(36,90,180,0.45)]">
-          <div className="flex items-center justify-between text-[10.5px] font-bold uppercase tracking-[0.14em] opacity-85">
-            <span className="inline-flex items-center gap-1.5">
+          <div className="flex items-center justify-between gap-2 text-[10.5px] font-bold uppercase tracking-[0.14em] opacity-85">
+            <span className="inline-flex items-center gap-1.5 min-w-0">
               <span className={`size-1.5 rounded-full ${live.active && !onBreak ? "bg-accent animate-pulse-dot" : "bg-white/50"}`} />
-              {live.active ? (onBreak ? "On break" : "On shift") : "Today"}
+              <span className="truncate">{live.active ? (onBreak ? "On break" : "On shift") : "Today"}</span>
             </span>
-            <span className="truncate ml-2">{gbp(live.hourlyRate)}/hr</span>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {streak >= 2 && (
+                <span className="inline-flex items-center gap-0.5 rounded-full bg-accent/90 text-accent-foreground px-1.5 py-0.5 text-[10px] normal-case tracking-normal">
+                  🔥 {streak}-day
+                </span>
+              )}
+              <span className="truncate">{gbp(live.hourlyRate)}/hr</span>
+            </div>
           </div>
 
           <div className="mt-3 flex items-end justify-between gap-2">
@@ -224,6 +231,11 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
             </div>
             <div className="text-[12.5px] opacity-85 tabular-nums pb-1">{fmtClock(elapsedMs)}</div>
           </div>
+
+          <div className="mt-1 text-[11px] opacity-75 leading-tight">
+            {live.active ? (onBreak ? "Paused · clock resumes when you tap Resume" : "Live · earning right now") : `Estimate · ${freshnessLabel(now)}`}
+          </div>
+
 
           {/* Calm next-step caption — single guiding sentence */}
           <div className="mt-3 flex items-center gap-2 rounded-2xl bg-white/10 ring-1 ring-white/15 px-3 py-2">
