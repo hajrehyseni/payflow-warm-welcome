@@ -26,7 +26,7 @@ export type LiveShift = {
   pausedAt: number | null; // epoch ms when paused (break)
 };
 
-export type SaveRule = "shift-1" | "shift-5" | "percent-3";
+export type SaveRule = "shift-1" | "shift-5" | "percent-3" | "roundup-5" | "roundup-10";
 export type PayCycle = "weekly" | "biweekly" | "monthly";
 
 export type PayCheck = {
