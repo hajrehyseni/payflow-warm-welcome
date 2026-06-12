@@ -138,10 +138,17 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
     const earnedNow = earned;
     endShift();
     const hrs = elapsedNow / 3600000;
-    const summary = hrs >= 0.02 ? `${fmtHours(hrs)} · ${gbp(earnedNow)}` : "Saved";
+    if (hrs < 0.02) return; // store doesn't insert micro-shifts
+    // The shift was just unshifted onto the list inside endShift().
+    const saved = store.get().shifts[0];
+    const summary = `${fmtHours(hrs)} · ${gbp(earnedNow)}`;
     toast.success(`Shift saved · ${summary}`, {
       description: "Added to your week. Nice work.",
-      duration: 3400,
+      duration: 6000,
+      action: saved ? {
+        label: "Undo",
+        onClick: () => { deleteShift(saved.id); toast("Shift removed", { description: "Back to where you were." }); },
+      } : undefined,
     });
   }
 
