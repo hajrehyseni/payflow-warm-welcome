@@ -517,17 +517,17 @@ export function PayScreen() {
 
       {/* Hero — PayFlow blue with green money accent */}
       <section className="mx-4 mt-4">
-        <div className="rounded-3xl bg-gradient-to-br from-primary to-ink p-5 text-sand shadow-[0_14px_34px_-20px_rgba(36,90,180,0.45)]">
-          <div className="flex items-center justify-between gap-2 text-[10.5px] font-bold uppercase tracking-[0.14em] opacity-90">
-            <span>Take-home this week</span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-money-soft/90 text-money px-2 py-0.5 normal-case tracking-normal text-[10.5px]">
-              <span className="size-1.5 rounded-full bg-money" /> Estimate
+        <div className="rounded-[24px] bg-gradient-to-br from-primary to-ink p-5 text-sand shadow-[0_14px_34px_-20px_rgba(7,27,58,0.45)] ring-1 ring-white/5">
+          <div className="flex items-center justify-between gap-2 text-[10.5px] font-bold uppercase tracking-[0.14em] opacity-85">
+            <span className="truncate">Take-home this week</span>
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-white/12 px-2 py-0.5 normal-case tracking-normal text-[10.5px] ring-1 ring-white/15">
+              Estimate
             </span>
           </div>
           <div className="mt-2 flex items-end gap-2">
             <div className="font-display text-[44px] font-extrabold tracking-tight tabular-nums leading-none text-money-soft">{gbp(ded.net)}</div>
           </div>
-          <div className="mt-1.5 text-[12px] opacity-85">{fmtHours(week.hours)} · before tax {gbp(ded.gross)}</div>
+          <div className="mt-1.5 text-[12px] opacity-85 truncate">{fmtHours(week.hours)} · before tax {gbp(ded.gross)}</div>
 
           <div className="mt-4 rounded-2xl bg-white/10 p-3 ring-1 ring-white/15">
             <Row k="PAYE income tax" v={`− ${gbp(ded.tax)}`} />
