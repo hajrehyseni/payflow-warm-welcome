@@ -103,7 +103,7 @@ function AppShell() {
           </Link>
         )}
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden">
+        <main ref={mainRef} className="flex-1 overflow-y-auto overflow-x-hidden">
           {tab === "today" && <TodayScreen goToTab={(t) => setTab(t as Tab)} />}
           {tab === "pay" && <PayScreen />}
           {tab === "save" && <SaveScreen />}
