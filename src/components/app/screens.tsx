@@ -534,7 +534,7 @@ export function PayScreen() {
     <div className="pb-6 overflow-x-hidden">
       <AppHeader title="Pay" subtitle={paydaySubtitle} />
 
-      {/* Hero — PayFlow blue with green money accent */}
+      {/* Hero — PayFlow blue with green money accent (or calm empty-state when no current-week shifts) */}
       <section className="mx-4 mt-4">
         <div className="rounded-[24px] bg-gradient-to-br from-primary to-ink p-5 text-sand shadow-[0_14px_34px_-20px_rgba(7,27,58,0.45)] ring-1 ring-white/5">
           <div className="flex items-center justify-between gap-2 text-[10.5px] font-bold uppercase tracking-[0.14em] opacity-85">
@@ -543,16 +543,31 @@ export function PayScreen() {
               Estimate
             </span>
           </div>
-          <div className="mt-2 flex items-end gap-2">
-            <div className="font-display text-[44px] font-extrabold tracking-tight tabular-nums leading-none text-money-soft">{gbp(ded.net)}</div>
-          </div>
-          <div className="mt-1.5 text-[12px] opacity-85 truncate">{fmtHours(week.hours)} · before tax {gbp(ded.gross)}</div>
+          {hasWeekShifts ? (
+            <>
+              <div className="mt-2 flex items-end gap-2">
+                <div className="font-display text-[44px] font-extrabold tracking-tight tabular-nums leading-none text-money-soft">{gbp(ded.net)}</div>
+              </div>
+              <div className="mt-1.5 text-[12px] opacity-85 truncate">{fmtHours(week.hours)} · before tax {gbp(ded.gross)}</div>
 
-          <div className="mt-4 rounded-2xl bg-white/10 p-3 ring-1 ring-white/15">
-            <Row k="PAYE income tax" v={`− ${gbp(ded.tax)}`} />
-            <Row k="National Insurance" v={`− ${gbp(ded.ni)}`} />
-            <Row k="Pension (5%)" v={`− ${gbp(ded.pension)}`} last />
-          </div>
+              <div className="mt-4 rounded-2xl bg-white/10 p-3 ring-1 ring-white/15">
+                <Row k="PAYE income tax" v={`− ${gbp(ded.tax)}`} />
+                <Row k="National Insurance" v={`− ${gbp(ded.ni)}`} />
+                <Row k="Pension (5%)" v={`− ${gbp(ded.pension)}`} last />
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="mt-2 font-display text-[28px] font-extrabold tracking-tight leading-tight">Add this week's shifts</div>
+              <p className="mt-1.5 text-[12.5px] opacity-90 leading-snug">Log a shift on Today and your take-home estimate appears here.</p>
+              <button
+                onClick={() => setModal("add")}
+                className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-sand text-primary py-3 text-[14px] font-bold active:scale-[0.98]"
+              >
+                <Plus className="size-4" /> Add a shift
+              </button>
+            </>
+          )}
         </div>
       </section>
 
@@ -563,8 +578,8 @@ export function PayScreen() {
           <div className="min-w-0 flex-1 text-left">
             <div className="text-[14px] font-bold">Check payslip</div>
             <div className="text-[12px] opacity-90 truncate">
-              {lastCheck
-                ? lastCheck.looksRight ? "Last check looked right ✓" : `Last check: ${gbp(Math.abs(lastCheck.gapNet))} ${lastCheck.gapNet > 0 ? "short" : "over"}`
+              {lastCheckCurrent
+                ? lastCheck!.looksRight ? "Last check looked right ✓" : `Last check: ${gbp(Math.abs(lastCheck!.gapNet))} ${lastCheck!.gapNet > 0 ? "short" : "over"}`
                 : "Compare your payslip to what you tracked."}
             </div>
           </div>
@@ -572,19 +587,21 @@ export function PayScreen() {
         </button>
       </section>
 
-      {/* Confidence */}
-      <section className="mx-4 mt-3 rounded-2xl bg-card p-4 ring-1 ring-border">
-        <div className="flex items-center justify-between">
-          <div className="text-[13px] font-bold">Pay confidence</div>
-          <div className="text-[13px] font-bold tabular-nums text-primary">{confidence}%</div>
-        </div>
-        <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-sand-deep">
-          <div className="h-full rounded-full bg-primary" style={{ width: `${confidence}%` }} />
-        </div>
-        <p className="mt-2 text-[12px] text-ink-soft leading-snug">
-          Based on {week.count} shift{week.count === 1 ? "" : "s"} this week. Log every shift to keep this accurate.
-        </p>
-      </section>
+      {/* Confidence — only meaningful once there are shifts to base it on */}
+      {hasWeekShifts && (
+        <section className="mx-4 mt-3 rounded-2xl bg-card p-4 ring-1 ring-border">
+          <div className="flex items-center justify-between">
+            <div className="text-[13px] font-bold">Pay confidence</div>
+            <div className="text-[13px] font-bold tabular-nums text-primary">{confidence}%</div>
+          </div>
+          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-sand-deep">
+            <div className="h-full rounded-full bg-primary" style={{ width: `${confidence}%` }} />
+          </div>
+          <p className="mt-2 text-[12px] text-ink-soft leading-snug">
+            Based on {week.count} shift{week.count === 1 ? "" : "s"} this week. Log every shift to keep this accurate.
+          </p>
+        </section>
+      )}
 
       {/* Secondary actions */}
       <section className="mx-4 mt-3 grid grid-cols-2 gap-2">
