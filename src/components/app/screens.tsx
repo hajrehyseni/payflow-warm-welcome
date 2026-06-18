@@ -1027,11 +1027,11 @@ export function CoachScreen() {
 
       {/* Today's insight */}
       <section className="mx-4 mt-4">
-        <div className="rounded-[24px] bg-primary p-5 text-primary-foreground">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider">
-            <Sparkles className="size-3" /> Today
+        <div className="rounded-[24px] bg-gradient-to-br from-primary to-ink p-5 text-sand shadow-[0_14px_34px_-20px_rgba(7,27,58,0.45)] ring-1 ring-white/5">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ring-1 ring-white/15">
+            <Sparkles className="size-3" /> Today's insight
           </div>
-          <p className="mt-2.5 text-[14px] leading-relaxed font-medium">
+          <p className="mt-2.5 text-[14px] leading-relaxed font-medium text-sand/95">
             {week.count > 0
               ? `You've logged ${fmtHours(week.hours)} this week — on track for around ${gbp(ded.net)} take-home.`
               : `Log a shift and I'll start showing you a real take-home estimate.`}
