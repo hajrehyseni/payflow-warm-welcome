@@ -60,18 +60,18 @@ function Landing() {
               <span className="size-1.5 rounded-full bg-primary animate-pulse-dot" />
               Pay protection — not pay advances
             </div>
-            <h1 className="mt-6 font-display text-5xl md:text-6xl font-extrabold tracking-tight leading-[0.95] text-balance">
+            <h1 className="mt-6 font-display text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-[0.95] text-balance break-words">
               Make sure you're paid <span className="text-primary">right</span>.
             </h1>
-            <p className="mt-5 max-w-md mx-auto md:mx-0 text-lg leading-relaxed text-ink-soft">
+            <p className="mt-5 max-w-md mx-auto md:mx-0 text-base sm:text-lg leading-relaxed text-ink-soft">
               We don't lend you your money early and charge you. We make sure you get <strong className="text-ink">all of it</strong> — free.
             </p>
             <div className="mt-7 flex flex-wrap items-center justify-center md:justify-start gap-3">
               <Link
                 to="/app"
-                className="inline-flex items-center gap-2 rounded-full bg-primary px-7 py-4 text-base font-bold text-primary-foreground shadow-[0_12px_30px_-8px_rgba(0,87,255,0.45)] hover:scale-[1.02] active:scale-[0.98] transition-transform"
+                className="inline-flex max-w-full items-center gap-2 rounded-full bg-primary px-6 py-3.5 sm:px-7 sm:py-4 text-sm sm:text-base font-bold text-primary-foreground shadow-[0_12px_30px_-8px_rgba(0,87,255,0.45)] hover:scale-[1.02] active:scale-[0.98] transition-transform"
               >
-                Open PayFlow — it's free <ArrowRight className="size-4" />
+                <span className="truncate">Open PayFlow — it's free</span> <ArrowRight className="size-4 shrink-0" />
               </Link>
               <a href="#business" className="text-sm font-bold text-ink-soft hover:text-ink underline-offset-4 hover:underline">
                 For business →
