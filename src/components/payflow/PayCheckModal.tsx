@@ -169,7 +169,7 @@ function ResultView({ result, hourlyRate, onQuery, onClose, onAgain }: {
 
   return (
     <div>
-      <div className={`rounded-[24px] p-5 ${ok ? "bg-primary text-primary-foreground" : short ? "bg-accent text-accent-foreground" : "bg-ink text-sand"}`}>
+      <div className={`rounded-[24px] p-5 ${ok ? "bg-money text-money-foreground" : short ? "bg-accent text-accent-foreground" : "bg-ink text-sand"}`}>
         <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider">
           {ok ? <Check className="size-3" /> : <AlertCircle className="size-3" />} {verdict}
         </div>
@@ -229,7 +229,7 @@ function HistoryView({ payChecks, onBack }: { payChecks: PayCheck[]; onBack: () 
               <span className="text-[12px] font-bold text-ink-soft">
                 {p.periodStart} → {p.periodEnd}
               </span>
-              <span className={`text-[11px] font-bold rounded-full px-2 py-0.5 ${p.looksRight ? "bg-primary-soft text-primary" : "bg-accent-soft text-accent"}`}>
+              <span className={`text-[11px] font-bold rounded-full px-2 py-0.5 ${p.looksRight ? "bg-money-soft text-money" : "bg-accent-soft text-accent"}`}>
                 {p.looksRight ? "Looked right" : `${p.gapNet > 0 ? "−" : "+"}${gbp(Math.abs(p.gapNet))}`}
               </span>
             </div>

@@ -188,12 +188,12 @@ function StepEarnings({ active }: { active: boolean }) {
   }, [active]);
   return (
     <div className="flex h-full flex-col items-center justify-center gap-3">
-      <div className="text-[10px] font-bold uppercase tracking-wider text-primary">Earning now</div>
+      <div className="text-[10px] font-bold uppercase tracking-wider text-money">Earning now</div>
       <div className="font-display text-5xl font-extrabold tracking-tight text-ink tabular-nums">
         £{val.toFixed(2)}
       </div>
       <div className="flex items-center gap-1.5 text-xs text-ink-soft">
-        <span className="inline-block size-1.5 rounded-full bg-primary animate-pulse" />
+        <span className="inline-block size-1.5 rounded-full bg-money animate-pulse" />
         Live · 2h 14m on shift
       </div>
       <div className="mt-2 w-full rounded-2xl bg-card p-3 ring-1 ring-border">
@@ -219,8 +219,8 @@ function StepTakeHome({ active: _active }: { active: boolean }) {
           <div className="font-display text-xl font-extrabold text-ink tabular-nums">£493.00</div>
         </div>
         <div className="text-right">
-          <div className="text-[10px] text-primary font-bold">Take-home</div>
-          <div className="font-display text-2xl font-extrabold text-primary tabular-nums">£398.12</div>
+          <div className="text-[10px] text-money font-bold">Take-home</div>
+          <div className="font-display text-2xl font-extrabold text-money tabular-nums">£398.12</div>
         </div>
       </div>
       <div className="space-y-1.5">
@@ -251,7 +251,7 @@ function StepSave({ active }: { active: boolean }) {
           <circle cx="50" cy="50" r={radius} fill="none" stroke="currentColor" strokeWidth="8" className="text-ink/10" />
           <circle
             cx="50" cy="50" r={radius} fill="none" strokeWidth="8" strokeLinecap="round"
-            className="text-primary"
+            className="text-money"
             stroke="currentColor"
             strokeDasharray={circ}
             style={{
@@ -267,8 +267,8 @@ function StepSave({ active }: { active: boolean }) {
           </div>
         </div>
       </div>
-      <div className="w-full rounded-2xl bg-primary-soft px-3 py-2 text-center">
-        <div className="text-[11px] font-bold text-primary">Rule: £5 from every shift</div>
+      <div className="w-full rounded-2xl bg-money-soft px-3 py-2 text-center">
+        <div className="text-[11px] font-bold text-money">Rule: £5 from every shift</div>
       </div>
     </div>
   );

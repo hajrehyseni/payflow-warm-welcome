@@ -69,7 +69,7 @@ function Landing() {
             <div className="mt-7 flex flex-wrap items-center justify-center md:justify-start gap-3">
               <Link
                 to="/app"
-                className="inline-flex items-center gap-2 rounded-full bg-accent px-7 py-4 text-base font-bold text-accent-foreground shadow-[0_12px_30px_-8px_rgba(255,107,94,0.55)] hover:scale-[1.02] active:scale-[0.98] transition-transform"
+                className="inline-flex items-center gap-2 rounded-full bg-primary px-7 py-4 text-base font-bold text-primary-foreground shadow-[0_12px_30px_-8px_rgba(0,87,255,0.45)] hover:scale-[1.02] active:scale-[0.98] transition-transform"
               >
                 Open PayFlow — it's free <ArrowRight className="size-4" />
               </Link>
@@ -272,7 +272,7 @@ function Landing() {
         <p className="mt-4 text-ink-soft">Free for workers. No advances. No fees. Just clarity.</p>
         <Link
           to="/app"
-          className="mt-8 inline-flex items-center gap-2 rounded-full bg-accent px-8 py-4 text-base font-bold text-accent-foreground shadow-[0_12px_30px_-8px_rgba(255,107,94,0.55)] hover:scale-[1.02] active:scale-[0.98] transition-transform"
+          className="mt-8 inline-flex items-center gap-2 rounded-full bg-primary px-8 py-4 text-base font-bold text-primary-foreground shadow-[0_12px_30px_-8px_rgba(0,87,255,0.45)] hover:scale-[1.02] active:scale-[0.98] transition-transform"
         >
           Open PayFlow <ArrowRight className="size-4" />
         </Link>

@@ -194,12 +194,12 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
         <section className="mx-4 mt-3">
           <button
             onClick={() => setSetupOpen(true)}
-            className="w-full flex items-center justify-between gap-2 rounded-xl bg-accent-soft px-3 py-1.5 ring-1 ring-accent/20 text-left"
+            className="w-full flex items-center justify-between gap-2 rounded-xl bg-primary-soft px-3 py-1.5 ring-1 ring-primary/15 text-left"
           >
             <div className="min-w-0">
-              <div className="text-[11px] font-bold text-accent truncate">Showing sample data — tap to use yours</div>
+              <div className="text-[11px] font-bold text-primary truncate">Showing sample data — tap to use yours</div>
             </div>
-            <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-[10.5px] font-bold text-accent-foreground shrink-0">
+            <span className="inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[10.5px] font-bold text-primary-foreground shrink-0">
               <Pencil className="size-3" /> Use mine
             </span>
           </button>
@@ -213,7 +213,7 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
         <div className="rounded-3xl bg-gradient-to-br from-primary to-ink p-5 text-sand shadow-[0_14px_34px_-20px_rgba(36,90,180,0.45)]">
           <div className="flex items-center justify-between gap-2 text-[10.5px] font-bold uppercase tracking-[0.14em] opacity-85">
             <span className="inline-flex items-center gap-1.5 min-w-0">
-              <span className={`size-1.5 rounded-full ${live.active && !onBreak ? "bg-accent animate-pulse-dot" : "bg-white/50"}`} />
+              <span className={`size-1.5 rounded-full ${live.active && !onBreak ? "bg-money animate-pulse-dot" : "bg-white/50"}`} />
               <span className="truncate">{live.active ? (onBreak ? "On break" : "On shift") : "Today"}</span>
             </span>
             <div className="flex items-center gap-1.5 shrink-0">
@@ -512,7 +512,7 @@ export function PayScreen() {
 
       {/* Hero */}
       <section className="mx-5 mt-5">
-        <div className="rounded-[28px] bg-gradient-to-br from-primary to-primary/80 p-6 text-primary-foreground">
+        <div className="rounded-[28px] bg-gradient-to-br from-money to-money/85 p-6 text-money-foreground">
           <div className="text-[11px] font-bold uppercase tracking-[0.18em] opacity-90">Estimated take-home this week</div>
           <div className="mt-2 font-display text-[52px] font-extrabold tracking-tight tabular-nums leading-none">{gbp(ded.net)}</div>
           <div className="mt-2 text-sm opacity-90">{fmtHours(week.hours)} · gross {gbp(ded.gross)}</div>
@@ -541,8 +541,8 @@ export function PayScreen() {
 
       {/* Check my pay — hero card */}
       <section className="mx-5 mt-4">
-        <button onClick={() => setPayCheckOpen(true)} className="w-full flex items-center gap-3 rounded-2xl bg-accent-soft p-4 ring-1 ring-accent/20 text-left active:scale-[0.99] transition">
-          <div className="grid size-11 place-items-center rounded-2xl bg-accent text-accent-foreground"><FileCheck2 className="size-5" /></div>
+        <button onClick={() => setPayCheckOpen(true)} className="w-full flex items-center gap-3 rounded-2xl bg-primary-soft p-4 ring-1 ring-primary/15 text-left active:scale-[0.99] transition">
+          <div className="grid size-11 place-items-center rounded-2xl bg-primary text-primary-foreground"><FileCheck2 className="size-5" /></div>
           <div className="min-w-0 flex-1">
             <div className="text-[14px] font-bold text-ink">Check my pay</div>
             <div className="text-[12px] text-ink-soft truncate">
@@ -857,7 +857,7 @@ export function SaveScreen() {
       <AppHeader title="Save" subtitle="Small moves from every shift" />
 
       <section className="mx-5 mt-5">
-        <div className="rounded-[28px] bg-gradient-to-br from-accent to-accent/80 p-6 text-accent-foreground">
+        <div className="rounded-[28px] bg-gradient-to-br from-money to-money/85 p-6 text-money-foreground">
           <div className="text-[11px] font-bold uppercase tracking-[0.18em] opacity-90">Saved so far</div>
           <div className="mt-2 font-display text-[52px] font-extrabold tracking-tight tabular-nums leading-none">{gbp(saved)}</div>
           <div className="mt-3 text-[13px] opacity-90">Emergency fund · {pct}% of {gbp(goal, { decimals: 0 })}</div>

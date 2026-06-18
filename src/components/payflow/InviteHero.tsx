@@ -10,7 +10,7 @@ export function InviteHero({ company, code, joinLink }: { company: string; code:
 
   useEffect(() => {
     if (!joinLink) return;
-    void QRCode.toDataURL(joinLink, { margin: 1, width: 240, color: { dark: "#0F1419", light: "#F5EFE4" } })
+    void QRCode.toDataURL(joinLink, { margin: 1, width: 240, color: { dark: "#071B3A", light: "#FFFFFF" } })
       .then(setQr)
       .catch(() => setQr(""));
   }, [joinLink]);
