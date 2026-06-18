@@ -210,7 +210,7 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
 
       {/* Hero card — big number first, calm next-step caption underneath */}
       <section className="mx-4 mt-3">
-        <div className="rounded-3xl bg-gradient-to-br from-primary to-ink p-5 text-sand shadow-[0_14px_34px_-20px_rgba(36,90,180,0.45)]">
+        <div className="rounded-[24px] bg-gradient-to-br from-primary to-ink p-5 text-sand shadow-[0_14px_34px_-20px_rgba(7,27,58,0.45)] ring-1 ring-white/5">
           <div className="flex items-center justify-between gap-2 text-[10.5px] font-bold uppercase tracking-[0.14em] opacity-85">
             <span className="inline-flex items-center gap-1.5 min-w-0">
               <span className={`size-1.5 rounded-full ${live.active && !onBreak ? "bg-money animate-pulse-dot" : "bg-white/50"}`} />
