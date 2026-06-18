@@ -183,10 +183,10 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
   })();
 
   return (
-    <div className="pb-[96px]">
-      {/* Monzo-style header: greeting + date, calm */}
-      <header className="sticky top-0 z-30 bg-sand/95 backdrop-blur-xl border-b border-border/60 px-5 pt-[max(env(safe-area-inset-top),0.5rem)] pb-3">
-        <h1 className="font-display text-[22px] font-extrabold leading-tight tracking-tight">{g.title}</h1>
+    <div className="pb-[88px] overflow-x-hidden">
+      {/* Greeting header, aligned to mx-4 card grid */}
+      <header className="sticky top-0 z-30 bg-sand/95 backdrop-blur-xl border-b border-border/60 px-4 pt-[max(env(safe-area-inset-top),0.5rem)] pb-3">
+        <h1 className="font-display text-[22px] font-extrabold leading-tight tracking-tight truncate">{g.title}</h1>
         <p className="text-[12px] text-ink-soft leading-tight truncate">{dateLabel}</p>
       </header>
 
