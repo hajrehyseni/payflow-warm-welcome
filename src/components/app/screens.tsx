@@ -874,17 +874,17 @@ export function SaveScreen() {
 
       {/* Hero — PayFlow blue with green money accent on saved value */}
       <section className="mx-4 mt-4">
-        <div className="rounded-3xl bg-gradient-to-br from-primary to-ink p-5 text-sand shadow-[0_14px_34px_-20px_rgba(36,90,180,0.45)]">
-          <div className="flex items-center justify-between gap-2 text-[10.5px] font-bold uppercase tracking-[0.14em] opacity-90">
-            <span>Saved so far</span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-money-soft/90 text-money px-2 py-0.5 normal-case tracking-normal text-[10.5px]">
+        <div className="rounded-[24px] bg-gradient-to-br from-primary to-ink p-5 text-sand shadow-[0_14px_34px_-20px_rgba(7,27,58,0.45)] ring-1 ring-white/5">
+          <div className="flex items-center justify-between gap-2 text-[10.5px] font-bold uppercase tracking-[0.14em] opacity-85">
+            <span className="truncate">Saved so far</span>
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-white/12 px-2 py-0.5 normal-case tracking-normal text-[10.5px] ring-1 ring-white/15">
               <PiggyBank className="size-3" /> Pot
             </span>
           </div>
           <div className="mt-2 font-display text-[44px] font-extrabold tracking-tight tabular-nums leading-none text-money-soft">{gbp(saved)}</div>
-          <div className="mt-3 flex items-center justify-between text-[12px] opacity-90">
-            <span>Emergency fund</span>
-            <span className="tabular-nums">{pct}% of {gbp(goal, { decimals: 0 })}</span>
+          <div className="mt-3 flex items-center justify-between gap-2 text-[12px] opacity-90">
+            <span className="truncate">Emergency fund</span>
+            <span className="shrink-0 tabular-nums">{pct}% of {gbp(goal, { decimals: 0 })}</span>
           </div>
           <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-white/15">
             <div className="h-full rounded-full bg-money" style={{ width: `${pct}%` }} />
