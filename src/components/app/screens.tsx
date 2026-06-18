@@ -313,7 +313,11 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
             <div className="min-w-0">
               <div className="text-[10.5px] font-bold uppercase tracking-wider text-ink-soft">Take-home</div>
               <div className="mt-1 font-display text-[30px] font-extrabold tracking-tight tabular-nums leading-none text-money">{gbp(ded.net)}</div>
-              <div className="mt-1.5 text-[11.5px] text-ink-soft">{week.count} shift{week.count === 1 ? "" : "s"} · before tax {gbp(ded.gross)}</div>
+              <div className="mt-1.5 text-[11.5px] text-ink-soft">
+                {week.count === 0
+                  ? (live.active ? "Live shift in progress — finishes when you tap End." : "No shifts logged this week yet.")
+                  : <>{week.count} shift{week.count === 1 ? "" : "s"} · before tax {gbp(ded.gross)}{live.active ? " · live shift in progress" : ""}</>}
+              </div>
             </div>
             <div className="grid size-11 shrink-0 place-items-center rounded-2xl bg-primary-soft text-primary">
               <Wallet className="size-5" />
@@ -516,7 +520,11 @@ export function PayScreen() {
   const [modal, setModal] = useState<PayModal>(null);
   const [payCheckOpen, setPayCheckOpen] = useState(false);
   const payChecks = useStore((s) => s.payChecks);
+  // Only treat the most recent check as "current" if its period overlaps this week.
+  const todayMonday = (() => { const d = new Date(); const day = d.getDay(); const diff = day === 0 ? -6 : 1 - day; const m = new Date(d); m.setDate(d.getDate()+diff); m.setHours(0,0,0,0); return m.toISOString().slice(0,10); })();
   const lastCheck = payChecks[0];
+  const lastCheckCurrent = lastCheck && lastCheck.periodEnd >= todayMonday;
+  const hasWeekShifts = week.count > 0;
 
   const paydaySubtitle = daysToPay < 0
     ? `Next payday · ${paydayLong}`
@@ -530,7 +538,7 @@ export function PayScreen() {
     <div className="pb-6 overflow-x-hidden">
       <AppHeader title="Pay" subtitle={paydaySubtitle} />
 
-      {/* Hero — PayFlow blue with green money accent */}
+      {/* Hero — PayFlow blue with green money accent (or calm empty-state when no current-week shifts) */}
       <section className="mx-4 mt-4">
         <div className="rounded-[24px] bg-gradient-to-br from-primary to-ink p-5 text-sand shadow-[0_14px_34px_-20px_rgba(7,27,58,0.45)] ring-1 ring-white/5">
           <div className="flex items-center justify-between gap-2 text-[10.5px] font-bold uppercase tracking-[0.14em] opacity-85">
@@ -539,16 +547,31 @@ export function PayScreen() {
               Estimate
             </span>
           </div>
-          <div className="mt-2 flex items-end gap-2">
-            <div className="font-display text-[44px] font-extrabold tracking-tight tabular-nums leading-none text-money-soft">{gbp(ded.net)}</div>
-          </div>
-          <div className="mt-1.5 text-[12px] opacity-85 truncate">{fmtHours(week.hours)} · before tax {gbp(ded.gross)}</div>
+          {hasWeekShifts ? (
+            <>
+              <div className="mt-2 flex items-end gap-2">
+                <div className="font-display text-[44px] font-extrabold tracking-tight tabular-nums leading-none text-money-soft">{gbp(ded.net)}</div>
+              </div>
+              <div className="mt-1.5 text-[12px] opacity-85 truncate">{fmtHours(week.hours)} · before tax {gbp(ded.gross)}</div>
 
-          <div className="mt-4 rounded-2xl bg-white/10 p-3 ring-1 ring-white/15">
-            <Row k="PAYE income tax" v={`− ${gbp(ded.tax)}`} />
-            <Row k="National Insurance" v={`− ${gbp(ded.ni)}`} />
-            <Row k="Pension (5%)" v={`− ${gbp(ded.pension)}`} last />
-          </div>
+              <div className="mt-4 rounded-2xl bg-white/10 p-3 ring-1 ring-white/15">
+                <Row k="PAYE income tax" v={`− ${gbp(ded.tax)}`} />
+                <Row k="National Insurance" v={`− ${gbp(ded.ni)}`} />
+                <Row k="Pension (5%)" v={`− ${gbp(ded.pension)}`} last />
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="mt-2 font-display text-[28px] font-extrabold tracking-tight leading-tight">Add this week's shifts</div>
+              <p className="mt-1.5 text-[12.5px] opacity-90 leading-snug">Log a shift on Today and your take-home estimate appears here.</p>
+              <button
+                onClick={() => setModal("add")}
+                className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-sand text-primary py-3 text-[14px] font-bold active:scale-[0.98]"
+              >
+                <Plus className="size-4" /> Add a shift
+              </button>
+            </>
+          )}
         </div>
       </section>
 
@@ -559,8 +582,8 @@ export function PayScreen() {
           <div className="min-w-0 flex-1 text-left">
             <div className="text-[14px] font-bold">Check payslip</div>
             <div className="text-[12px] opacity-90 truncate">
-              {lastCheck
-                ? lastCheck.looksRight ? "Last check looked right ✓" : `Last check: ${gbp(Math.abs(lastCheck.gapNet))} ${lastCheck.gapNet > 0 ? "short" : "over"}`
+              {lastCheckCurrent
+                ? lastCheck!.looksRight ? "Last check looked right ✓" : `Last check: ${gbp(Math.abs(lastCheck!.gapNet))} ${lastCheck!.gapNet > 0 ? "short" : "over"}`
                 : "Compare your payslip to what you tracked."}
             </div>
           </div>
@@ -568,19 +591,21 @@ export function PayScreen() {
         </button>
       </section>
 
-      {/* Confidence */}
-      <section className="mx-4 mt-3 rounded-2xl bg-card p-4 ring-1 ring-border">
-        <div className="flex items-center justify-between">
-          <div className="text-[13px] font-bold">Pay confidence</div>
-          <div className="text-[13px] font-bold tabular-nums text-primary">{confidence}%</div>
-        </div>
-        <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-sand-deep">
-          <div className="h-full rounded-full bg-primary" style={{ width: `${confidence}%` }} />
-        </div>
-        <p className="mt-2 text-[12px] text-ink-soft leading-snug">
-          Based on {week.count} shift{week.count === 1 ? "" : "s"} this week. Log every shift to keep this accurate.
-        </p>
-      </section>
+      {/* Confidence — only meaningful once there are shifts to base it on */}
+      {hasWeekShifts && (
+        <section className="mx-4 mt-3 rounded-2xl bg-card p-4 ring-1 ring-border">
+          <div className="flex items-center justify-between">
+            <div className="text-[13px] font-bold">Pay confidence</div>
+            <div className="text-[13px] font-bold tabular-nums text-primary">{confidence}%</div>
+          </div>
+          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-sand-deep">
+            <div className="h-full rounded-full bg-primary" style={{ width: `${confidence}%` }} />
+          </div>
+          <p className="mt-2 text-[12px] text-ink-soft leading-snug">
+            Based on {week.count} shift{week.count === 1 ? "" : "s"} this week. Log every shift to keep this accurate.
+          </p>
+        </section>
+      )}
 
       {/* Secondary actions */}
       <section className="mx-4 mt-3 grid grid-cols-2 gap-2">
@@ -891,7 +916,7 @@ export function SaveScreen() {
       <section className="mx-4 mt-4">
         <div className="rounded-[24px] bg-gradient-to-br from-primary to-ink p-5 text-sand shadow-[0_14px_34px_-20px_rgba(7,27,58,0.45)] ring-1 ring-white/5">
           <div className="flex items-center justify-between gap-2 text-[10.5px] font-bold uppercase tracking-[0.14em] opacity-85">
-            <span className="truncate">Saved so far</span>
+            <span className="truncate">Your safety pot so far</span>
             <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-white/12 px-2 py-0.5 normal-case tracking-normal text-[10.5px] ring-1 ring-white/15">
               <PiggyBank className="size-3" /> Pot
             </span>
@@ -938,15 +963,20 @@ export function SaveScreen() {
 
       <section className="mx-4 mt-3">
         {weekly <= 0 ? (
-          <Btn className="w-full" variant="ghost" disabled>
-            <PiggyBank className="size-4" /> Add a shift to unlock savings
-          </Btn>
+          <>
+            <Btn className="w-full" variant="ghost" disabled>
+              <PiggyBank className="size-4" /> Add a shift to unlock this week's saving
+            </Btn>
+            <p className="mt-2 text-[11px] text-ink-soft text-center">Savings projections unlock once this week has shifts.</p>
+          </>
         ) : (
-          <Btn className="w-full" variant="primary" onClick={() => { addToSavings(weekly); toast.success(`${gbp(weekly)} moved to your pot`, { description: "Small moves, real progress." }); }}>
-            <PiggyBank className="size-4" /> Move {gbp(weekly)} to savings
-          </Btn>
+          <>
+            <Btn className="w-full" variant="primary" onClick={() => { addToSavings(weekly); toast.success(`${gbp(weekly)} moved to your pot`, { description: "Small moves, real progress." }); }}>
+              <PiggyBank className="size-4" /> Move {gbp(weekly)} to savings
+            </Btn>
+            <p className="mt-2 text-[11px] text-ink-soft text-center">Moves the amount in PayFlow only. We never touch your bank account.</p>
+          </>
         )}
-        <p className="mt-2 text-[11px] text-ink-soft text-center">Moves the amount in PayFlow only. We never touch your bank account.</p>
       </section>
 
       <Compliance />

@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Home, Wallet, PiggyBank, Sparkles, LogOut, CloudUpload } from "lucide-react";
 import { TodayScreen, PayScreen, SaveScreen, CoachScreen, Onboarding } from "@/components/app/screens";
 import { useStore, setOnboarded as setLocalOnboarded } from "@/lib/payflow/store";
@@ -42,6 +42,7 @@ function AppSplash() {
 function AppShell() {
   const user = useAuth();
   const nav = useNavigate();
+  const mainRef = useRef<HTMLElement>(null);
   const [tab, setTab] = useState<Tab>("today");
   const [ready, setReady] = useState(false);
   const [hydrated, setHydrated] = useState(false);
@@ -57,6 +58,9 @@ function AppShell() {
   })();
 
   useEffect(() => { void ensureInitialised().then(() => setReady(true)); }, []);
+
+  // Reset scroll to top whenever the user changes tabs — keeps sticky titles fully visible.
+  useEffect(() => { mainRef.current?.scrollTo({ top: 0, behavior: "auto" }); }, [tab]);
 
   // Hydrate from cloud once we know the user; guests skip cloud and use local store.
   useEffect(() => {
@@ -103,7 +107,7 @@ function AppShell() {
           </Link>
         )}
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden">
+        <main ref={mainRef} className="flex-1 overflow-y-auto overflow-x-hidden">
           {tab === "today" && <TodayScreen goToTab={(t) => setTab(t as Tab)} />}
           {tab === "pay" && <PayScreen />}
           {tab === "save" && <SaveScreen />}

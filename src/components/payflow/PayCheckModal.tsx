@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { X, Check, AlertCircle, ShieldCheck, MessageSquare, History, ChevronRight } from "lucide-react";
-import { useStore, addPayCheck, type PayCheck } from "@/lib/payflow/store";
+import { useStore, addPayCheck, weekRange, type PayCheck } from "@/lib/payflow/store";
 import { estimateDeductions, gbp, fmtHours } from "@/lib/payflow/calc";
 import { PayrollQueryModal } from "@/components/app/screens";
 
@@ -18,12 +18,13 @@ export function PayCheckModal({ onClose }: { onClose: () => void }) {
   const hourlyRate = useStore((s) => s.hourlyRateDefault);
   const payChecks = useStore((s) => s.payChecks);
 
-  // Default period: last 7 days ending today
-  const todayISO = new Date().toISOString().slice(0, 10);
-  const weekAgoISO = new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10);
+  // Default period: the current pay week (Mon–Sun) so figures match the Pay screen.
+  const { monday, sunday } = weekRange();
+  const weekStartISO = monday.toISOString().slice(0, 10);
+  const weekEndISO = sunday.toISOString().slice(0, 10);
 
-  const [periodStart, setPeriodStart] = useState(weekAgoISO);
-  const [periodEnd, setPeriodEnd] = useState(todayISO);
+  const [periodStart, setPeriodStart] = useState(weekStartISO);
+  const [periodEnd, setPeriodEnd] = useState(weekEndISO);
   const [actualNet, setActualNet] = useState<number>(0);
   const [actualHours, setActualHours] = useState<number>(0);
   const [result, setResult] = useState<PayCheck | null>(null);
@@ -38,7 +39,8 @@ export function PayCheckModal({ onClose }: { onClose: () => void }) {
     return { hours: +hours.toFixed(2), gross, net: ded.net };
   }, [shifts, periodStart, periodEnd]);
 
-  // Both figures must be sensible before comparing.
+  // Both figures must be sensible before comparing, AND we need something tracked to compare against.
+  const hasTracked = expected.hours > 0;
   const bothEntered = actualNet > 0 && actualHours > 0;
   // Friendly warning for obviously unrealistic entries (still allowed to proceed).
   const looksLow = (actualNet > 0 && actualNet < 10) || (actualHours > 0 && actualHours < 1);
@@ -81,9 +83,15 @@ export function PayCheckModal({ onClose }: { onClose: () => void }) {
                   </label>
                 </div>
 
-                <div className="rounded-2xl bg-primary-soft p-3 ring-1 ring-primary/15 text-[12px] text-primary">
-                  <strong>You tracked:</strong> {fmtHours(expected.hours)} · estimate {gbp(expected.net)} take-home
-                </div>
+                {hasTracked ? (
+                  <div className="rounded-2xl bg-primary-soft p-3 ring-1 ring-primary/15 text-[12px] text-primary">
+                    <strong>You tracked:</strong> {fmtHours(expected.hours)} · estimate {gbp(expected.net)} take-home
+                  </div>
+                ) : (
+                  <div className="rounded-2xl bg-card p-3 ring-1 ring-border text-[12px] text-ink-soft">
+                    No shifts tracked in this period yet. Add your shifts first so PayFlow has something to compare.
+                  </div>
+                )}
 
                 <label className="block">
                   <span className="block text-[12px] font-bold text-ink-soft mb-1.5">Take-home pay shown on your payslip (£)</span>
@@ -112,7 +120,7 @@ export function PayCheckModal({ onClose }: { onClose: () => void }) {
 
               <button
                 onClick={run}
-                disabled={!bothEntered}
+                disabled={!bothEntered || !hasTracked}
                 className="mt-5 w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-primary text-primary-foreground py-3.5 font-bold shadow-[0_10px_24px_-14px_rgba(0,87,255,0.65)] transition-all active:scale-[0.98] disabled:opacity-40 disabled:shadow-none disabled:cursor-not-allowed disabled:active:scale-100"
               >
                 <Check className="size-4" /> Compare with PayFlow
