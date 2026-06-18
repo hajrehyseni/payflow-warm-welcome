@@ -125,8 +125,11 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
   const g = greetingFor({ name: user?.name, onShift: live.active, onBreak, hasEndedToday, hour });
 
   const payday = new Date(nextPayday + "T00:00:00");
-  const daysToPay = daysUntil(payday);
-  const paydayLabel = payday.toLocaleDateString("en-GB", { weekday: "short" });
+  const paydayValid = !Number.isNaN(payday.getTime());
+  const rawDaysToPay = paydayValid ? daysUntil(payday) : NaN;
+  const daysToPay = Number.isFinite(rawDaysToPay) && rawDaysToPay >= 0 ? rawDaysToPay : -1;
+  const paydayLabel = paydayValid ? payday.toLocaleDateString("en-GB", { weekday: "short" }) : "soon";
+  const paydayLong = paydayValid ? payday.toLocaleDateString("en-GB", { weekday: "long" }) : "soon";
   const streak = useMemo(() => computeStreak(shifts), [shifts]);
 
 
