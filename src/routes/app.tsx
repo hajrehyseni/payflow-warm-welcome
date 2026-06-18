@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Home, Wallet, PiggyBank, Sparkles, LogOut, CloudUpload } from "lucide-react";
 import { TodayScreen, PayScreen, SaveScreen, CoachScreen, Onboarding } from "@/components/app/screens";
 import { useStore, setOnboarded as setLocalOnboarded } from "@/lib/payflow/store";
