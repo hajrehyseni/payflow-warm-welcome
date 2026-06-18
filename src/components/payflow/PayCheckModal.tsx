@@ -83,9 +83,15 @@ export function PayCheckModal({ onClose }: { onClose: () => void }) {
                   </label>
                 </div>
 
-                <div className="rounded-2xl bg-primary-soft p-3 ring-1 ring-primary/15 text-[12px] text-primary">
-                  <strong>You tracked:</strong> {fmtHours(expected.hours)} · estimate {gbp(expected.net)} take-home
-                </div>
+                {hasTracked ? (
+                  <div className="rounded-2xl bg-primary-soft p-3 ring-1 ring-primary/15 text-[12px] text-primary">
+                    <strong>You tracked:</strong> {fmtHours(expected.hours)} · estimate {gbp(expected.net)} take-home
+                  </div>
+                ) : (
+                  <div className="rounded-2xl bg-card p-3 ring-1 ring-border text-[12px] text-ink-soft">
+                    No shifts tracked in this period yet. Add your shifts first so PayFlow has something to compare.
+                  </div>
+                )}
 
                 <label className="block">
                   <span className="block text-[12px] font-bold text-ink-soft mb-1.5">Take-home pay shown on your payslip (£)</span>
