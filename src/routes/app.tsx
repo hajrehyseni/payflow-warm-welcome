@@ -107,7 +107,7 @@ function AppShell() {
         className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-md border-t border-border bg-sand/95 backdrop-blur-xl"
         style={{ paddingBottom: "max(env(safe-area-inset-bottom), 0.5rem)" }}
       >
-        <div className="flex items-stretch justify-between px-2 pt-1.5">
+        <div className="flex items-stretch justify-between px-2 pt-1">
           {TABS.map((t) => {
             const active = tab === t.id;
             const Icon = t.icon;
@@ -115,13 +115,13 @@ function AppShell() {
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
-                className={`relative flex flex-1 flex-col items-center gap-0.5 rounded-xl py-1.5 mx-0.5 transition-all active:scale-[0.94] ${active ? "text-primary bg-primary-soft" : "text-ink-soft"}`}
+                className={`relative flex flex-1 flex-col items-center gap-0.5 rounded-xl py-1.5 mx-0.5 transition-colors active:scale-[0.96] ${active ? "text-primary" : "text-ink-soft hover:text-ink"}`}
                 aria-label={t.label}
                 aria-current={active ? "page" : undefined}
               >
-                {active && <span className="absolute top-0 h-[2.5px] w-6 rounded-full bg-primary" />}
+                {active && <span className="absolute top-0 h-[2px] w-5 rounded-full bg-primary" />}
                 <span className="relative">
-                  <Icon className="size-[20px]" strokeWidth={active ? 2.5 : 2} />
+                  <Icon className="size-[20px]" strokeWidth={active ? 2.4 : 2} />
                   {t.id === "pay" && paydaySoon && !active && (
                     <span className="absolute -right-1 -top-0.5 size-2 rounded-full bg-accent ring-2 ring-sand" aria-label="Payday soon" />
                   )}
