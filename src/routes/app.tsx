@@ -42,6 +42,7 @@ function AppSplash() {
 function AppShell() {
   const user = useAuth();
   const nav = useNavigate();
+  const mainRef = useRef<HTMLElement>(null);
   const [tab, setTab] = useState<Tab>("today");
   const [ready, setReady] = useState(false);
   const [hydrated, setHydrated] = useState(false);
