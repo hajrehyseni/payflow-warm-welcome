@@ -47,7 +47,7 @@ function computeStreak(shifts: { date: string }[]) {
 
 export function AppHeader({ title, subtitle, right }: { title: string; subtitle?: string; right?: React.ReactNode }) {
   return (
-    <header className="sticky top-0 z-30 bg-sand/95 backdrop-blur-xl border-b border-border/60 px-5 pt-[max(env(safe-area-inset-top),0.5rem)] pb-3">
+    <header className="sticky top-0 z-30 bg-sand/95 backdrop-blur-xl border-b border-border/60 px-4 pt-[max(env(safe-area-inset-top),0.5rem)] pb-3">
       <div className="flex items-end justify-between gap-3">
         <div>
           <h1 className="font-display text-[26px] font-extrabold leading-tight tracking-tight">{title}</h1>
