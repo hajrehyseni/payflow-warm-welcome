@@ -59,6 +59,9 @@ function AppShell() {
 
   useEffect(() => { void ensureInitialised().then(() => setReady(true)); }, []);
 
+  // Reset scroll to top whenever the user changes tabs — keeps sticky titles fully visible.
+  useEffect(() => { mainRef.current?.scrollTo({ top: 0, behavior: "auto" }); }, [tab]);
+
   // Hydrate from cloud once we know the user; guests skip cloud and use local store.
   useEffect(() => {
     if (!ready) return;
