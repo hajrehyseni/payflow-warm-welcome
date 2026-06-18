@@ -315,7 +315,9 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
               <div className="mt-1 font-display text-[30px] font-extrabold tracking-tight tabular-nums leading-none text-money">{gbp(ded.net)}</div>
               <div className="mt-1.5 text-[11.5px] text-ink-soft">
                 {week.count === 0
-                  ? (live.active ? "Live shift in progress — finishes when you tap End." : "No shifts logged this week yet.")
+                  ? (live.active
+                      ? `Live shift in progress · if you finish now ≈ ${gbp(earned)} gross`
+                      : "No shifts logged this week yet.")
                   : <>{week.count} shift{week.count === 1 ? "" : "s"} · before tax {gbp(ded.gross)}{live.active ? " · live shift in progress" : ""}</>}
               </div>
             </div>
@@ -325,8 +327,9 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
           </div>
           <div className="mt-3 grid grid-cols-2 gap-2">
             <MiniStat label="Hours" value={fmtHours(week.hours)} />
-            <MiniStat label="Saved" value={gbp(saved)} money />
+            <MiniStat label="Safety pot" value={gbp(saved)} money />
           </div>
+
         </div>
       </section>
 
@@ -360,7 +363,9 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
       {/* Recent shifts — Monzo feed-style with emoji avatars */}
       <section className="mx-4 mt-4">
         <div className="flex items-center justify-between mb-1.5 px-1">
-          <h2 className="text-[10.5px] font-bold text-ink-soft uppercase tracking-[0.14em]">Recent shifts</h2>
+          <h2 className="text-[10.5px] font-bold text-ink-soft uppercase tracking-[0.14em]">
+            {week.count === 0 && shifts.length > 0 ? "Earlier shifts" : "Recent shifts"}
+          </h2>
           {shifts.length > 0 && (
             <button onClick={() => goToTab?.("pay")} className="text-[11px] font-bold text-primary inline-flex items-center gap-0.5">
               See all <ChevronRight className="size-3" />
@@ -368,31 +373,37 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
           )}
         </div>
         {recentShifts.length > 0 ? (
-          <ul className="space-y-2">
-            {recentShifts.map((s) => (
-              <li key={s.id}>
-                <button onClick={() => setEditingShift(s)} className="w-full flex items-center gap-2.5 rounded-2xl bg-card p-3 ring-1 ring-border text-left active:scale-[0.99] transition-transform">
-                  <div className="grid size-10 place-items-center rounded-full bg-primary-soft text-[16px] shrink-0" aria-hidden>
-                    {shiftEmoji(s.workplace)}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-[13.5px] font-bold leading-tight">{s.workplace}</div>
-                    <div className="text-[11.5px] text-ink-soft leading-tight truncate">{shiftWhen(s)} · {fmtHours(s.hours)}</div>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="font-display text-[15px] font-extrabold tabular-nums text-money">+{gbp(s.gross)}</div>
-                    <Pencil className="size-3.5 text-ink-soft shrink-0" />
-                  </div>
-                </button>
-              </li>
-            ))}
-          </ul>
+          <>
+            {week.count === 0 && (
+              <p className="mb-1.5 px-1 text-[11px] text-ink-soft">From earlier weeks — not part of this week's totals.</p>
+            )}
+            <ul className="space-y-2">
+              {recentShifts.map((s) => (
+                <li key={s.id}>
+                  <button onClick={() => setEditingShift(s)} className="w-full flex items-center gap-2.5 rounded-2xl bg-card p-3 ring-1 ring-border text-left active:scale-[0.99] transition-transform">
+                    <div className="grid size-10 place-items-center rounded-full bg-primary-soft text-[16px] shrink-0" aria-hidden>
+                      {shiftEmoji(s.workplace)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-[13.5px] font-bold leading-tight">{s.workplace}</div>
+                      <div className="text-[11.5px] text-ink-soft leading-tight truncate">{shiftWhen(s)} · {fmtHours(s.hours)}</div>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="font-display text-[15px] font-extrabold tabular-nums text-money">+{gbp(s.gross)}</div>
+                      <Pencil className="size-3.5 text-ink-soft shrink-0" />
+                    </div>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
         ) : (
           <div className="rounded-2xl bg-card p-4 ring-1 ring-border text-center text-[12.5px] text-ink-soft">
             Your finished shifts will appear here, like a little payday diary.
           </div>
         )}
       </section>
+
 
       {editingShift && <EditShiftModal shift={editingShift} onClose={() => setEditingShift(null)} />}
 
