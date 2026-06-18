@@ -532,50 +532,54 @@ export function PayScreen() {
         </div>
       </section>
 
-      {/* Confidence */}
-      <section className="mx-5 mt-4 rounded-2xl bg-card p-4 ring-1 ring-border">
-        <div className="flex items-center justify-between">
-          <div className="text-[13px] font-bold">Pay confidence</div>
-          <div className="text-[13px] font-bold tabular-nums">{confidence}%</div>
-        </div>
-        <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-sand-deep">
-          <div className="h-full rounded-full bg-primary" style={{ width: `${confidence}%` }} />
-        </div>
-        <p className="mt-2 text-[12px] text-ink-soft">
-          Based on {week.count} shift{week.count === 1 ? "" : "s"} this week. Log every shift to keep this accurate.
-        </p>
-      </section>
-
-      {/* Check my pay — hero card */}
-      <section className="mx-5 mt-4">
-        <button onClick={() => setPayCheckOpen(true)} className="w-full flex items-center gap-3 rounded-2xl bg-primary-soft p-4 ring-1 ring-primary/15 text-left active:scale-[0.99] transition">
-          <div className="grid size-11 place-items-center rounded-2xl bg-primary text-primary-foreground"><FileCheck2 className="size-5" /></div>
-          <div className="min-w-0 flex-1">
-            <div className="text-[14px] font-bold text-ink">Check my pay</div>
-            <div className="text-[12px] text-ink-soft truncate">
+      {/* Check my pay — primary action, sibling to Today's hero CTA */}
+      <section className="mx-4 mt-3">
+        <button onClick={() => setPayCheckOpen(true)} className="w-full flex items-center gap-3 rounded-2xl bg-primary text-primary-foreground p-4 shadow-[0_8px_18px_-10px_rgba(0,87,255,0.55)] active:scale-[0.99] transition">
+          <div className="grid size-11 place-items-center rounded-2xl bg-white/15"><FileCheck2 className="size-5" /></div>
+          <div className="min-w-0 flex-1 text-left">
+            <div className="text-[14px] font-bold">Check payslip</div>
+            <div className="text-[12px] opacity-90 truncate">
               {lastCheck
                 ? lastCheck.looksRight ? "Last check looked right ✓" : `Last check: ${gbp(Math.abs(lastCheck.gapNet))} ${lastCheck.gapNet > 0 ? "short" : "over"}`
                 : "Compare your payslip to what you tracked."}
             </div>
           </div>
-          <ChevronRight className="size-4 text-ink-soft" />
+          <ChevronRight className="size-4 opacity-90" />
         </button>
       </section>
 
-      {/* Actions */}
-      <section className="mx-5 mt-4 grid grid-cols-2 gap-2">
-        <Btn variant="ink" onClick={() => setModal("add")}><Plus className="size-4" /> Add shift</Btn>
+      {/* Confidence */}
+      <section className="mx-4 mt-3 rounded-2xl bg-card p-4 ring-1 ring-border">
+        <div className="flex items-center justify-between">
+          <div className="text-[13px] font-bold">Pay confidence</div>
+          <div className="text-[13px] font-bold tabular-nums text-primary">{confidence}%</div>
+        </div>
+        <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-sand-deep">
+          <div className="h-full rounded-full bg-primary" style={{ width: `${confidence}%` }} />
+        </div>
+        <p className="mt-2 text-[12px] text-ink-soft leading-snug">
+          Based on {week.count} shift{week.count === 1 ? "" : "s"} this week. Log every shift to keep this accurate.
+        </p>
+      </section>
+
+      {/* Secondary actions */}
+      <section className="mx-4 mt-3 grid grid-cols-2 gap-2">
+        <Btn variant="ghost" onClick={() => setModal("add")}><Plus className="size-4" /> Add a shift</Btn>
         <Btn variant="ghost" onClick={() => setModal("forecast")}><TrendingUp className="size-4" /> Pay forecast</Btn>
-        <Btn variant="ghost" onClick={() => setModal("payslip")}><FileText className="size-4" /> Payslip translator</Btn>
+        <Btn variant="ghost" onClick={() => setModal("payslip")}><FileText className="size-4" /> Translator</Btn>
         <Btn variant="ghost" onClick={() => setModal("query")}><MessageSquare className="size-4" /> Payroll query</Btn>
       </section>
 
       {payCheckOpen && <PayCheckModal onClose={() => setPayCheckOpen(false)} />}
-      <section className="mx-5 mt-6">
-        <h2 className="text-[13px] font-bold text-ink-soft uppercase tracking-wider mb-2">Shift history</h2>
+
+      <section className="mx-4 mt-5">
+        <div className="flex items-center justify-between mb-1.5 px-1">
+          <h2 className="text-[10.5px] font-bold text-ink-soft uppercase tracking-[0.14em]">Shift history</h2>
+          {shifts.length > 0 && <span className="text-[10.5px] text-ink-soft">{shifts.length} total</span>}
+        </div>
         {shifts.length === 0 ? (
-          <div className="rounded-2xl bg-card p-5 ring-1 ring-border text-center text-sm text-ink-soft">
-            No shifts logged yet. Tap Add shift to get started.
+          <div className="rounded-2xl bg-card p-5 ring-1 ring-border text-center text-[12.5px] text-ink-soft">
+            No shifts logged yet. Tap Add a shift to get started.
           </div>
         ) : (
           <ul className="space-y-2">
