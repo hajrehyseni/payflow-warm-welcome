@@ -113,7 +113,7 @@ export function PayCheckModal({ onClose }: { onClose: () => void }) {
               <button
                 onClick={run}
                 disabled={!bothEntered}
-                className="mt-5 w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-primary text-primary-foreground py-3.5 font-bold disabled:opacity-50"
+                className="mt-5 w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-primary text-primary-foreground py-3.5 font-bold shadow-[0_10px_24px_-14px_rgba(0,87,255,0.65)] transition-all active:scale-[0.98] disabled:opacity-40 disabled:shadow-none disabled:cursor-not-allowed disabled:active:scale-100"
               >
                 <Check className="size-4" /> Compare with PayFlow
               </button>
