@@ -507,7 +507,10 @@ export function PayScreen() {
   const week = weeklyTotals(shifts);
   const ded = estimateDeductions(week.gross);
   const payday = new Date(nextPayday + "T00:00:00");
-  const daysToPay = daysUntil(payday);
+  const paydayValid = !Number.isNaN(payday.getTime());
+  const rawDaysToPay = paydayValid ? daysUntil(payday) : NaN;
+  const daysToPay = Number.isFinite(rawDaysToPay) && rawDaysToPay >= 0 ? rawDaysToPay : -1;
+  const paydayLong = paydayValid ? payday.toLocaleDateString("en-GB", { weekday: "long" }) : "soon";
   const confidence = Math.min(100, Math.round((week.count >= 4 ? 90 : 60 + week.count * 7)));
 
   const [modal, setModal] = useState<PayModal>(null);
@@ -515,9 +518,17 @@ export function PayScreen() {
   const payChecks = useStore((s) => s.payChecks);
   const lastCheck = payChecks[0];
 
+  const paydaySubtitle = daysToPay < 0
+    ? `Next payday · ${paydayLong}`
+    : daysToPay === 0
+      ? `Next payday · ${paydayLong} (today)`
+      : daysToPay === 1
+        ? `Next payday · ${paydayLong} (tomorrow)`
+        : `Next payday · ${paydayLong} (in ${daysToPay} days)`;
+
   return (
     <div className="pb-6 overflow-x-hidden">
-      <AppHeader title="Pay" subtitle={`Next payday · Fri (${daysToPay} day${daysToPay === 1 ? "" : "s"})`} />
+      <AppHeader title="Pay" subtitle={paydaySubtitle} />
 
       {/* Hero — PayFlow blue with green money accent */}
       <section className="mx-4 mt-4">
