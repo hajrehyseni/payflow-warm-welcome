@@ -18,12 +18,13 @@ export function PayCheckModal({ onClose }: { onClose: () => void }) {
   const hourlyRate = useStore((s) => s.hourlyRateDefault);
   const payChecks = useStore((s) => s.payChecks);
 
-  // Default period: last 7 days ending today
-  const todayISO = new Date().toISOString().slice(0, 10);
-  const weekAgoISO = new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10);
+  // Default period: the current pay week (Mon–Sun) so figures match the Pay screen.
+  const { monday, sunday } = weekRange();
+  const weekStartISO = monday.toISOString().slice(0, 10);
+  const weekEndISO = sunday.toISOString().slice(0, 10);
 
-  const [periodStart, setPeriodStart] = useState(weekAgoISO);
-  const [periodEnd, setPeriodEnd] = useState(todayISO);
+  const [periodStart, setPeriodStart] = useState(weekStartISO);
+  const [periodEnd, setPeriodEnd] = useState(weekEndISO);
   const [actualNet, setActualNet] = useState<number>(0);
   const [actualHours, setActualHours] = useState<number>(0);
   const [result, setResult] = useState<PayCheck | null>(null);
