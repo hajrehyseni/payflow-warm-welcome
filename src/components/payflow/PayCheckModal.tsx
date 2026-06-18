@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { X, Check, AlertCircle, ShieldCheck, MessageSquare, History, ChevronRight } from "lucide-react";
-import { useStore, addPayCheck, type PayCheck } from "@/lib/payflow/store";
+import { useStore, addPayCheck, weekRange, type PayCheck } from "@/lib/payflow/store";
 import { estimateDeductions, gbp, fmtHours } from "@/lib/payflow/calc";
 import { PayrollQueryModal } from "@/components/app/screens";
 
