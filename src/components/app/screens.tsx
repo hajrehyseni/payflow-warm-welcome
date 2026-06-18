@@ -183,7 +183,7 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
   })();
 
   return (
-    <div className="pb-[88px] overflow-x-hidden">
+    <div className="pb-6 overflow-x-hidden">
       {/* Greeting header, aligned to mx-4 card grid */}
       <header className="sticky top-0 z-30 bg-sand/95 backdrop-blur-xl border-b border-border/60 px-4 pt-[max(env(safe-area-inset-top),0.5rem)] pb-3">
         <h1 className="font-display text-[22px] font-extrabold leading-tight tracking-tight truncate">{g.title}</h1>
@@ -512,7 +512,7 @@ export function PayScreen() {
   const lastCheck = payChecks[0];
 
   return (
-    <div className="pb-[88px] overflow-x-hidden">
+    <div className="pb-6 overflow-x-hidden">
       <AppHeader title="Pay" subtitle={`Next payday · Fri (${daysToPay} day${daysToPay === 1 ? "" : "s"})`} />
 
       {/* Hero — PayFlow blue with green money accent */}
@@ -869,7 +869,7 @@ export function SaveScreen() {
   const pct = Math.min(100, Math.round((saved / goal) * 100));
 
   return (
-    <div className="pb-[88px] overflow-x-hidden">
+    <div className="pb-6 overflow-x-hidden">
       <AppHeader title="Save" subtitle="Small moves from every shift" />
 
       {/* Hero — PayFlow blue with green money accent on saved value */}
@@ -952,7 +952,7 @@ export function LifeScreen() {
     { icon: TrendingUp, title: "Money habits", body: "Tiny ideas, never pushy. Read in 2 minutes." },
   ];
   return (
-    <div className="pb-[88px] overflow-x-hidden">
+    <div className="pb-6 overflow-x-hidden">
       <AppHeader title="Life" subtitle="Real perks. Calm tools." />
       <section className="mx-4 mt-4 space-y-2">
         {items.map((i) => (
@@ -1022,7 +1022,7 @@ export function CoachScreen() {
   }
 
   return (
-    <div className="pb-[88px] overflow-x-hidden">
+    <div className="pb-6 overflow-x-hidden">
       <AppHeader title="Flow Coach" subtitle="Ask anything about your pay" />
 
       {/* Today's insight */}
