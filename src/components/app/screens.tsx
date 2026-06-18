@@ -61,7 +61,7 @@ export function AppHeader({ title, subtitle, right }: { title: string; subtitle?
 
 export function Compliance({ short = false }: { short?: boolean }) {
   return (
-    <div className="mx-5 mt-4 mb-2 flex items-start gap-2 rounded-2xl bg-card p-3 ring-1 ring-border">
+    <div className="mx-4 mt-4 mb-2 flex items-start gap-2 rounded-2xl bg-card p-3 ring-1 ring-border">
       <ShieldCheck className="mt-0.5 size-3.5 shrink-0 text-primary" />
       <p className="text-[11px] leading-snug text-ink-soft">
         {short
