@@ -449,15 +449,14 @@ function Tile({ label, value, icon: Icon, accent }: { label: string; value: stri
 }
 
 function MiniStat({ label, value, accent, money }: { label: string; value: string; accent?: boolean; money?: boolean }) {
-  const tone = money
-    ? "bg-money text-money-foreground ring-transparent"
-    : accent
-      ? "bg-primary text-primary-foreground ring-transparent"
-      : "bg-card ring-border";
+  const tone = accent
+    ? "bg-primary text-primary-foreground ring-transparent"
+    : "bg-sand-deep ring-border/60";
+  const valueTone = money ? "text-money" : accent ? "" : "text-ink";
   return (
     <div className={`rounded-2xl px-3 py-2.5 ring-1 ${tone}`}>
-      <div className="text-[10px] font-bold uppercase tracking-wider opacity-80 truncate">{label}</div>
-      <div className="mt-0.5 font-display text-[17px] font-extrabold tracking-tight tabular-nums truncate">{value}</div>
+      <div className={`text-[10px] font-bold uppercase tracking-wider truncate ${accent ? "opacity-80" : "text-ink-soft"}`}>{label}</div>
+      <div className={`mt-0.5 font-display text-[17px] font-extrabold tracking-tight tabular-nums truncate ${valueTone}`}>{value}</div>
     </div>
   );
 }
