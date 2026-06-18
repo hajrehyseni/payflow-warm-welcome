@@ -23,7 +23,7 @@ function Landing() {
       </div>
 
       <header className="sticky top-0 z-40 backdrop-blur-md bg-sand/70 border-b border-border/60">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-3 sm:px-6 sm:py-4">
           <Link to="/" className="flex items-center gap-2">
             <div className="grid size-8 place-items-center rounded-xl bg-primary text-primary-foreground">
               <Sparkles className="size-4" />
