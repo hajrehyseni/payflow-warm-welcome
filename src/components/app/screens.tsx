@@ -298,21 +298,27 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
         </section>
       )}
 
-      {/* This week — Monzo Pot-style money summary */}
+      {/* This week — calm white card with money-accent value */}
       <section className="mx-4 mt-4">
         <div className="flex items-center justify-between mb-1.5 px-1">
           <h2 className="text-[10.5px] font-bold text-ink-soft uppercase tracking-[0.14em]">This week</h2>
           <span className="text-[10.5px] text-ink-soft">Estimate</span>
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          <div className="row-span-2 rounded-2xl bg-money text-money-foreground p-4 shadow-[0_8px_20px_-14px_rgba(20,120,90,0.55)] relative overflow-hidden">
-            <div className="absolute left-0 top-3 bottom-3 w-1 rounded-r-full bg-white/40" />
-            <div className="text-[10.5px] font-bold uppercase tracking-wider opacity-90">Take-home</div>
-            <div className="mt-1.5 font-display text-[28px] font-extrabold tracking-tight tabular-nums leading-none">{gbp(ded.net)}</div>
-            <div className="mt-2 text-[11px] opacity-90 leading-snug">{week.count} shift{week.count === 1 ? "" : "s"} this week</div>
+        <div className="rounded-2xl bg-card p-4 ring-1 ring-border shadow-[0_8px_20px_-18px_rgba(7,27,58,0.35)]">
+          <div className="flex items-end justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-[10.5px] font-bold uppercase tracking-wider text-ink-soft">Take-home</div>
+              <div className="mt-1 font-display text-[30px] font-extrabold tracking-tight tabular-nums leading-none text-money">{gbp(ded.net)}</div>
+              <div className="mt-1.5 text-[11.5px] text-ink-soft">{week.count} shift{week.count === 1 ? "" : "s"} · before tax {gbp(ded.gross)}</div>
+            </div>
+            <div className="grid size-11 shrink-0 place-items-center rounded-2xl bg-primary-soft text-primary">
+              <Wallet className="size-5" />
+            </div>
           </div>
-          <MiniStat label="Hours" value={fmtHours(week.hours)} />
-          <MiniStat label="Saved" value={gbp(saved)} money />
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <MiniStat label="Hours" value={fmtHours(week.hours)} />
+            <MiniStat label="Saved" value={gbp(saved)} money />
+          </div>
         </div>
       </section>
 
