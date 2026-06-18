@@ -313,7 +313,11 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
             <div className="min-w-0">
               <div className="text-[10.5px] font-bold uppercase tracking-wider text-ink-soft">Take-home</div>
               <div className="mt-1 font-display text-[30px] font-extrabold tracking-tight tabular-nums leading-none text-money">{gbp(ded.net)}</div>
-              <div className="mt-1.5 text-[11.5px] text-ink-soft">{week.count} shift{week.count === 1 ? "" : "s"} · before tax {gbp(ded.gross)}</div>
+              <div className="mt-1.5 text-[11.5px] text-ink-soft">
+                {week.count === 0
+                  ? (live.active ? "Live shift in progress — finishes when you tap End." : "No shifts logged this week yet.")
+                  : <>{week.count} shift{week.count === 1 ? "" : "s"} · before tax {gbp(ded.gross)}{live.active ? " · live shift in progress" : ""}</>}
+              </div>
             </div>
             <div className="grid size-11 shrink-0 place-items-center rounded-2xl bg-primary-soft text-primary">
               <Wallet className="size-5" />
