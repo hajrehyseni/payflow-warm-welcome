@@ -183,10 +183,10 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
   })();
 
   return (
-    <div className="pb-[96px]">
-      {/* Monzo-style header: greeting + date, calm */}
-      <header className="sticky top-0 z-30 bg-sand/95 backdrop-blur-xl border-b border-border/60 px-5 pt-[max(env(safe-area-inset-top),0.5rem)] pb-3">
-        <h1 className="font-display text-[22px] font-extrabold leading-tight tracking-tight">{g.title}</h1>
+    <div className="pb-[88px] overflow-x-hidden">
+      {/* Greeting header, aligned to mx-4 card grid */}
+      <header className="sticky top-0 z-30 bg-sand/95 backdrop-blur-xl border-b border-border/60 px-4 pt-[max(env(safe-area-inset-top),0.5rem)] pb-3">
+        <h1 className="font-display text-[22px] font-extrabold leading-tight tracking-tight truncate">{g.title}</h1>
         <p className="text-[12px] text-ink-soft leading-tight truncate">{dateLabel}</p>
       </header>
 
@@ -210,7 +210,7 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
 
       {/* Hero card — big number first, calm next-step caption underneath */}
       <section className="mx-4 mt-3">
-        <div className="rounded-3xl bg-gradient-to-br from-primary to-ink p-5 text-sand shadow-[0_14px_34px_-20px_rgba(36,90,180,0.45)]">
+        <div className="rounded-[24px] bg-gradient-to-br from-primary to-ink p-5 text-sand shadow-[0_14px_34px_-20px_rgba(7,27,58,0.45)] ring-1 ring-white/5">
           <div className="flex items-center justify-between gap-2 text-[10.5px] font-bold uppercase tracking-[0.14em] opacity-85">
             <span className="inline-flex items-center gap-1.5 min-w-0">
               <span className={`size-1.5 rounded-full ${live.active && !onBreak ? "bg-money animate-pulse-dot" : "bg-white/50"}`} />
@@ -512,22 +512,22 @@ export function PayScreen() {
   const lastCheck = payChecks[0];
 
   return (
-    <div className="pb-[96px]">
+    <div className="pb-[88px] overflow-x-hidden">
       <AppHeader title="Pay" subtitle={`Next payday · Fri (${daysToPay} day${daysToPay === 1 ? "" : "s"})`} />
 
       {/* Hero — PayFlow blue with green money accent */}
       <section className="mx-4 mt-4">
-        <div className="rounded-3xl bg-gradient-to-br from-primary to-ink p-5 text-sand shadow-[0_14px_34px_-20px_rgba(36,90,180,0.45)]">
-          <div className="flex items-center justify-between gap-2 text-[10.5px] font-bold uppercase tracking-[0.14em] opacity-90">
-            <span>Take-home this week</span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-money-soft/90 text-money px-2 py-0.5 normal-case tracking-normal text-[10.5px]">
-              <span className="size-1.5 rounded-full bg-money" /> Estimate
+        <div className="rounded-[24px] bg-gradient-to-br from-primary to-ink p-5 text-sand shadow-[0_14px_34px_-20px_rgba(7,27,58,0.45)] ring-1 ring-white/5">
+          <div className="flex items-center justify-between gap-2 text-[10.5px] font-bold uppercase tracking-[0.14em] opacity-85">
+            <span className="truncate">Take-home this week</span>
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-white/12 px-2 py-0.5 normal-case tracking-normal text-[10.5px] ring-1 ring-white/15">
+              Estimate
             </span>
           </div>
           <div className="mt-2 flex items-end gap-2">
             <div className="font-display text-[44px] font-extrabold tracking-tight tabular-nums leading-none text-money-soft">{gbp(ded.net)}</div>
           </div>
-          <div className="mt-1.5 text-[12px] opacity-85">{fmtHours(week.hours)} · before tax {gbp(ded.gross)}</div>
+          <div className="mt-1.5 text-[12px] opacity-85 truncate">{fmtHours(week.hours)} · before tax {gbp(ded.gross)}</div>
 
           <div className="mt-4 rounded-2xl bg-white/10 p-3 ring-1 ring-white/15">
             <Row k="PAYE income tax" v={`− ${gbp(ded.tax)}`} />
@@ -869,22 +869,22 @@ export function SaveScreen() {
   const pct = Math.min(100, Math.round((saved / goal) * 100));
 
   return (
-    <div className="pb-[96px]">
+    <div className="pb-[88px] overflow-x-hidden">
       <AppHeader title="Save" subtitle="Small moves from every shift" />
 
       {/* Hero — PayFlow blue with green money accent on saved value */}
       <section className="mx-4 mt-4">
-        <div className="rounded-3xl bg-gradient-to-br from-primary to-ink p-5 text-sand shadow-[0_14px_34px_-20px_rgba(36,90,180,0.45)]">
-          <div className="flex items-center justify-between gap-2 text-[10.5px] font-bold uppercase tracking-[0.14em] opacity-90">
-            <span>Saved so far</span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-money-soft/90 text-money px-2 py-0.5 normal-case tracking-normal text-[10.5px]">
+        <div className="rounded-[24px] bg-gradient-to-br from-primary to-ink p-5 text-sand shadow-[0_14px_34px_-20px_rgba(7,27,58,0.45)] ring-1 ring-white/5">
+          <div className="flex items-center justify-between gap-2 text-[10.5px] font-bold uppercase tracking-[0.14em] opacity-85">
+            <span className="truncate">Saved so far</span>
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-white/12 px-2 py-0.5 normal-case tracking-normal text-[10.5px] ring-1 ring-white/15">
               <PiggyBank className="size-3" /> Pot
             </span>
           </div>
           <div className="mt-2 font-display text-[44px] font-extrabold tracking-tight tabular-nums leading-none text-money-soft">{gbp(saved)}</div>
-          <div className="mt-3 flex items-center justify-between text-[12px] opacity-90">
-            <span>Emergency fund</span>
-            <span className="tabular-nums">{pct}% of {gbp(goal, { decimals: 0 })}</span>
+          <div className="mt-3 flex items-center justify-between gap-2 text-[12px] opacity-90">
+            <span className="truncate">Emergency fund</span>
+            <span className="shrink-0 tabular-nums">{pct}% of {gbp(goal, { decimals: 0 })}</span>
           </div>
           <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-white/15">
             <div className="h-full rounded-full bg-money" style={{ width: `${pct}%` }} />
@@ -952,7 +952,7 @@ export function LifeScreen() {
     { icon: TrendingUp, title: "Money habits", body: "Tiny ideas, never pushy. Read in 2 minutes." },
   ];
   return (
-    <div className="pb-[96px]">
+    <div className="pb-[88px] overflow-x-hidden">
       <AppHeader title="Life" subtitle="Real perks. Calm tools." />
       <section className="mx-4 mt-4 space-y-2">
         {items.map((i) => (
@@ -1022,16 +1022,16 @@ export function CoachScreen() {
   }
 
   return (
-    <div className="pb-[96px]">
+    <div className="pb-[88px] overflow-x-hidden">
       <AppHeader title="Flow Coach" subtitle="Ask anything about your pay" />
 
       {/* Today's insight */}
       <section className="mx-4 mt-4">
-        <div className="rounded-[24px] bg-primary p-5 text-primary-foreground">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider">
-            <Sparkles className="size-3" /> Today
+        <div className="rounded-[24px] bg-gradient-to-br from-primary to-ink p-5 text-sand shadow-[0_14px_34px_-20px_rgba(7,27,58,0.45)] ring-1 ring-white/5">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ring-1 ring-white/15">
+            <Sparkles className="size-3" /> Today's insight
           </div>
-          <p className="mt-2.5 text-[14px] leading-relaxed font-medium">
+          <p className="mt-2.5 text-[14px] leading-relaxed font-medium text-sand/95">
             {week.count > 0
               ? `You've logged ${fmtHours(week.hours)} this week — on track for around ${gbp(ded.net)} take-home.`
               : `Log a shift and I'll start showing you a real take-home estimate.`}

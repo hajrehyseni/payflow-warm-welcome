@@ -23,7 +23,7 @@ function Landing() {
       </div>
 
       <header className="sticky top-0 z-40 backdrop-blur-md bg-sand/70 border-b border-border/60">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-3 sm:px-6 sm:py-4">
           <Link to="/" className="flex items-center gap-2">
             <div className="grid size-8 place-items-center rounded-xl bg-primary text-primary-foreground">
               <Sparkles className="size-4" />
@@ -53,25 +53,25 @@ function Landing() {
       </header>
 
       {/* Hero */}
-      <section className="mx-auto max-w-6xl px-6 pt-14 pb-16 md:pt-20 md:pb-24">
+      <section className="mx-auto max-w-6xl px-4 sm:px-6 pt-14 pb-16 md:pt-20 md:pb-24">
         <div className="grid items-center gap-12 md:grid-cols-2">
           <div className="text-center md:text-left">
             <div className="inline-flex items-center gap-2 rounded-full bg-card px-3 py-1.5 text-xs font-semibold text-primary ring-1 ring-primary/15">
               <span className="size-1.5 rounded-full bg-primary animate-pulse-dot" />
               Pay protection — not pay advances
             </div>
-            <h1 className="mt-6 font-display text-5xl md:text-6xl font-extrabold tracking-tight leading-[0.95] text-balance">
+            <h1 className="mt-6 font-display text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-[0.95] text-balance break-words">
               Make sure you're paid <span className="text-primary">right</span>.
             </h1>
-            <p className="mt-5 max-w-md mx-auto md:mx-0 text-lg leading-relaxed text-ink-soft">
+            <p className="mt-5 max-w-md mx-auto md:mx-0 text-base sm:text-lg leading-relaxed text-ink-soft">
               We don't lend you your money early and charge you. We make sure you get <strong className="text-ink">all of it</strong> — free.
             </p>
             <div className="mt-7 flex flex-wrap items-center justify-center md:justify-start gap-3">
               <Link
                 to="/app"
-                className="inline-flex items-center gap-2 rounded-full bg-primary px-7 py-4 text-base font-bold text-primary-foreground shadow-[0_12px_30px_-8px_rgba(0,87,255,0.45)] hover:scale-[1.02] active:scale-[0.98] transition-transform"
+                className="inline-flex max-w-full items-center gap-2 rounded-full bg-primary px-6 py-3.5 sm:px-7 sm:py-4 text-sm sm:text-base font-bold text-primary-foreground shadow-[0_12px_30px_-8px_rgba(0,87,255,0.45)] hover:scale-[1.02] active:scale-[0.98] transition-transform"
               >
-                Open PayFlow — it's free <ArrowRight className="size-4" />
+                <span className="truncate">Open PayFlow — it's free</span> <ArrowRight className="size-4 shrink-0" />
               </Link>
               <a href="#business" className="text-sm font-bold text-ink-soft hover:text-ink underline-offset-4 hover:underline">
                 For business →
@@ -88,7 +88,7 @@ function Landing() {
 
       {/* THE PROBLEM / THE SOLUTION */}
       <section className="border-y border-border/60 bg-card/60">
-        <div className="mx-auto max-w-5xl px-6 py-20">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 py-16 sm:py-20">
           <div className="grid gap-6 md:grid-cols-2">
             {/* Problem */}
             <div className="rounded-3xl bg-sand p-7 ring-1 ring-border">
@@ -130,7 +130,7 @@ function Landing() {
       </section>
 
       {/* HOW IT WORKS — 5 steps */}
-      <section id="how" className="mx-auto max-w-5xl px-6 py-20">
+      <section id="how" className="mx-auto max-w-5xl px-4 sm:px-6 py-16 sm:py-20">
         <div className="max-w-2xl">
           <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">How it works</div>
           <h2 className="mt-2 font-display text-4xl md:text-5xl font-extrabold tracking-tight leading-tight">
@@ -153,7 +153,7 @@ function Landing() {
 
       {/* PAY CHECK hero feature */}
       <section className="border-y border-border/60 bg-card/60">
-        <div className="mx-auto max-w-5xl px-6 py-20">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 py-16 sm:py-20">
           <div className="grid items-center gap-10 md:grid-cols-2">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full bg-accent-soft px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-accent">
@@ -206,7 +206,7 @@ function Landing() {
       </section>
 
       {/* EDUCATE — friendly money lessons */}
-      <section className="mx-auto max-w-5xl px-6 py-20">
+      <section className="mx-auto max-w-5xl px-4 sm:px-6 py-16 sm:py-20">
         <div className="max-w-2xl">
           <div className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-primary">
             <GraduationCap className="size-3.5" /> Friendly money lessons
@@ -229,7 +229,7 @@ function Landing() {
 
       {/* FOR BUSINESS */}
       <section id="business" className="border-y border-border/60 bg-ink text-sand">
-        <div className="mx-auto max-w-5xl px-6 py-20">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 py-16 sm:py-20">
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 rounded-full bg-sand/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider">
               <Building className="size-3.5" /> For business
@@ -265,7 +265,7 @@ function Landing() {
       </section>
 
       {/* CTA */}
-      <section className="mx-auto max-w-3xl px-6 py-20 text-center">
+      <section className="mx-auto max-w-3xl px-4 sm:px-6 py-16 sm:py-20 text-center">
         <h2 className="font-display text-4xl md:text-5xl font-extrabold tracking-tight leading-tight">
           Every penny you've <span className="text-primary">earned</span>.
         </h2>
@@ -285,7 +285,7 @@ function Landing() {
       </section>
 
       <footer className="border-t border-border/60 py-10">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 text-xs text-ink-soft md:flex-row">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 sm:px-6 text-xs text-ink-soft md:flex-row">
           <div className="flex items-center gap-2">
             <div className="grid size-6 place-items-center rounded-md bg-primary text-primary-foreground">
               <Sparkles className="size-3" />
