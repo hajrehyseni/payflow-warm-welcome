@@ -867,9 +867,6 @@ export function SaveScreen() {
     <div className="pb-[120px]">
       <AppHeader title="Save" subtitle="Small moves from every shift" />
 
-      <section className="mx-5 mt-5">
-        <div className="rounded-[28px] bg-gradient-to-br from-money to-money/85 p-6 text-money-foreground">
-          <div className="text-[11px] font-bold uppercase tracking-[0.18em] opacity-90">Saved so far</div>
       {/* Hero — PayFlow blue with green money accent on saved value */}
       <section className="mx-4 mt-4">
         <div className="rounded-3xl bg-gradient-to-br from-primary to-ink p-5 text-sand shadow-[0_14px_34px_-20px_rgba(36,90,180,0.45)]">
