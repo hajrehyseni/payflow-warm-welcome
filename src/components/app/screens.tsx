@@ -181,9 +181,10 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
       if (daysToPay <= 2) return { tone: "money", text: "Nice one — shift saved ✅ Payslip due soon.", cta: { label: "Check payslip", onClick: () => setPayCheckOpen(true) } };
       return { tone: "money", text: "Nice one — shift saved ✅ You’re done for now." };
     }
-    if (daysToPay <= 2) return { tone: "primary", text: `Payday ${paydayLabel} 💷 Payslip arrived? Check it against your hours.`, cta: { label: "Check payslip", onClick: () => setPayCheckOpen(true) } };
+    if (daysToPay >= 0 && daysToPay <= 2) return { tone: "primary", text: `Payday ${paydayLabel} 💷 Payslip arrived? Check it against your hours.`, cta: { label: "Check payslip", onClick: () => setPayCheckOpen(true) } };
     return { tone: "primary", text: "Whenever you’re ready 👋 Tap Start shift when you clock on." };
   })();
+  void paydayLong;
 
   return (
     <div className="pb-6 overflow-x-hidden">
