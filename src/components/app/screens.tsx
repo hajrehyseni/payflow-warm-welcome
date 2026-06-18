@@ -516,7 +516,11 @@ export function PayScreen() {
   const [modal, setModal] = useState<PayModal>(null);
   const [payCheckOpen, setPayCheckOpen] = useState(false);
   const payChecks = useStore((s) => s.payChecks);
+  // Only treat the most recent check as "current" if its period overlaps this week.
+  const todayMonday = (() => { const d = new Date(); const day = d.getDay(); const diff = day === 0 ? -6 : 1 - day; const m = new Date(d); m.setDate(d.getDate()+diff); m.setHours(0,0,0,0); return m.toISOString().slice(0,10); })();
   const lastCheck = payChecks[0];
+  const lastCheckCurrent = lastCheck && lastCheck.periodEnd >= todayMonday;
+  const hasWeekShifts = week.count > 0;
 
   const paydaySubtitle = daysToPay < 0
     ? `Next payday · ${paydayLong}`
