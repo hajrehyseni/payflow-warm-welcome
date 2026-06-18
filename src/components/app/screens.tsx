@@ -916,7 +916,7 @@ export function SaveScreen() {
       <section className="mx-4 mt-4">
         <div className="rounded-[24px] bg-gradient-to-br from-primary to-ink p-5 text-sand shadow-[0_14px_34px_-20px_rgba(7,27,58,0.45)] ring-1 ring-white/5">
           <div className="flex items-center justify-between gap-2 text-[10.5px] font-bold uppercase tracking-[0.14em] opacity-85">
-            <span className="truncate">Saved so far</span>
+            <span className="truncate">Your safety pot so far</span>
             <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-white/12 px-2 py-0.5 normal-case tracking-normal text-[10.5px] ring-1 ring-white/15">
               <PiggyBank className="size-3" /> Pot
             </span>
