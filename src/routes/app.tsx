@@ -48,7 +48,12 @@ function AppShell() {
   const localOnboarded = useStore((s) => s.onboarded);
   const nextPayday = useStore((s) => s.nextPayday);
   const paydaySoon = (() => {
-    try { return daysUntil(new Date(nextPayday + "T00:00:00")) <= 1; } catch { return false; }
+    try {
+      const d = new Date(nextPayday + "T00:00:00");
+      if (Number.isNaN(d.getTime())) return false;
+      const n = daysUntil(d);
+      return Number.isFinite(n) && n >= 0 && n <= 1;
+    } catch { return false; }
   })();
 
   useEffect(() => { void ensureInitialised().then(() => setReady(true)); }, []);

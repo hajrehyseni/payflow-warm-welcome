@@ -125,8 +125,11 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
   const g = greetingFor({ name: user?.name, onShift: live.active, onBreak, hasEndedToday, hour });
 
   const payday = new Date(nextPayday + "T00:00:00");
-  const daysToPay = daysUntil(payday);
-  const paydayLabel = payday.toLocaleDateString("en-GB", { weekday: "short" });
+  const paydayValid = !Number.isNaN(payday.getTime());
+  const rawDaysToPay = paydayValid ? daysUntil(payday) : NaN;
+  const daysToPay = Number.isFinite(rawDaysToPay) && rawDaysToPay >= 0 ? rawDaysToPay : -1;
+  const paydayLabel = paydayValid ? payday.toLocaleDateString("en-GB", { weekday: "short" }) : "soon";
+  const paydayLong = paydayValid ? payday.toLocaleDateString("en-GB", { weekday: "long" }) : "soon";
   const streak = useMemo(() => computeStreak(shifts), [shifts]);
 
 
@@ -178,9 +181,10 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
       if (daysToPay <= 2) return { tone: "money", text: "Nice one — shift saved ✅ Payslip due soon.", cta: { label: "Check payslip", onClick: () => setPayCheckOpen(true) } };
       return { tone: "money", text: "Nice one — shift saved ✅ You’re done for now." };
     }
-    if (daysToPay <= 2) return { tone: "primary", text: `Payday ${paydayLabel} 💷 Payslip arrived? Check it against your hours.`, cta: { label: "Check payslip", onClick: () => setPayCheckOpen(true) } };
+    if (daysToPay >= 0 && daysToPay <= 2) return { tone: "primary", text: `Payday ${paydayLabel} 💷 Payslip arrived? Check it against your hours.`, cta: { label: "Check payslip", onClick: () => setPayCheckOpen(true) } };
     return { tone: "primary", text: "Whenever you’re ready 👋 Tap Start shift when you clock on." };
   })();
+  void paydayLong;
 
   return (
     <div className="pb-6 overflow-x-hidden">
@@ -503,7 +507,10 @@ export function PayScreen() {
   const week = weeklyTotals(shifts);
   const ded = estimateDeductions(week.gross);
   const payday = new Date(nextPayday + "T00:00:00");
-  const daysToPay = daysUntil(payday);
+  const paydayValid = !Number.isNaN(payday.getTime());
+  const rawDaysToPay = paydayValid ? daysUntil(payday) : NaN;
+  const daysToPay = Number.isFinite(rawDaysToPay) && rawDaysToPay >= 0 ? rawDaysToPay : -1;
+  const paydayLong = paydayValid ? payday.toLocaleDateString("en-GB", { weekday: "long" }) : "soon";
   const confidence = Math.min(100, Math.round((week.count >= 4 ? 90 : 60 + week.count * 7)));
 
   const [modal, setModal] = useState<PayModal>(null);
@@ -511,9 +518,17 @@ export function PayScreen() {
   const payChecks = useStore((s) => s.payChecks);
   const lastCheck = payChecks[0];
 
+  const paydaySubtitle = daysToPay < 0
+    ? `Next payday · ${paydayLong}`
+    : daysToPay === 0
+      ? `Next payday · ${paydayLong} (today)`
+      : daysToPay === 1
+        ? `Next payday · ${paydayLong} (tomorrow)`
+        : `Next payday · ${paydayLong} (in ${daysToPay} days)`;
+
   return (
     <div className="pb-6 overflow-x-hidden">
-      <AppHeader title="Pay" subtitle={`Next payday · Fri (${daysToPay} day${daysToPay === 1 ? "" : "s"})`} />
+      <AppHeader title="Pay" subtitle={paydaySubtitle} />
 
       {/* Hero — PayFlow blue with green money accent */}
       <section className="mx-4 mt-4">
@@ -922,9 +937,15 @@ export function SaveScreen() {
       </section>
 
       <section className="mx-4 mt-3">
-        <Btn className="w-full" variant="primary" onClick={() => { addToSavings(weekly); toast.success(`${gbp(weekly)} moved to your pot`, { description: "Small moves, real progress." }); }}>
-          <PiggyBank className="size-4" /> Move {gbp(weekly)} to savings
-        </Btn>
+        {weekly <= 0 ? (
+          <Btn className="w-full" variant="ghost" disabled>
+            <PiggyBank className="size-4" /> Add a shift to unlock savings
+          </Btn>
+        ) : (
+          <Btn className="w-full" variant="primary" onClick={() => { addToSavings(weekly); toast.success(`${gbp(weekly)} moved to your pot`, { description: "Small moves, real progress." }); }}>
+            <PiggyBank className="size-4" /> Move {gbp(weekly)} to savings
+          </Btn>
+        )}
         <p className="mt-2 text-[11px] text-ink-soft text-center">Moves the amount in PayFlow only. We never touch your bank account.</p>
       </section>
 
