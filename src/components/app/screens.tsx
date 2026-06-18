@@ -183,7 +183,7 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
   })();
 
   return (
-    <div className="pb-[104px]">
+    <div className="pb-[96px]">
       {/* Monzo-style header: greeting + date, calm */}
       <header className="sticky top-0 z-30 bg-sand/95 backdrop-blur-xl border-b border-border/60 px-5 pt-[max(env(safe-area-inset-top),0.5rem)] pb-3">
         <h1 className="font-display text-[22px] font-extrabold leading-tight tracking-tight">{g.title}</h1>
@@ -507,17 +507,24 @@ export function PayScreen() {
   const lastCheck = payChecks[0];
 
   return (
-    <div className="pb-[120px]">
+    <div className="pb-[96px]">
       <AppHeader title="Pay" subtitle={`Next payday · Fri (${daysToPay} day${daysToPay === 1 ? "" : "s"})`} />
 
-      {/* Hero */}
-      <section className="mx-5 mt-5">
-        <div className="rounded-[28px] bg-gradient-to-br from-money to-money/85 p-6 text-money-foreground">
-          <div className="text-[11px] font-bold uppercase tracking-[0.18em] opacity-90">Estimated take-home this week</div>
-          <div className="mt-2 font-display text-[52px] font-extrabold tracking-tight tabular-nums leading-none">{gbp(ded.net)}</div>
-          <div className="mt-2 text-sm opacity-90">{fmtHours(week.hours)} · gross {gbp(ded.gross)}</div>
+      {/* Hero — PayFlow blue with green money accent */}
+      <section className="mx-4 mt-4">
+        <div className="rounded-3xl bg-gradient-to-br from-primary to-ink p-5 text-sand shadow-[0_14px_34px_-20px_rgba(36,90,180,0.45)]">
+          <div className="flex items-center justify-between gap-2 text-[10.5px] font-bold uppercase tracking-[0.14em] opacity-90">
+            <span>Take-home this week</span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-money-soft/90 text-money px-2 py-0.5 normal-case tracking-normal text-[10.5px]">
+              <span className="size-1.5 rounded-full bg-money" /> Estimate
+            </span>
+          </div>
+          <div className="mt-2 flex items-end gap-2">
+            <div className="font-display text-[44px] font-extrabold tracking-tight tabular-nums leading-none text-money-soft">{gbp(ded.net)}</div>
+          </div>
+          <div className="mt-1.5 text-[12px] opacity-85">{fmtHours(week.hours)} · before tax {gbp(ded.gross)}</div>
 
-          <div className="mt-5 rounded-2xl bg-white/10 p-3 ring-1 ring-white/15">
+          <div className="mt-4 rounded-2xl bg-white/10 p-3 ring-1 ring-white/15">
             <Row k="PAYE income tax" v={`− ${gbp(ded.tax)}`} />
             <Row k="National Insurance" v={`− ${gbp(ded.ni)}`} />
             <Row k="Pension (5%)" v={`− ${gbp(ded.pension)}`} last />
@@ -525,50 +532,54 @@ export function PayScreen() {
         </div>
       </section>
 
-      {/* Confidence */}
-      <section className="mx-5 mt-4 rounded-2xl bg-card p-4 ring-1 ring-border">
-        <div className="flex items-center justify-between">
-          <div className="text-[13px] font-bold">Pay confidence</div>
-          <div className="text-[13px] font-bold tabular-nums">{confidence}%</div>
-        </div>
-        <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-sand-deep">
-          <div className="h-full rounded-full bg-primary" style={{ width: `${confidence}%` }} />
-        </div>
-        <p className="mt-2 text-[12px] text-ink-soft">
-          Based on {week.count} shift{week.count === 1 ? "" : "s"} this week. Log every shift to keep this accurate.
-        </p>
-      </section>
-
-      {/* Check my pay — hero card */}
-      <section className="mx-5 mt-4">
-        <button onClick={() => setPayCheckOpen(true)} className="w-full flex items-center gap-3 rounded-2xl bg-primary-soft p-4 ring-1 ring-primary/15 text-left active:scale-[0.99] transition">
-          <div className="grid size-11 place-items-center rounded-2xl bg-primary text-primary-foreground"><FileCheck2 className="size-5" /></div>
-          <div className="min-w-0 flex-1">
-            <div className="text-[14px] font-bold text-ink">Check my pay</div>
-            <div className="text-[12px] text-ink-soft truncate">
+      {/* Check my pay — primary action, sibling to Today's hero CTA */}
+      <section className="mx-4 mt-3">
+        <button onClick={() => setPayCheckOpen(true)} className="w-full flex items-center gap-3 rounded-2xl bg-primary text-primary-foreground p-4 shadow-[0_8px_18px_-10px_rgba(0,87,255,0.55)] active:scale-[0.99] transition">
+          <div className="grid size-11 place-items-center rounded-2xl bg-white/15"><FileCheck2 className="size-5" /></div>
+          <div className="min-w-0 flex-1 text-left">
+            <div className="text-[14px] font-bold">Check payslip</div>
+            <div className="text-[12px] opacity-90 truncate">
               {lastCheck
                 ? lastCheck.looksRight ? "Last check looked right ✓" : `Last check: ${gbp(Math.abs(lastCheck.gapNet))} ${lastCheck.gapNet > 0 ? "short" : "over"}`
                 : "Compare your payslip to what you tracked."}
             </div>
           </div>
-          <ChevronRight className="size-4 text-ink-soft" />
+          <ChevronRight className="size-4 opacity-90" />
         </button>
       </section>
 
-      {/* Actions */}
-      <section className="mx-5 mt-4 grid grid-cols-2 gap-2">
-        <Btn variant="ink" onClick={() => setModal("add")}><Plus className="size-4" /> Add shift</Btn>
+      {/* Confidence */}
+      <section className="mx-4 mt-3 rounded-2xl bg-card p-4 ring-1 ring-border">
+        <div className="flex items-center justify-between">
+          <div className="text-[13px] font-bold">Pay confidence</div>
+          <div className="text-[13px] font-bold tabular-nums text-primary">{confidence}%</div>
+        </div>
+        <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-sand-deep">
+          <div className="h-full rounded-full bg-primary" style={{ width: `${confidence}%` }} />
+        </div>
+        <p className="mt-2 text-[12px] text-ink-soft leading-snug">
+          Based on {week.count} shift{week.count === 1 ? "" : "s"} this week. Log every shift to keep this accurate.
+        </p>
+      </section>
+
+      {/* Secondary actions */}
+      <section className="mx-4 mt-3 grid grid-cols-2 gap-2">
+        <Btn variant="ghost" onClick={() => setModal("add")}><Plus className="size-4" /> Add a shift</Btn>
         <Btn variant="ghost" onClick={() => setModal("forecast")}><TrendingUp className="size-4" /> Pay forecast</Btn>
-        <Btn variant="ghost" onClick={() => setModal("payslip")}><FileText className="size-4" /> Payslip translator</Btn>
+        <Btn variant="ghost" onClick={() => setModal("payslip")}><FileText className="size-4" /> Translator</Btn>
         <Btn variant="ghost" onClick={() => setModal("query")}><MessageSquare className="size-4" /> Payroll query</Btn>
       </section>
 
       {payCheckOpen && <PayCheckModal onClose={() => setPayCheckOpen(false)} />}
-      <section className="mx-5 mt-6">
-        <h2 className="text-[13px] font-bold text-ink-soft uppercase tracking-wider mb-2">Shift history</h2>
+
+      <section className="mx-4 mt-5">
+        <div className="flex items-center justify-between mb-1.5 px-1">
+          <h2 className="text-[10.5px] font-bold text-ink-soft uppercase tracking-[0.14em]">Shift history</h2>
+          {shifts.length > 0 && <span className="text-[10.5px] text-ink-soft">{shifts.length} total</span>}
+        </div>
         {shifts.length === 0 ? (
-          <div className="rounded-2xl bg-card p-5 ring-1 ring-border text-center text-sm text-ink-soft">
-            No shifts logged yet. Tap Add shift to get started.
+          <div className="rounded-2xl bg-card p-5 ring-1 ring-border text-center text-[12.5px] text-ink-soft">
+            No shifts logged yet. Tap Add a shift to get started.
           </div>
         ) : (
           <ul className="space-y-2">
@@ -853,46 +864,60 @@ export function SaveScreen() {
   const pct = Math.min(100, Math.round((saved / goal) * 100));
 
   return (
-    <div className="pb-[120px]">
+    <div className="pb-[96px]">
       <AppHeader title="Save" subtitle="Small moves from every shift" />
 
-      <section className="mx-5 mt-5">
-        <div className="rounded-[28px] bg-gradient-to-br from-money to-money/85 p-6 text-money-foreground">
-          <div className="text-[11px] font-bold uppercase tracking-[0.18em] opacity-90">Saved so far</div>
-          <div className="mt-2 font-display text-[52px] font-extrabold tracking-tight tabular-nums leading-none">{gbp(saved)}</div>
-          <div className="mt-3 text-[13px] opacity-90">Emergency fund · {pct}% of {gbp(goal, { decimals: 0 })}</div>
-          <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-white/25">
-            <div className="h-full rounded-full bg-white" style={{ width: `${pct}%` }} />
+      {/* Hero — PayFlow blue with green money accent on saved value */}
+      <section className="mx-4 mt-4">
+        <div className="rounded-3xl bg-gradient-to-br from-primary to-ink p-5 text-sand shadow-[0_14px_34px_-20px_rgba(36,90,180,0.45)]">
+          <div className="flex items-center justify-between gap-2 text-[10.5px] font-bold uppercase tracking-[0.14em] opacity-90">
+            <span>Saved so far</span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-money-soft/90 text-money px-2 py-0.5 normal-case tracking-normal text-[10.5px]">
+              <PiggyBank className="size-3" /> Pot
+            </span>
+          </div>
+          <div className="mt-2 font-display text-[44px] font-extrabold tracking-tight tabular-nums leading-none text-money-soft">{gbp(saved)}</div>
+          <div className="mt-3 flex items-center justify-between text-[12px] opacity-90">
+            <span>Emergency fund</span>
+            <span className="tabular-nums">{pct}% of {gbp(goal, { decimals: 0 })}</span>
+          </div>
+          <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-white/15">
+            <div className="h-full rounded-full bg-money" style={{ width: `${pct}%` }} />
           </div>
         </div>
       </section>
 
-      <section className="mx-5 mt-5">
-        <h2 className="text-[13px] font-bold text-ink-soft uppercase tracking-wider mb-2">Pick a saving rule</h2>
+      <section className="mx-4 mt-4">
+        <h2 className="text-[10.5px] font-bold text-ink-soft uppercase tracking-[0.14em] mb-1.5 px-1">Pick a saving rule</h2>
         <div className="space-y-2">
           {RULES.map((r) => {
             const active = rule === r.id;
             return (
-              <button key={r.id} onClick={() => setSaveRule(r.id)} className={`w-full flex items-center justify-between gap-3 rounded-2xl p-4 ring-1 text-left transition ${active ? "bg-primary text-primary-foreground ring-transparent" : "bg-card ring-border"}`}>
-                <div className="min-w-0">
-                  <div className="text-[14px] font-bold">{r.label}</div>
-                  <div className={`text-[12px] ${active ? "opacity-90" : "text-ink-soft"}`}>{r.desc}</div>
+              <button key={r.id} onClick={() => setSaveRule(r.id)} className={`w-full flex items-center justify-between gap-3 rounded-2xl p-3.5 ring-1 text-left transition ${active ? "bg-primary-soft ring-primary/30" : "bg-card ring-border"}`}>
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className={`grid size-9 place-items-center rounded-xl shrink-0 ${active ? "bg-primary text-primary-foreground" : "bg-primary-soft text-primary"}`}>
+                    {active ? <Check className="size-4" strokeWidth={3} /> : <PiggyBank className="size-4" />}
+                  </div>
+                  <div className="min-w-0">
+                    <div className={`text-[14px] font-bold ${active ? "text-primary" : "text-ink"}`}>{r.label}</div>
+                    <div className="text-[12px] text-ink-soft truncate">{r.desc}</div>
+                  </div>
                 </div>
-                {active ? <Check className="size-5" /> : <ChevronRight className="size-5 opacity-50" />}
+                {!active && <ChevronRight className="size-4 text-ink-soft shrink-0" />}
               </button>
             );
           })}
         </div>
       </section>
 
-      <section className="mx-5 mt-5 grid grid-cols-3 gap-2">
+      <section className="mx-4 mt-4 grid grid-cols-3 gap-2">
         <Stat3 k="Weekly" v={gbp(weekly)} />
         <Stat3 k="Monthly" v={gbp(monthly)} />
         <Stat3 k="Yearly" v={gbp(yearly)} />
       </section>
 
-      <section className="mx-5 mt-4">
-        <Btn className="w-full" variant="ink" onClick={() => { addToSavings(weekly); toast.success(`${gbp(weekly)} moved to savings`, { description: "Small moves, real progress." }); }}>
+      <section className="mx-4 mt-3">
+        <Btn className="w-full" variant="primary" onClick={() => { addToSavings(weekly); toast.success(`${gbp(weekly)} moved to your pot`, { description: "Small moves, real progress." }); }}>
           <PiggyBank className="size-4" /> Move {gbp(weekly)} to savings
         </Btn>
         <p className="mt-2 text-[11px] text-ink-soft text-center">Moves the amount in PayFlow only. We never touch your bank account.</p>
@@ -922,7 +947,7 @@ export function LifeScreen() {
     { icon: TrendingUp, title: "Money habits", body: "Tiny ideas, never pushy. Read in 2 minutes." },
   ];
   return (
-    <div className="pb-[120px]">
+    <div className="pb-[96px]">
       <AppHeader title="Life" subtitle="Real perks. Calm tools." />
       <section className="mx-5 mt-4 space-y-2">
         {items.map((i) => (
@@ -992,7 +1017,7 @@ export function CoachScreen() {
   }
 
   return (
-    <div className="pb-[120px]">
+    <div className="pb-[96px]">
       <AppHeader title="Flow Coach" subtitle="Ask anything about your pay" />
 
       {/* Today's insight */}

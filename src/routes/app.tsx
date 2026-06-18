@@ -115,18 +115,18 @@ function AppShell() {
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
-                className={`relative flex flex-1 flex-col items-center gap-0.5 rounded-2xl py-2 mx-0.5 transition-all active:scale-[0.94] ${active ? "text-primary bg-primary-soft" : "text-ink-soft"}`}
+                className={`relative flex flex-1 flex-col items-center gap-0.5 rounded-xl py-1.5 mx-0.5 transition-all active:scale-[0.94] ${active ? "text-primary bg-primary-soft" : "text-ink-soft"}`}
                 aria-label={t.label}
                 aria-current={active ? "page" : undefined}
               >
-                {active && <span className="absolute top-0 h-[3px] w-7 rounded-full bg-primary" />}
+                {active && <span className="absolute top-0 h-[2.5px] w-6 rounded-full bg-primary" />}
                 <span className="relative">
-                  <Icon className="size-[22px]" strokeWidth={active ? 2.6 : 2} />
+                  <Icon className="size-[20px]" strokeWidth={active ? 2.5 : 2} />
                   {t.id === "pay" && paydaySoon && !active && (
                     <span className="absolute -right-1 -top-0.5 size-2 rounded-full bg-accent ring-2 ring-sand" aria-label="Payday soon" />
                   )}
                 </span>
-                <span className={`text-[10.5px] ${active ? "font-extrabold" : "font-semibold"}`}>{t.label}</span>
+                <span className={`text-[10px] ${active ? "font-extrabold" : "font-semibold"}`}>{t.label}</span>
               </button>
             );
           })}
