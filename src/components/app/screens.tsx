@@ -963,15 +963,20 @@ export function SaveScreen() {
 
       <section className="mx-4 mt-3">
         {weekly <= 0 ? (
-          <Btn className="w-full" variant="ghost" disabled>
-            <PiggyBank className="size-4" /> Add a shift to unlock savings
-          </Btn>
+          <>
+            <Btn className="w-full" variant="ghost" disabled>
+              <PiggyBank className="size-4" /> Add a shift to unlock this week's saving
+            </Btn>
+            <p className="mt-2 text-[11px] text-ink-soft text-center">Savings projections unlock once this week has shifts.</p>
+          </>
         ) : (
-          <Btn className="w-full" variant="primary" onClick={() => { addToSavings(weekly); toast.success(`${gbp(weekly)} moved to your pot`, { description: "Small moves, real progress." }); }}>
-            <PiggyBank className="size-4" /> Move {gbp(weekly)} to savings
-          </Btn>
+          <>
+            <Btn className="w-full" variant="primary" onClick={() => { addToSavings(weekly); toast.success(`${gbp(weekly)} moved to your pot`, { description: "Small moves, real progress." }); }}>
+              <PiggyBank className="size-4" /> Move {gbp(weekly)} to savings
+            </Btn>
+            <p className="mt-2 text-[11px] text-ink-soft text-center">Moves the amount in PayFlow only. We never touch your bank account.</p>
+          </>
         )}
-        <p className="mt-2 text-[11px] text-ink-soft text-center">Moves the amount in PayFlow only. We never touch your bank account.</p>
       </section>
 
       <Compliance />
