@@ -47,7 +47,7 @@ function computeStreak(shifts: { date: string }[]) {
 
 export function AppHeader({ title, subtitle, right }: { title: string; subtitle?: string; right?: React.ReactNode }) {
   return (
-    <header className="sticky top-0 z-30 bg-sand/95 backdrop-blur-xl border-b border-border/60 px-5 pt-[max(env(safe-area-inset-top),0.5rem)] pb-3">
+    <header className="sticky top-0 z-30 bg-sand/95 backdrop-blur-xl border-b border-border/60 px-4 pt-[max(env(safe-area-inset-top),0.5rem)] pb-3">
       <div className="flex items-end justify-between gap-3">
         <div>
           <h1 className="font-display text-[26px] font-extrabold leading-tight tracking-tight">{title}</h1>
@@ -61,7 +61,7 @@ export function AppHeader({ title, subtitle, right }: { title: string; subtitle?
 
 export function Compliance({ short = false }: { short?: boolean }) {
   return (
-    <div className="mx-5 mt-4 mb-2 flex items-start gap-2 rounded-2xl bg-card p-3 ring-1 ring-border">
+    <div className="mx-4 mt-4 mb-2 flex items-start gap-2 rounded-2xl bg-card p-3 ring-1 ring-border">
       <ShieldCheck className="mt-0.5 size-3.5 shrink-0 text-primary" />
       <p className="text-[11px] leading-snug text-ink-soft">
         {short
@@ -298,21 +298,27 @@ export function TodayScreen({ goToTab }: { goToTab?: (t: string) => void }) {
         </section>
       )}
 
-      {/* This week — Monzo Pot-style money summary */}
+      {/* This week — calm white card with money-accent value */}
       <section className="mx-4 mt-4">
         <div className="flex items-center justify-between mb-1.5 px-1">
           <h2 className="text-[10.5px] font-bold text-ink-soft uppercase tracking-[0.14em]">This week</h2>
           <span className="text-[10.5px] text-ink-soft">Estimate</span>
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          <div className="row-span-2 rounded-2xl bg-money text-money-foreground p-4 shadow-[0_8px_20px_-14px_rgba(20,120,90,0.55)] relative overflow-hidden">
-            <div className="absolute left-0 top-3 bottom-3 w-1 rounded-r-full bg-white/40" />
-            <div className="text-[10.5px] font-bold uppercase tracking-wider opacity-90">Take-home</div>
-            <div className="mt-1.5 font-display text-[28px] font-extrabold tracking-tight tabular-nums leading-none">{gbp(ded.net)}</div>
-            <div className="mt-2 text-[11px] opacity-90 leading-snug">{week.count} shift{week.count === 1 ? "" : "s"} this week</div>
+        <div className="rounded-2xl bg-card p-4 ring-1 ring-border shadow-[0_8px_20px_-18px_rgba(7,27,58,0.35)]">
+          <div className="flex items-end justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-[10.5px] font-bold uppercase tracking-wider text-ink-soft">Take-home</div>
+              <div className="mt-1 font-display text-[30px] font-extrabold tracking-tight tabular-nums leading-none text-money">{gbp(ded.net)}</div>
+              <div className="mt-1.5 text-[11.5px] text-ink-soft">{week.count} shift{week.count === 1 ? "" : "s"} · before tax {gbp(ded.gross)}</div>
+            </div>
+            <div className="grid size-11 shrink-0 place-items-center rounded-2xl bg-primary-soft text-primary">
+              <Wallet className="size-5" />
+            </div>
           </div>
-          <MiniStat label="Hours" value={fmtHours(week.hours)} />
-          <MiniStat label="Saved" value={gbp(saved)} money />
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <MiniStat label="Hours" value={fmtHours(week.hours)} />
+            <MiniStat label="Saved" value={gbp(saved)} money />
+          </div>
         </div>
       </section>
 
@@ -443,15 +449,14 @@ function Tile({ label, value, icon: Icon, accent }: { label: string; value: stri
 }
 
 function MiniStat({ label, value, accent, money }: { label: string; value: string; accent?: boolean; money?: boolean }) {
-  const tone = money
-    ? "bg-money text-money-foreground ring-transparent"
-    : accent
-      ? "bg-primary text-primary-foreground ring-transparent"
-      : "bg-card ring-border";
+  const tone = accent
+    ? "bg-primary text-primary-foreground ring-transparent"
+    : "bg-sand-deep ring-border/60";
+  const valueTone = money ? "text-money" : accent ? "" : "text-ink";
   return (
     <div className={`rounded-2xl px-3 py-2.5 ring-1 ${tone}`}>
-      <div className="text-[10px] font-bold uppercase tracking-wider opacity-80 truncate">{label}</div>
-      <div className="mt-0.5 font-display text-[17px] font-extrabold tracking-tight tabular-nums truncate">{value}</div>
+      <div className={`text-[10px] font-bold uppercase tracking-wider truncate ${accent ? "opacity-80" : "text-ink-soft"}`}>{label}</div>
+      <div className={`mt-0.5 font-display text-[17px] font-extrabold tracking-tight tabular-nums truncate ${valueTone}`}>{value}</div>
     </div>
   );
 }
@@ -949,7 +954,7 @@ export function LifeScreen() {
   return (
     <div className="pb-[96px]">
       <AppHeader title="Life" subtitle="Real perks. Calm tools." />
-      <section className="mx-5 mt-4 space-y-2">
+      <section className="mx-4 mt-4 space-y-2">
         {items.map((i) => (
           <div key={i.title} className="flex items-center gap-3 rounded-2xl bg-card p-4 ring-1 ring-border">
             <div className="grid size-10 place-items-center rounded-xl bg-primary-soft text-primary"><i.icon className="size-4" /></div>
@@ -1021,7 +1026,7 @@ export function CoachScreen() {
       <AppHeader title="Flow Coach" subtitle="Ask anything about your pay" />
 
       {/* Today's insight */}
-      <section className="mx-5 mt-4">
+      <section className="mx-4 mt-4">
         <div className="rounded-[24px] bg-primary p-5 text-primary-foreground">
           <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider">
             <Sparkles className="size-3" /> Today
@@ -1035,7 +1040,7 @@ export function CoachScreen() {
       </section>
 
       {/* Conversation */}
-      <section className="mx-5 mt-4 space-y-2">
+      <section className="mx-4 mt-4 space-y-2">
         {messages.length === 0 && (
           <div className="rounded-2xl bg-card p-4 ring-1 ring-border text-[13px] leading-relaxed text-ink-soft">
             Hi — I'm Flow Coach. Ask me anything about your pay, payslips or saving habits. I can't give financial advice, but I'll explain things in plain English.
@@ -1061,7 +1066,7 @@ export function CoachScreen() {
       </section>
 
       {/* Composer */}
-      <section className="mx-5 mt-3">
+      <section className="mx-4 mt-3">
         <form
           onSubmit={(e) => { e.preventDefault(); ask(input); }}
           className="flex items-end gap-2 rounded-2xl bg-card p-2 ring-1 ring-border"
@@ -1085,7 +1090,7 @@ export function CoachScreen() {
       </section>
 
       {/* Quick prompts */}
-      <section className="mx-5 mt-3">
+      <section className="mx-4 mt-3">
         <div className="flex flex-wrap gap-1.5">
           {COACH_QUICK.map((q) => (
             <button
@@ -1101,7 +1106,7 @@ export function CoachScreen() {
       </section>
 
       {/* Before payday checklist */}
-      <section className="mx-5 mt-5">
+      <section className="mx-4 mt-5">
         <h2 className="text-[12px] font-bold text-ink-soft uppercase tracking-wider mb-2">Before payday — quick check</h2>
         <ul className="space-y-1.5">
           {[
@@ -1117,7 +1122,7 @@ export function CoachScreen() {
         </ul>
       </section>
 
-      <div className="mx-5 mt-4 rounded-2xl bg-card p-3 ring-1 ring-border">
+      <div className="mx-4 mt-4 rounded-2xl bg-card p-3 ring-1 ring-border">
         <p className="text-[11px] leading-snug text-ink-soft">
           Flow Coach gives general information only — not financial, tax, legal or payroll advice.
         </p>
