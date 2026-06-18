@@ -39,7 +39,8 @@ export function PayCheckModal({ onClose }: { onClose: () => void }) {
     return { hours: +hours.toFixed(2), gross, net: ded.net };
   }, [shifts, periodStart, periodEnd]);
 
-  // Both figures must be sensible before comparing.
+  // Both figures must be sensible before comparing, AND we need something tracked to compare against.
+  const hasTracked = expected.hours > 0;
   const bothEntered = actualNet > 0 && actualHours > 0;
   // Friendly warning for obviously unrealistic entries (still allowed to proceed).
   const looksLow = (actualNet > 0 && actualNet < 10) || (actualHours > 0 && actualHours < 1);
