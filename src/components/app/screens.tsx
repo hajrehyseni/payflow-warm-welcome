@@ -954,7 +954,7 @@ export function LifeScreen() {
   return (
     <div className="pb-[96px]">
       <AppHeader title="Life" subtitle="Real perks. Calm tools." />
-      <section className="mx-5 mt-4 space-y-2">
+      <section className="mx-4 mt-4 space-y-2">
         {items.map((i) => (
           <div key={i.title} className="flex items-center gap-3 rounded-2xl bg-card p-4 ring-1 ring-border">
             <div className="grid size-10 place-items-center rounded-xl bg-primary-soft text-primary"><i.icon className="size-4" /></div>
@@ -1026,7 +1026,7 @@ export function CoachScreen() {
       <AppHeader title="Flow Coach" subtitle="Ask anything about your pay" />
 
       {/* Today's insight */}
-      <section className="mx-5 mt-4">
+      <section className="mx-4 mt-4">
         <div className="rounded-[24px] bg-primary p-5 text-primary-foreground">
           <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider">
             <Sparkles className="size-3" /> Today
@@ -1040,7 +1040,7 @@ export function CoachScreen() {
       </section>
 
       {/* Conversation */}
-      <section className="mx-5 mt-4 space-y-2">
+      <section className="mx-4 mt-4 space-y-2">
         {messages.length === 0 && (
           <div className="rounded-2xl bg-card p-4 ring-1 ring-border text-[13px] leading-relaxed text-ink-soft">
             Hi — I'm Flow Coach. Ask me anything about your pay, payslips or saving habits. I can't give financial advice, but I'll explain things in plain English.
@@ -1066,7 +1066,7 @@ export function CoachScreen() {
       </section>
 
       {/* Composer */}
-      <section className="mx-5 mt-3">
+      <section className="mx-4 mt-3">
         <form
           onSubmit={(e) => { e.preventDefault(); ask(input); }}
           className="flex items-end gap-2 rounded-2xl bg-card p-2 ring-1 ring-border"
@@ -1090,7 +1090,7 @@ export function CoachScreen() {
       </section>
 
       {/* Quick prompts */}
-      <section className="mx-5 mt-3">
+      <section className="mx-4 mt-3">
         <div className="flex flex-wrap gap-1.5">
           {COACH_QUICK.map((q) => (
             <button
@@ -1106,7 +1106,7 @@ export function CoachScreen() {
       </section>
 
       {/* Before payday checklist */}
-      <section className="mx-5 mt-5">
+      <section className="mx-4 mt-5">
         <h2 className="text-[12px] font-bold text-ink-soft uppercase tracking-wider mb-2">Before payday — quick check</h2>
         <ul className="space-y-1.5">
           {[
@@ -1122,7 +1122,7 @@ export function CoachScreen() {
         </ul>
       </section>
 
-      <div className="mx-5 mt-4 rounded-2xl bg-card p-3 ring-1 ring-border">
+      <div className="mx-4 mt-4 rounded-2xl bg-card p-3 ring-1 ring-border">
         <p className="text-[11px] leading-snug text-ink-soft">
           Flow Coach gives general information only — not financial, tax, legal or payroll advice.
         </p>
