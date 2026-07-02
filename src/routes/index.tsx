@@ -291,12 +291,13 @@ function Landing() {
               <Sparkles className="size-3" />
             </div>
             <span className="font-display font-bold text-ink">PayFlow</span>
-            <span>· built with UK hourly workers</span>
+            <span>· by Londonra Ltd, London UK</span>
           </div>
           <div className="flex gap-5">
-            <a href="#">Privacy</a>
-            <a href="#">Terms</a>
-            <a href="#">Contact</a>
+            <Link to="/privacy-policy">Privacy</Link>
+            <Link to="/terms-of-service">Terms</Link>
+            <Link to="/cookie-policy">Cookies</Link>
+            <a href="mailto:info@londonra.com">Contact</a>
           </div>
         </div>
       </footer>
