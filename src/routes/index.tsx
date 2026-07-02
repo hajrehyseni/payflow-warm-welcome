@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState, useEffect, useRef } from "react";
 import { ArrowRight, Clock, Wallet, PiggyBank, Sparkles, ShieldCheck, TrendingUp, AlertTriangle, CheckCircle2, Users, MessageSquareOff, GraduationCap, HeartHandshake } from "lucide-react";
 import { HeroDemo } from "@/components/HeroDemo";
 
@@ -13,6 +14,33 @@ export const Route = createFileRoute("/")({
   }),
   component: Landing,
 });
+
+function CountUp({ end, suffix = "", duration = 1500 }: { end: number; suffix?: string; duration?: number }) {
+  const [count, setCount] = useState(0);
+  const startRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const animate = (timestamp: number) => {
+      if (startRef.current === null) startRef.current = timestamp;
+      const progress = Math.min((timestamp - startRef.current) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const value = Math.floor(eased * end);
+      setCount(value);
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+    const raf = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(raf);
+  }, [end, duration]);
+
+  return (
+    <span aria-label={`${end.toLocaleString()}${suffix}`}>
+      {count.toLocaleString()}{suffix}
+    </span>
+  );
+}
+
 
 function Landing() {
   return (
@@ -86,7 +114,48 @@ function Landing() {
         </div>
       </section>
 
+      {/* SOCIAL PROOF */}
+      <section className="border-y border-border/60 bg-card/80">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 py-14 sm:py-20">
+          <div className="text-center">
+            <div className="font-display text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-primary">
+              <CountUp end={12500} suffix="+" />
+            </div>
+            <p className="mt-2 text-lg sm:text-xl font-semibold text-ink">
+              Trusted by 12,500+ workers across the UK
+            </p>
+          </div>
+
+          <div className="mt-12 grid gap-4 md:grid-cols-3">
+            {TESTIMONIALS.map((t) => (
+              <div key={t.name} className="rounded-3xl bg-sand p-6 ring-1 ring-border">
+                <div className="text-3xl leading-none text-primary/30">"</div>
+                <p className="mt-2 text-sm leading-relaxed text-ink">{t.quote}</p>
+                <div className="mt-4 text-xs font-bold text-ink-soft">{t.name}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-12">
+            <p className="text-center text-[11px] font-bold uppercase tracking-[0.2em] text-ink-soft">
+              Trusted by teams at
+            </p>
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-4">
+              {[...Array(5)].map((_, i) => (
+                <div
+                  key={i}
+                  className="flex h-14 w-28 items-center justify-center rounded-xl bg-ink/5 text-xs font-semibold text-ink-soft"
+                >
+                  Partner Logo
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* THE PROBLEM / THE SOLUTION */}
+
       <section className="border-y border-border/60 bg-card/60">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 py-16 sm:py-20">
           <div className="grid gap-6 md:grid-cols-2">
@@ -340,4 +409,10 @@ const BIZ = [
   { icon: MessageSquareOff, title: "Fewer pay queries", body: "Workers can answer their own 'where did this go?' questions before they reach your inbox." },
   { icon: HeartHandshake, title: "Teams that stay", body: "Confidence in pay is the cheapest retention tool you have. Happier teams stay longer." },
   { icon: ShieldCheck, title: "Early-warning view", body: "An aggregate compliance signal — patterns in pay gaps, before HMRC ever asks. Never any individual pay data." },
+];
+
+const TESTIMONIALS = [
+  { name: "Sarah M., Retail Worker", quote: "PayFlow spotted a tax code error that was costing me £40 a month. I had no idea until I checked." },
+  { name: "James T., Warehouse Operative", quote: "I finally understand my payslip. The breakdown is so clear, even my wife uses it now." },
+  { name: "Priya K., Care Worker", quote: "Saved over £200 last year just by catching shift payment mistakes. Worth every second." },
 ];
