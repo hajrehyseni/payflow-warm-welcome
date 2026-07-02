@@ -44,11 +44,13 @@ function AppShell() {
   const nav = useNavigate();
   const mainRef = useRef<HTMLElement>(null);
   const [tab, setTab] = useState<Tab>("today");
+  const [mounted, setMounted] = useState(false);
   const [ready, setReady] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const localOnboarded = useStore((s) => s.onboarded);
   const nextPayday = useStore((s) => s.nextPayday);
   const paydaySoon = (() => {
+    if (!mounted) return false;
     try {
       const d = new Date(nextPayday + "T00:00:00");
       if (Number.isNaN(d.getTime())) return false;
@@ -57,6 +59,7 @@ function AppShell() {
     } catch { return false; }
   })();
 
+  useEffect(() => { setMounted(true); }, []);
   useEffect(() => { void ensureInitialised().then(() => setReady(true)); }, []);
 
   // Reset scroll to top whenever the user changes tabs — keeps sticky titles fully visible.
@@ -69,7 +72,8 @@ function AppShell() {
     else { clearCloudUser(); setHydrated(true); }
   }, [ready, user?.id]);
 
-  if (!ready || !hydrated) return <AppSplash />;
+  if (!mounted || !ready || !hydrated) return <AppSplash />;
+
 
   // Guest-first: no login wall. Local onboarding flag is enough.
   const onboarded = (user?.onboardingComplete) || localOnboarded;

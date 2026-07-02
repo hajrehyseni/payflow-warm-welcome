@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
-import { ArrowRight, Clock, Wallet, PiggyBank, Sparkles, ShieldCheck, TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, Users, MessageSquareOff, GraduationCap, HeartHandshake, Heart } from "lucide-react";
+import { ArrowRight, Clock, Wallet, PiggyBank, Sparkles, ShieldCheck, TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, Users, MessageSquareOff, GraduationCap, HeartHandshake, Heart, Menu, X } from "lucide-react";
 import { HeroDemo } from "@/components/HeroDemo";
 
 export const Route = createFileRoute("/")({
@@ -43,6 +43,16 @@ function CountUp({ end, suffix = "", duration = 1500 }: { end: number; suffix?: 
 
 
 function Landing() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const closeMenu = () => setMenuOpen(false);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [menuOpen]);
+
   return (
     <div className="min-h-screen bg-sand text-ink overflow-x-hidden">
       <div className="pointer-events-none fixed inset-0 -z-10">
@@ -65,20 +75,65 @@ function Landing() {
           </nav>
           <div className="flex items-center gap-1">
             <Link
-              to="/login"
-              className="rounded-full px-3 py-2 text-sm font-semibold text-ink-soft hover:text-ink md:hidden"
-            >
-              Sign in
-            </Link>
-            <Link
               to="/app"
-              className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground hover:opacity-90 transition-opacity"
+              className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground hover:opacity-90 transition-opacity"
             >
               Open PayFlow <ArrowRight className="size-3.5" />
             </Link>
+            <button
+              type="button"
+              onClick={() => setMenuOpen(true)}
+              className="md:hidden inline-flex size-10 items-center justify-center rounded-full text-ink hover:bg-card"
+              aria-label="Open menu"
+              aria-expanded={menuOpen}
+            >
+              <Menu className="size-5" />
+            </button>
           </div>
         </div>
       </header>
+
+      {menuOpen && (
+        <div className="fixed inset-0 z-[100] md:hidden" role="dialog" aria-modal="true">
+          <div
+            className="absolute inset-0 bg-ink/50 backdrop-blur-sm"
+            onClick={closeMenu}
+            aria-hidden="true"
+          />
+          <div className="absolute inset-x-0 top-0 bg-sand border-b border-border shadow-xl">
+            <div className="flex items-center justify-between px-4 py-3 sm:px-6">
+              <Link to="/" onClick={closeMenu} className="flex items-center gap-2">
+                <div className="grid size-8 place-items-center rounded-xl bg-primary text-primary-foreground">
+                  <Sparkles className="size-4" />
+                </div>
+                <span className="font-display text-lg font-extrabold tracking-tight">PayFlow</span>
+              </Link>
+              <button
+                type="button"
+                onClick={closeMenu}
+                className="inline-flex size-10 items-center justify-center rounded-full text-ink hover:bg-card"
+                aria-label="Close menu"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+            <nav className="flex flex-col px-4 pb-6 pt-2 text-base font-semibold text-ink sm:px-6">
+              <a href="#how" onClick={closeMenu} className="py-3 border-b border-border/60">How it works</a>
+              <a href="#business" onClick={closeMenu} className="py-3 border-b border-border/60">For business</a>
+              <Link to="/pricing" onClick={closeMenu} className="py-3 border-b border-border/60">Pricing</Link>
+              <Link to="/login" onClick={closeMenu} className="py-3 border-b border-border/60">Sign in</Link>
+              <Link
+                to="/app"
+                onClick={closeMenu}
+                className="mt-4 inline-flex items-center justify-center gap-1.5 rounded-full bg-primary px-4 py-3 text-sm font-bold text-primary-foreground hover:opacity-90 transition-opacity"
+              >
+                Open PayFlow <ArrowRight className="size-3.5" />
+              </Link>
+            </nav>
+          </div>
+        </div>
+      )}
+
 
       {/* Hero */}
       <section className="mx-auto max-w-6xl px-4 sm:px-6 pt-14 pb-16 md:pt-20 md:pb-24">
