@@ -407,9 +407,9 @@ const LESSONS = [
 ];
 
 const BIZ = [
-  { icon: MessageSquareOff, title: "Fewer pay queries", body: "Workers can answer their own 'where did this go?' questions before they reach your inbox." },
-  { icon: HeartHandshake, title: "Teams that stay", body: "Confidence in pay is the cheapest retention tool you have. Happier teams stay longer." },
-  { icon: ShieldCheck, title: "Early-warning view", body: "An aggregate compliance signal — patterns in pay gaps, before HMRC ever asks. Never any individual pay data." },
+  { icon: ShieldCheck, title: "Compliance Early-Warning", body: "Catch payroll errors before they become tribunal claims. Aggregate compliance signals, no individual pay data." },
+  { icon: TrendingDown, title: "Reduce Payroll Queries", body: "Workers self-serve pay questions in plain English. Cut HR ticket volume by up to 40%." },
+  { icon: Heart, title: "Happier Workforce", body: "Transparent pay builds trust and improves retention. Confident teams stay longer." },
 ];
 
 const TESTIMONIALS = [
