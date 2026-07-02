@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
-import { ArrowRight, Clock, Wallet, PiggyBank, Sparkles, ShieldCheck, TrendingUp, AlertTriangle, CheckCircle2, Users, MessageSquareOff, GraduationCap, HeartHandshake } from "lucide-react";
+import { ArrowRight, Clock, Wallet, PiggyBank, Sparkles, ShieldCheck, TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, Users, MessageSquareOff, GraduationCap, HeartHandshake, Heart } from "lucide-react";
 import { HeroDemo } from "@/components/HeroDemo";
 
 export const Route = createFileRoute("/")({
