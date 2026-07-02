@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
-import { ArrowRight, Clock, Wallet, PiggyBank, Sparkles, ShieldCheck, TrendingUp, AlertTriangle, CheckCircle2, Users, MessageSquareOff, GraduationCap, HeartHandshake } from "lucide-react";
+import { ArrowRight, Clock, Wallet, PiggyBank, Sparkles, ShieldCheck, TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, Users, MessageSquareOff, GraduationCap, HeartHandshake, Heart } from "lucide-react";
 import { HeroDemo } from "@/components/HeroDemo";
 
 export const Route = createFileRoute("/")({
@@ -301,13 +301,13 @@ function Landing() {
         <div className="mx-auto max-w-5xl px-4 sm:px-6 py-16 sm:py-20">
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 rounded-full bg-sand/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider">
-              <Building className="size-3.5" /> For business
+              <Building className="size-3.5" /> For employers
             </div>
             <h2 className="mt-4 font-display text-4xl md:text-5xl font-extrabold tracking-tight leading-tight">
-              Fewer pay queries. Teams that <span className="text-primary">stay</span>.
+              Pay clarity that protects your <span className="text-primary">business</span>.
             </h2>
             <p className="mt-4 text-lg leading-relaxed text-sand/80">
-              A clear signal you're paying people right — before HMRC ever asks. PayFlow gives your team confidence in their payslips and gives you an aggregate compliance early-warning view. No individual pay data, ever.
+              Give workers confidence in every payslip. Cut payroll queries. Spot compliance issues before they escalate. No individual pay data, ever.
             </p>
           </div>
           <ul className="mt-10 grid gap-4 md:grid-cols-3">
@@ -319,16 +319,17 @@ function Landing() {
               </li>
             ))}
           </ul>
-          <div className="mt-10 flex flex-wrap items-center gap-3">
-            <Link
-              to="/pricing"
-              className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-foreground hover:scale-[1.02] transition-transform"
+          <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center">
+            <a
+              href="mailto:info@londonra.com?subject=Book a PayFlow demo"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-foreground hover:scale-[1.02] active:scale-[0.98] transition-transform"
             >
-              See business pricing <ArrowRight className="size-4" />
+              Book a Demo <ArrowRight className="size-4" />
+            </a>
+            <Link to="/pricing" className="text-sm font-bold text-sand/80 hover:text-sand underline-offset-4 hover:underline">
+              See business pricing →
             </Link>
-            <Link to="/signup" className="text-sm font-bold text-sand/80 hover:text-sand underline-offset-4 hover:underline">
-              Start a free pilot →
-            </Link>
+            <span className="text-sm text-sand/60">Free for workers. Employers get the dashboard.</span>
           </div>
         </div>
       </section>
@@ -406,9 +407,9 @@ const LESSONS = [
 ];
 
 const BIZ = [
-  { icon: MessageSquareOff, title: "Fewer pay queries", body: "Workers can answer their own 'where did this go?' questions before they reach your inbox." },
-  { icon: HeartHandshake, title: "Teams that stay", body: "Confidence in pay is the cheapest retention tool you have. Happier teams stay longer." },
-  { icon: ShieldCheck, title: "Early-warning view", body: "An aggregate compliance signal — patterns in pay gaps, before HMRC ever asks. Never any individual pay data." },
+  { icon: ShieldCheck, title: "Compliance Early-Warning", body: "Catch payroll errors before they become tribunal claims. Aggregate compliance signals, no individual pay data." },
+  { icon: TrendingDown, title: "Reduce Payroll Queries", body: "Workers self-serve pay questions in plain English. Cut HR ticket volume by up to 40%." },
+  { icon: Heart, title: "Happier Workforce", body: "Transparent pay builds trust and improves retention. Confident teams stay longer." },
 ];
 
 const TESTIMONIALS = [
