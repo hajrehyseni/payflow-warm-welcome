@@ -326,6 +326,9 @@ function Landing() {
             >
               Book a Demo <ArrowRight className="size-4" />
             </a>
+            <Link to="/employer-dashboard" className="text-sm font-bold text-sand/80 hover:text-sand underline-offset-4 hover:underline">
+              View dashboard preview →
+            </Link>
             <Link to="/pricing" className="text-sm font-bold text-sand/80 hover:text-sand underline-offset-4 hover:underline">
               See business pricing →
             </Link>

@@ -15,6 +15,7 @@ import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as JoinRouteImport } from './routes/join'
+import { Route as EmployerDashboardRouteImport } from './routes/employer-dashboard'
 import { Route as CookiePolicyRouteImport } from './routes/cookie-policy'
 import { Route as BusinessRouteImport } from './routes/business'
 import { Route as AppRouteImport } from './routes/app'
@@ -51,6 +52,11 @@ const JoinRoute = JoinRouteImport.update({
   path: '/join',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EmployerDashboardRoute = EmployerDashboardRouteImport.update({
+  id: '/employer-dashboard',
+  path: '/employer-dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CookiePolicyRoute = CookiePolicyRouteImport.update({
   id: '/cookie-policy',
   path: '/cookie-policy',
@@ -83,6 +89,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRoute
   '/business': typeof BusinessRoute
   '/cookie-policy': typeof CookiePolicyRoute
+  '/employer-dashboard': typeof EmployerDashboardRoute
   '/join': typeof JoinRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
@@ -96,6 +103,7 @@ export interface FileRoutesByTo {
   '/app': typeof AppRoute
   '/business': typeof BusinessRoute
   '/cookie-policy': typeof CookiePolicyRoute
+  '/employer-dashboard': typeof EmployerDashboardRoute
   '/join': typeof JoinRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
@@ -110,6 +118,7 @@ export interface FileRoutesById {
   '/app': typeof AppRoute
   '/business': typeof BusinessRoute
   '/cookie-policy': typeof CookiePolicyRoute
+  '/employer-dashboard': typeof EmployerDashboardRoute
   '/join': typeof JoinRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
@@ -125,6 +134,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/business'
     | '/cookie-policy'
+    | '/employer-dashboard'
     | '/join'
     | '/login'
     | '/pricing'
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/business'
     | '/cookie-policy'
+    | '/employer-dashboard'
     | '/join'
     | '/login'
     | '/pricing'
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/business'
     | '/cookie-policy'
+    | '/employer-dashboard'
     | '/join'
     | '/login'
     | '/pricing'
@@ -165,6 +177,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRoute
   BusinessRoute: typeof BusinessRoute
   CookiePolicyRoute: typeof CookiePolicyRoute
+  EmployerDashboardRoute: typeof EmployerDashboardRoute
   JoinRoute: typeof JoinRoute
   LoginRoute: typeof LoginRoute
   PricingRoute: typeof PricingRoute
@@ -218,6 +231,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof JoinRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/employer-dashboard': {
+      id: '/employer-dashboard'
+      path: '/employer-dashboard'
+      fullPath: '/employer-dashboard'
+      preLoaderRoute: typeof EmployerDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/cookie-policy': {
       id: '/cookie-policy'
       path: '/cookie-policy'
@@ -261,6 +281,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRoute,
   BusinessRoute: BusinessRoute,
   CookiePolicyRoute: CookiePolicyRoute,
+  EmployerDashboardRoute: EmployerDashboardRoute,
   JoinRoute: JoinRoute,
   LoginRoute: LoginRoute,
   PricingRoute: PricingRoute,
@@ -272,3 +293,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
