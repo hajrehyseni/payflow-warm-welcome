@@ -1,0 +1,99 @@
+{
+  "version": 1,
+  "sdk_version": "0.20.0",
+  "path": "/mcp",
+  "auth": {
+    "type": "none"
+  },
+  "mcp": {
+    "server": {
+      "name": "payflow-mcp",
+      "version": "0.1.0",
+      "title": "PayFlow"
+    },
+    "tools": [
+      {
+        "name": "get_app_info",
+        "title": "Get PayFlow info",
+        "description": "Returns a short description of PayFlow — a UK pay transparency app for hourly workers — including who it's for, what it does, and pricing model.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "estimate_uk_take_home",
+        "title": "Estimate UK take-home pay",
+        "description": "Rough estimate of annual UK take-home pay for an employee (England) given gross annual salary. Applies standard Personal Allowance, PAYE bands, and Class 1 NI (employee) at 8%/2%. Guidance only — not tax advice.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "grossAnnual": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Gross annual salary in GBP (before tax and NI)."
+            }
+          },
+          "required": [
+            "grossAnnual"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "estimate_weekly_pay",
+        "title": "Estimate weekly hourly pay",
+        "description": "Estimate gross weekly pay for an hourly worker from hours worked and hourly rate. Optionally includes overtime hours paid at a multiplier.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "hours": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Regular hours worked this week."
+            },
+            "hourlyRate": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Hourly rate in GBP."
+            },
+            "overtimeHours": {
+              "description": "Overtime hours worked (optional).",
+              "type": "number",
+              "minimum": 0
+            },
+            "overtimeMultiplier": {
+              "description": "Overtime pay multiplier, e.g. 1.5. Defaults to 1.5.",
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          },
+          "required": [
+            "hours",
+            "hourlyRate"
+          ]
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
